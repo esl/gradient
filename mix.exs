@@ -8,7 +8,8 @@ defmodule GradualizerEx.MixProject do
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      aliases: aliases()
+      aliases: aliases(),
+      xref: [exclude: [:gradualizer_fmt]]
     ]
   end
 
