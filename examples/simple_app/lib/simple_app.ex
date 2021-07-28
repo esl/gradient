@@ -31,6 +31,15 @@ defmodule SimpleApp do
     12
   end
 
+  @spec one_line() :: atom()
+  def one_line, do: :ok 
+
+  @spec lambda() :: atom()
+  def lambda do
+    l = fn -> :ok end
+    l.()
+  end
+
   #@spec copy_bool_id(boolean()) :: integer()
   #def copy_bool_id(x), do: x
 

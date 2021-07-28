@@ -28,8 +28,6 @@ defmodule GradualizerEx.ElixirFmt do
         _ -> ''
       end
 
-    IO.inspect(actual_type)
-
     :io_lib.format(
       "~sThe ~s~ts~s is expected to have type ~ts but it has type ~ts~n~ts~n",
       [

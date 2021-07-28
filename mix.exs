@@ -28,7 +28,6 @@ defmodule GradualizerEx.MixProject do
   end
 
   def aliases do
-    [
-    ]
+    []
   end
 end

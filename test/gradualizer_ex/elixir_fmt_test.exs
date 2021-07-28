@@ -13,7 +13,7 @@ defmodule GradualizerEx.ElixirFmtTest do
     res = ElixirFmt.try_highlight_in_context(expression, opts)
 
     expected =
-      '28  @spec bool_id(boolean()) :: boolean()\n29  def bool_id(x) do \n30\e[4m    _x = 12\e[0m\n31    :ok \n32  end'
+      '29  def bool_id(x) do \n30    _x = 13\n\e[4m\e[31m31    12\e[0m\n32  end\n33\n\n19  @spec wrong_return_a(boolean()) :: integer()\n20  def wrong_return_a(_x) do \n\e[4m\e[31m21    y = 12\e[0m\n22    12\n23  end\n\n20  def wrong_return_a(_x) do \n21    y = 12\n\e[4m\e[31m22    12\e[0m\n23  end\n24'
 
     assert res == expected
   end
