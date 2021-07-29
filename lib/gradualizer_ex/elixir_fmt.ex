@@ -29,7 +29,7 @@ defmodule GradualizerEx.ElixirFmt do
       end
 
     :io_lib.format(
-      "~sThe ~s~ts~s is expected to have type ~ts but it has type ~ts~n~ts~n",
+      "~sThe ~s~ts~s is expected to have type ~ts but it has type ~ts~n~ts~n~n",
       [
         FmtLib.format_location(expression, :brief, opts),
         FmtLib.describe_expr(expression),
@@ -46,15 +46,35 @@ defmodule GradualizerEx.ElixirFmt do
     forms = Keyword.get(opts, :forms)
 
     with {:ok, path} <- get_ex_file_path(forms),
-         {:ok, code} <- File.read(path),
-         {:ok, ast} <- Code.string_to_quoted(code, columns: true) do
-      {_ast, candidates} = Macro.prewalk(ast, [], &match_node(&1, &2, expression))
+         {:ok, code} <- File.read(path) do
       code_lines = String.split(code, ~r/\R/)
-
-      Enum.map(candidates, fn candidate -> plane_code(code_lines, candidate, expression) end)
-      |> Enum.join("\n\n")
-      |> String.to_charlist()
+      plane_code2(code_lines, expression)
     end
+  end
+
+  def try_highlight_expr_without_loc_in_context(code, expression) do
+    {:ok, ast} = Code.string_to_quoted(code, columns: true)
+    {_ast, candidates} = Macro.prewalk(ast, [], &match_node(&1, &2, expression))
+
+    code_lines = String.split(code, ~r/\R/)
+
+    candidates
+    |> Enum.map(fn candidate -> plane_code(code_lines, candidate, expression) end)
+    |> Enum.join("\n\n")
+    |> String.to_charlist()
+  end
+
+  def plane_code2(_code, expression) when elem(expression, 1) == 0 do
+    IO.ANSI.red() <> "Error :: Can't localyze expression in the code" <> IO.ANSI.reset()
+  end
+  def plane_code2(code, expression) do
+    line = elem(expression, 1)
+
+    code
+    |> Enum.with_index(1)
+    |> filter_context(line, 2)
+    |> underscore_line(line)
+    |> Enum.join("\n")
   end
 
   @spec get_block_lines(tuple()) :: [integer()]
@@ -103,9 +123,9 @@ defmodule GradualizerEx.ElixirFmt do
   def underscore_line(lines, line) do
     Enum.map(lines, fn {str, n} ->
       if(n == line) do
-        IO.ANSI.underline() <> IO.ANSI.red() <> to_string(n) <> str <> IO.ANSI.reset()
+        IO.ANSI.underline() <> IO.ANSI.red() <> to_string(n)  <> " " <> str <> IO.ANSI.reset()
       else
-        to_string(n) <> str
+        to_string(n) <> " " <>str
       end
     end)
   end
