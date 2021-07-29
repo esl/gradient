@@ -8,10 +8,12 @@ defmodule Mix.Tasks.Gradualizer do
     IO.puts("Found files:\n #{Enum.join(files, "\n ")}")
 
     IO.puts("Gradualizing files...")
-    res = Enum.map(files, & GradualizerEx.type_check_file(&1))
-    if Enum.all?(res, & &1 == :ok) do
+    res = Enum.map(files, &GradualizerEx.type_check_file(&1))
+
+    if Enum.all?(res, &(&1 == :ok)) do
       IO.puts("No problems found!")
     end
+
     :ok
   end
 

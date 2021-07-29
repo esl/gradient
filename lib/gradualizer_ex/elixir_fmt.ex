@@ -67,6 +67,7 @@ defmodule GradualizerEx.ElixirFmt do
   def plane_code2(_code, expression) when elem(expression, 1) == 0 do
     IO.ANSI.red() <> "Error :: Can't localyze expression in the code" <> IO.ANSI.reset()
   end
+
   def plane_code2(code, expression) do
     line = elem(expression, 1)
 
@@ -123,9 +124,9 @@ defmodule GradualizerEx.ElixirFmt do
   def underscore_line(lines, line) do
     Enum.map(lines, fn {str, n} ->
       if(n == line) do
-        IO.ANSI.underline() <> IO.ANSI.red() <> to_string(n)  <> " " <> str <> IO.ANSI.reset()
+        IO.ANSI.underline() <> IO.ANSI.red() <> to_string(n) <> " " <> str <> IO.ANSI.reset()
       else
-        to_string(n) <> " " <>str
+        to_string(n) <> " " <> str
       end
     end)
   end
