@@ -27,22 +27,8 @@ defmodule GradualizerEx.ElixirFmtTest do
     IO.puts(res)
   end
 
-  test "get_block_lines/1" do
-    ast = example_block_ast()
-
-    assert [30, 31, 32] == ElixirFmt.get_block_lines(ast)
-  end
-
   def basic_erlang_forms() do
     [{:attribute, 1, :file, {@example_module_path, 1}}]
   end
 
-  def example_block_ast() do
-    {:__block__, [],
-     [
-       {:=, [line: 30], [{:_x, [line: 30], nil}, 12]},
-       {:=, [line: 31], [{:_x, [line: 31], nil}, 12]},
-       :ok
-     ]}
-  end
 end

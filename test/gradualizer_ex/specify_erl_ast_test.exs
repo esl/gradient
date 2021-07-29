@@ -33,10 +33,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
 
   test "get_list_from_tokens" do
     tokens = example_string_tokens()
-    ts = drop_tokens_to_line(tokens, 5)
+    ts = drop_tokens_to_line(tokens, 4)
     assert {:charlist, _} = SpecifyErlAst.get_list_from_tokens(ts)
 
-    ts = drop_tokens_to_line(ts, 7)
+    ts = drop_tokens_to_line(ts, 6)
     assert {:list, _} = SpecifyErlAst.get_list_from_tokens(ts)
   end
 

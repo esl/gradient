@@ -52,17 +52,6 @@ defmodule GradualizerEx.ElixirFmt do
     end
   end
 
-  def try_highlight_expr_without_loc_in_context(code, expression) do
-    {:ok, ast} = Code.string_to_quoted(code, columns: true)
-    {_ast, candidates} = Macro.prewalk(ast, [], &match_node(&1, &2, expression))
-
-    code_lines = String.split(code, ~r/\R/)
-
-    candidates
-    |> Enum.map(fn candidate -> plane_code(code_lines, candidate, expression) end)
-    |> Enum.join("\n\n")
-    |> String.to_charlist()
-  end
 
   def plane_code2(_code, expression) when elem(expression, 1) == 0 do
     IO.ANSI.red() <> "Error :: Can't localyze expression in the code" <> IO.ANSI.reset()
@@ -70,49 +59,6 @@ defmodule GradualizerEx.ElixirFmt do
 
   def plane_code2(code, expression) do
     line = elem(expression, 1)
-
-    code
-    |> Enum.with_index(1)
-    |> filter_context(line, 2)
-    |> underscore_line(line)
-    |> Enum.join("\n")
-  end
-
-  @spec get_block_lines(tuple()) :: [integer()]
-  def get_block_lines({:__block__, [], childs}) do
-    {_, lines} =
-      Macro.prewalk(childs, [], fn node, acc ->
-        {node, get_ex_expr_line(node, acc)}
-      end)
-
-    lines =
-      lines
-      |> Enum.uniq()
-      |> Enum.sort()
-
-    if childs |> List.last() |> is_ex_literal() do
-      lines ++ [List.last(lines) + 1]
-    else
-      lines
-    end
-  end
-
-  @spec plane_code([String.t()], tuple(), tuple()) :: String.t()
-  def plane_code(_code, nil, _expression), do: "ERROR::Can't display code"
-
-  def plane_code(code, {:__block__, [], _childs} = block, _expression) do
-    lines = get_block_lines(block)
-    uline = List.last(lines)
-
-    code
-    |> Enum.with_index(1)
-    |> filter_context(uline, 2)
-    |> underscore_line(uline)
-    |> Enum.join("\n")
-  end
-
-  def plane_code(code, candidate, _expression) do
-    line = elem(candidate, 1) |> Keyword.get(:line, 0)
 
     code
     |> Enum.with_index(1)
@@ -136,51 +82,6 @@ defmodule GradualizerEx.ElixirFmt do
 
     Enum.filter(lines, fn {_, number} -> number in range end)
   end
-
-  def append_line(acc, _line, node) do
-    [node | acc]
-    # list = Map.get(acc, line, [])
-    # Map.put(acc, line, [node | list])
-  end
-
-  def match_node({_type, loc, children} = node, acc, expr)
-      when is_list(children) do
-    line = Keyword.get(loc, :line, 0)
-    expr_line = get_line_from_expression(expr)
-
-    case expr_line do
-      0 ->
-        if Enum.any?(children, &check_literal(&1, expr)) do
-          {node, append_line(acc, line, node)}
-        else
-          {node, acc}
-        end
-
-      ^line ->
-        {node, append_line(acc, line, node)}
-
-      _otherwise ->
-        {node, acc}
-    end
-  end
-
-  def match_node(node, acc, _) do
-    # skipped node
-    {node, acc}
-  end
-
-  def get_line_from_expression(expr) when is_tuple(expr) do
-    elem(expr, 1)
-  end
-
-  def get_ex_expr_line({_, loc, _}, acc), do: [Keyword.get(loc, :line, 0) | acc]
-  def get_ex_expr_line(_, acc), do: acc
-
-  def is_ex_literal(x), do: is_integer(x) or is_binary(x) or is_atom(x)
-
-  def check_literal(node, {:integer, _, value}), do: value == node
-  def check_literal(node, {:atom, _, value}), do: value == node
-  def check_literal(_node, _expr), do: false
 
   def get_ex_file_path([{:attribute, 1, :file, {path, 1}} | _]), do: {:ok, path}
   def get_ex_file_path(_), do: {:error, :not_found}
