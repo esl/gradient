@@ -16,7 +16,10 @@ defmodule GradualizerEx do
   end
 
   def elixir_opts() do
-    [gradualizer_fmt: GradualizerEx.ElixirFmt]
+    [
+      gradualizer_fmt: GradualizerEx.ElixirFmt,
+      gradualizer_file_loader: GradualizerEx.ElixirFileUtils
+    ]
   end
 
   def string_to_quoted(module) do
