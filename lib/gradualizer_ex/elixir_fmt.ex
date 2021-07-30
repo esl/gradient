@@ -20,51 +20,76 @@ defmodule GradualizerEx.ElixirFmt do
   end
 
   def format_expr_type_error(expression, actual_type, expected_type, opts) do
-    fancy_expr = try_highlight_in_context(expression, opts)
-
-    inline_expr =
-      case fancy_expr do
-        '' -> ' ' ++ FmtLib.pp_expr(expression, opts)
-        _ -> ''
+    {inline_expr, fancy_expr} =
+      case try_highlight_in_context(expression, opts) do
+        {:error, _e} -> {" " <> pp_expr(expression, opts), ""}
+        {:ok, fancy} -> {"", fancy}
       end
 
     :io_lib.format(
       "~sThe ~s~ts~s is expected to have type ~ts but it has type ~ts~n~ts~n~n",
       [
-        FmtLib.format_location(expression, :brief, opts),
+        format_location(expression, :brief, opts),
         FmtLib.describe_expr(expression),
         inline_expr,
-        FmtLib.format_location(expression, :verbose),
-        FmtLib.pp_type(expected_type, opts),
-        FmtLib.pp_type(actual_type, opts),
+        format_location(expression, :verbose, opts),
+        pp_type(expected_type, opts),
+        pp_type(actual_type, opts),
         fancy_expr
       ]
     )
   end
 
-  def try_highlight_in_context(expression, opts) do
-    forms = Keyword.get(opts, :forms)
-
-    with {:ok, path} <- get_ex_file_path(forms),
-         {:ok, code} <- File.read(path) do
-      code_lines = String.split(code, ~r/\R/)
-      plane_code2(code_lines, expression)
+  def format_location(expression, fmt_type, opts \\ []) do
+    case Keyword.get(opts, :fmt_location, :verbose) do
+      ^fmt_type -> FmtLib.format_location(expression, fmt_type)
+      :verbose -> ""
     end
   end
 
-
-  def plane_code2(_code, expression) when elem(expression, 1) == 0 do
-    IO.ANSI.red() <> "Error :: Can't localyze expression in the code" <> IO.ANSI.reset()
+  def pp_expr(expression, _opts) do
+    IO.ANSI.blue() <> "#{inspect(expression)}" <> IO.ANSI.reset()
   end
 
-  def plane_code2(code, expression) do
+  def pp_type(expression, _opts) do
+    pp = expression |> :typelib.pp_type() |> to_string()
+    IO.ANSI.yellow() <> pp <> IO.ANSI.reset()
+  end
+
+  def try_highlight_in_context(expression, opts) do
+    forms = Keyword.get(opts, :forms)
+
+    with :ok <- has_location?(expression),
+         {:ok, path} <- get_ex_file_path(forms),
+         {:ok, code} <- File.read(path) do
+      code_lines = String.split(code, ~r/\R/)
+      {:ok, highlight_in_context(expression, code_lines)}
+    end
+  end
+
+  def has_location?(expression) do
+    if elem(expression, 1) == 0 do
+      {:error, "The location is missing in the expression"}
+    else
+      :ok
+    end
+  end
+
+  @spec highlight_in_context(tuple(), [String.t()]) :: String.t()
+  def highlight_in_context(expression, context) do
     line = elem(expression, 1)
 
-    code
+    context
     |> Enum.with_index(1)
     |> filter_context(line, 2)
     |> underscore_line(line)
     |> Enum.join("\n")
+  end
+
+  def filter_context(lines, line, ctx_size \\ 1) do
+    range = (line - ctx_size)..(line + ctx_size)
+
+    Enum.filter(lines, fn {_, number} -> number in range end)
   end
 
   def underscore_line(lines, line) do
@@ -75,12 +100,6 @@ defmodule GradualizerEx.ElixirFmt do
         to_string(n) <> " " <> str
       end
     end)
-  end
-
-  def filter_context(lines, line, ctx_size \\ 1) do
-    range = (line - ctx_size)..(line + ctx_size)
-
-    Enum.filter(lines, fn {_, number} -> number in range end)
   end
 
   def get_ex_file_path([{:attribute, 1, :file, {path, 1}} | _]), do: {:ok, path}
