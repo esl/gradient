@@ -12,7 +12,9 @@ defmodule GradualizerEx.ElixirFmtTest do
 
     res = ElixirFmt.try_highlight_in_context(expression, opts)
 
-    expected = "29   def bool_id(x) do\n30     _x = 13\n\e[4m\e[31m31     12\e[0m\n32   end\n33 "
+    expected =
+      {:ok, "29   def bool_id(x) do\n30     _x = 13\n\e[4m\e[31m31     12\e[0m\n32   end\n33 "}
+
     assert res == expected
   end
 
@@ -30,5 +32,4 @@ defmodule GradualizerEx.ElixirFmtTest do
   def basic_erlang_forms() do
     [{:attribute, 1, :file, {@example_module_path, 1}}]
   end
-
 end

@@ -212,7 +212,8 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   @spec specify_line(form(), [token()]) :: {form(), [token()]}
   def specify_line(form, tokens) do
-    # IO.puts("#{inspect form} --- #{inspect tokens}")
+    IO.puts("#{inspect(form)} --- #{inspect(tokens)}")
+
     [token | tokens] =
       tokens
       |> Enum.drop_while(&(!match_token_to_form(&1, form)))
@@ -221,8 +222,16 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   @spec match_token_to_form(token(), form()) :: boolean()
-  defp match_token_to_form({:int, {l1, _, _}, v1}, {:integer, l2, v2}) do
-    l2 <= l1 && v1 == to_charlist(v2)
+  defp match_token_to_form({:int, {l1, _, v1}, _}, {:integer, l2, v2}) do
+    l2 <= l1 && v1 == v2
+  end
+
+  defp match_token_to_form({:char, {l1, _, _}, v1}, {:integer, l2, v2}) do
+    l2 <= l1 && v1 == v2
+  end
+
+  defp match_token_to_form({:flt, {l1, _, v1}, _}, {:float, l2, v2}) do
+    l2 <= l1 && v1 == v2
   end
 
   defp match_token_to_form({:atom, {l1, _, _}, v1}, {:atom, l2, v2}) do
@@ -230,7 +239,6 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp match_token_to_form({:list_string, {l1, _, _}, [v1]}, {:cons, l2, _, _} = cons) do
-    # charlist
     v2 = cons_to_charlist(cons)
     # IO.puts("#{inspect v1} -- #{inspect v2}")
     l2 <= l1 && to_charlist(v1) == v2
@@ -260,6 +268,14 @@ defmodule GradualizerEx.SpecifyErlAst do
   @spec take_loc_from_token(token(), form()) :: form()
   defp take_loc_from_token({:int, {line, _, _}, _}, {:integer, _, value}) do
     {:integer, line, value}
+  end
+
+  defp take_loc_from_token({:char, {line, _, _}, _}, {:integer, _, value}) do
+    {:integer, line, value}
+  end
+
+  defp take_loc_from_token({:flt, {line, _, _}, _}, {:float, _, value}) do
+    {:float, line, value}
   end
 
   defp take_loc_from_token({:atom, {line, _, _}, _}, {:atom, _, value}) do

@@ -1,4 +1,4 @@
-defmodule SimpleApp.StringTest do
+defmodule StringTest do
   def string, do: "100"
 
   def charlist, do: '100'
