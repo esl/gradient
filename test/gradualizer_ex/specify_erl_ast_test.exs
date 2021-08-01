@@ -12,6 +12,45 @@ defmodule GradualizerEx.SpecifyErlAstTest do
     {:ok, state}
   end
 
+  describe "get_conditional/1" do
+    test "case" do
+      {tokens, _ast} = load("/conditional/Elixir.Conditional.Case.beam", "/conditional/case.ex")
+      tokens = drop_tokens_to_line(tokens, 2)
+      assert {:case, _} = SpecifyErlAst.get_conditional(tokens)
+
+      tokens = drop_tokens_to_line(tokens, 9)
+      assert {:case, _} = SpecifyErlAst.get_conditional(tokens)
+    end
+
+    test "if" do
+      {tokens, _ast} = load("/conditional/Elixir.Conditional.If.beam", "/conditional/if.ex")
+
+      tokens = drop_tokens_to_line(tokens, 2)
+      assert {:if, _} = SpecifyErlAst.get_conditional(tokens)
+
+      tokens = drop_tokens_to_line(tokens, 12)
+      assert {:if, _} = SpecifyErlAst.get_conditional(tokens)
+    end
+
+    test "unless" do
+      {tokens, _ast} =
+        load("/conditional/Elixir.Conditional.Unless.beam", "/conditional/unless.ex")
+
+      tokens = drop_tokens_to_line(tokens, 2)
+      assert {:unless, _} = SpecifyErlAst.get_conditional(tokens)
+    end
+
+    test "cond" do
+      {tokens, _ast} = load("/conditional/Elixir.Conditional.Cond.beam", "/conditional/cond.ex")
+
+      tokens = drop_tokens_to_line(tokens, 2)
+      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens)
+
+      tokens = drop_tokens_to_line(tokens, 10)
+      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens)
+    end
+  end
+
   describe "add_missing_loc_literals/2" do
     test "messy test on simple_app" do
       {tokens, ast} = example_data()
@@ -180,6 +219,75 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                     ]}
                  ]}
               ]} = if_
+    end
+
+    test "cond conditional" do
+      {tokens, ast} = load("/conditional/Elixir.Conditional.Cond.beam", "/conditional/cond.ex")
+
+      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+      assert {:function, 2, :cond_, 1,
+              [
+                {:clause, 2, [{:var, 2, :_a@1}], [],
+                 [
+                   {:case, 4, {:op, 5, :==, {:var, 5, :_a@1}, {:atom, 0, :ok}},
+                    [
+                      {:clause, 5, [{:atom, 7, true}], [], [{:atom, 5, :ok}]},
+                      {:clause, 6, [{:atom, 6, false}], [],
+                       [
+                         {:case, 6, {:op, 6, :>, {:var, 6, :_a@1}, {:integer, 0, 5}},
+                          [
+                            {:clause, 6, [{:atom, 7, true}], [], [{:atom, 6, :ok}]},
+                            {:clause, 7, [{:atom, 7, false}], [],
+                             [
+                               {:case, 7, {:atom, 7, true},
+                                [
+                                  {:clause, 7, [{:atom, 7, true}], [], [{:atom, 7, :error}]},
+                                  {:clause, 7, [{:atom, 0, false}], [],
+                                   [
+                                     {:call, 7,
+                                      {:remote, 7, {:atom, 0, :erlang}, {:atom, 7, :error}},
+                                      [{:atom, 0, :cond_clause}]}
+                                   ]}
+                                ]}
+                             ]}
+                          ]}
+                       ]}
+                    ]}
+                 ]}
+              ]} = inline
+
+      assert {:function, 10, :cond_block, 0,
+              [
+                {:clause, 10, [], [],
+                 [
+                   {:match, 11, {:var, 11, :_a@1}, {:integer, 11, 5}},
+                   {:case, 13, {:op, 14, :==, {:var, 14, :_a@1}, {:atom, 0, :ok}},
+                    [
+                      {:clause, 14, [{:atom, 16, true}], [], [{:atom, 14, :ok}]},
+                      {:clause, 15, [{:atom, 15, false}], [],
+                       [
+                         {:case, 15, {:op, 15, :>, {:var, 15, :_a@1}, {:integer, 0, 5}},
+                          [
+                            {:clause, 15, [{:atom, 16, true}], [], [{:atom, 15, :ok}]},
+                            {:clause, 16, [{:atom, 16, false}], [],
+                             [
+                               {:case, 16, {:atom, 16, true},
+                                [
+                                  {:clause, 16, [{:atom, 16, true}], [], [{:atom, 16, :error}]},
+                                  {:clause, 16, [{:atom, 0, false}], [],
+                                   [
+                                     {:call, 16,
+                                      {:remote, 16, {:atom, 0, :erlang}, {:atom, 16, :error}},
+                                      [{:atom, 0, :cond_clause}]}
+                                   ]}
+                                ]}
+                             ]}
+                          ]}
+                       ]}
+                    ]}
+                 ]}
+              ]} = block
     end
 
     @tag :skip

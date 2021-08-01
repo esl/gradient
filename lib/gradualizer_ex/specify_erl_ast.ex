@@ -84,11 +84,12 @@ defmodule GradualizerEx.SpecifyErlAst do
     # as a `case` in abstract code.
     opts = Keyword.put(opts, :line, line)
 
-    {new_condition, tokens} = mapper(condition, tokens, opts)
+    # TODO figure out how to use this tokens
+    # right now it works wrong for generated forms
+    {new_condition, _tokens} = mapper(condition, tokens, opts)
 
-    #NOTE use map because generated clauses can be in wrong order
+    # NOTE use map because generated clauses can be in wrong order
     new_children = Enum.map(children, fn x -> mapper(x, tokens, opts) |> elem(0) end)
-    # {new_children, new_tokens} = foldl(children, tokens, opts)
 
     {:case, line, new_condition, new_children}
     |> pass_tokens(tokens)
@@ -101,7 +102,9 @@ defmodule GradualizerEx.SpecifyErlAst do
     line = get_line_from_loc(loc)
     opts = Keyword.put(opts, :line, line)
 
-    {args, tokens} =
+    # NOTE take a look at this returned tokens
+    # 
+    {args, _tokens} =
       if !was_generate?(loc) do
         foldl(args, tokens, opts)
       else
@@ -188,6 +191,30 @@ defmodule GradualizerEx.SpecifyErlAst do
     {:cons, line, new_value, list_foldl(tail, tokens, opts)}
   end
 
+  @doc """
+  Drop tokens to the first conditional occurance. Returns type of the encountered conditional and following tokens.
+  """
+  @spec get_conditional([token()]) ::
+          {:case, [token()]}
+          | {:cond, [token()]}
+          | {:unless, [token()]}
+          | {:if, [token()]}
+          | :undefined
+  def get_conditional(tokens) do
+    conditionals = [:if, :unless, :cond, :case]
+
+    Enum.drop_while(tokens, fn
+      {:do_identifier, _, c} -> c not in conditionals
+      {:paren_identifier, _, c} -> c not in conditionals
+      {:identifier, _, c} -> c not in conditionals
+      _ -> true
+    end)
+    |> case do
+      [token | _] = tokens -> {elem(token, 2), tokens}
+      _ -> :undefined
+    end
+  end
+
   @spec get_list_from_tokens([token()]) ::
           {:list, [token()]} | {:charlist, [token()]} | :undefined
   def get_list_from_tokens(tokens) do
@@ -222,13 +249,20 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   @spec specify_line(form(), [token()]) :: {form(), [token()]}
   def specify_line(form, tokens) do
-    # IO.puts("#{inspect(form)} --- #{inspect(tokens)}")
+    #IO.puts("#{inspect(form)} --- #{inspect(tokens)}")
 
-    [token | tokens] =
+    res =
       tokens
       |> Enum.drop_while(&(!match_token_to_form(&1, form)))
 
-    {take_loc_from_token(token, form), tokens}
+    case res do
+      [token | tokens] ->
+        {take_loc_from_token(token, form), tokens}
+
+      [] ->
+        IO.puts("Not found - #{inspect(form)}")
+        {form, tokens}
+    end
   end
 
   @spec match_token_to_form(token(), form()) :: boolean()
