@@ -86,10 +86,12 @@ defmodule GradualizerEx.SpecifyErlAst do
 
     {new_condition, tokens} = mapper(condition, tokens, opts)
 
-    {new_children, new_tokens} = foldl(children, tokens, opts)
+    #NOTE use map because generated clauses can be in wrong order
+    new_children = Enum.map(children, fn x -> mapper(x, tokens, opts) |> elem(0) end)
+    # {new_children, new_tokens} = foldl(children, tokens, opts)
 
     {:case, line, new_condition, new_children}
-    |> pass_tokens(new_tokens)
+    |> pass_tokens(tokens)
   end
 
   defp mapper({:clause, loc, args, [], children}, tokens, opts) do
@@ -98,7 +100,15 @@ defmodule GradualizerEx.SpecifyErlAst do
     # from the parents without checking them with tokens 
     line = get_line_from_loc(loc)
     opts = Keyword.put(opts, :line, line)
-    {children, tokens} = foldl(children, tokens, opts)
+
+    {args, tokens} =
+      if !was_generate?(loc) do
+        foldl(args, tokens, opts)
+      else
+        {args, tokens}
+      end
+
+    {children, tokens} = children |> foldl(tokens, opts)
 
     {:clause, line, args, [], children}
     |> pass_tokens(tokens)
@@ -212,7 +222,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   @spec specify_line(form(), [token()]) :: {form(), [token()]}
   def specify_line(form, tokens) do
-    IO.puts("#{inspect(form)} --- #{inspect(tokens)}")
+    # IO.puts("#{inspect(form)} --- #{inspect(tokens)}")
 
     [token | tokens] =
       tokens

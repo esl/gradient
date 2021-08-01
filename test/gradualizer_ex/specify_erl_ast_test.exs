@@ -33,6 +33,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
     test "float" do
       {tokens, ast} = load("/basic/Elixir.Basic.Float.beam", "/basic/float.ex")
 
+      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
       assert {:function, 2, :float, 0, [{:clause, 2, [], [], [{:float, 2, 0.12}]}]} = inline
 
       assert {:function, 4, :float_block, 0, [{:clause, 4, [], [], [{:float, 5, 0.12}]}]} = block
@@ -103,9 +104,82 @@ defmodule GradualizerEx.SpecifyErlAstTest do
 
     @tag :skip
     test "binary" do
-      {tokens, ast} = load("/basic/Elixir.Basic.Binary.beam", "/basic/binary.ex")
+      {_tokens, _ast} = load("/basic/Elixir.Basic.Binary.beam", "/basic/binary.ex")
 
       assert false
+    end
+
+    test "case conditional" do
+      {tokens, ast} = load("/conditional/Elixir.Conditional.Case.beam", "/conditional/case.ex")
+
+      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+      assert {:function, 2, :case_, 0,
+              [
+                {:clause, 2, [], [],
+                 [
+                   {:case, 4, {:integer, 4, 5},
+                    [
+                      {:clause, 5, [{:integer, 5, 5}], [], [{:atom, 5, :ok}]},
+                      {:clause, 6, [{:var, 6, :_}], [], [{:atom, 6, :error}]}
+                    ]}
+                 ]}
+              ]} = inline
+
+      assert {:function, 9, :case_block, 0,
+              [
+                {:clause, 9, [], [],
+                 [
+                   {:case, 10, {:integer, 10, 5},
+                    [
+                      {:clause, 11, [{:integer, 11, 5}], [], [{:atom, 11, :ok}]},
+                      {:clause, 12, [{:var, 12, :_}], [], [{:atom, 12, :error}]}
+                    ]}
+                 ]}
+              ]} = block
+    end
+
+    test "if conditional" do
+      {tokens, ast} = load("/conditional/Elixir.Conditional.If.beam", "/conditional/if.ex")
+
+      [inline, block, if_ | _] =
+        SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+      assert {:function, 12, :if_block, 0,
+              [
+                {:clause, 12, [], [],
+                 [
+                   {:case, 13, {:op, 13, :<, {:integer, 0, 1}, {:integer, 0, 5}},
+                    [
+                      {:clause, 13, [{:atom, 0, false}], [], [{:atom, 16, :error}]},
+                      {:clause, 13, [{:atom, 0, true}], [], [{:atom, 14, :ok}]}
+                    ]}
+                 ]}
+              ]} = block
+
+      assert {:function, 10, :if_inline, 0,
+              [
+                {:clause, 10, [], [],
+                 [
+                   {:case, 10, {:op, 10, :<, {:integer, 0, 1}, {:integer, 0, 5}},
+                    [
+                      {:clause, 10, [{:atom, 0, false}], [], [{:atom, 10, :error}]},
+                      {:clause, 10, [{:atom, 0, true}], [], [{:atom, 10, :ok}]}
+                    ]}
+                 ]}
+              ]} = inline
+
+      assert {:function, 2, :if_, 0,
+              [
+                {:clause, 2, [], [],
+                 [
+                   {:case, 4, {:op, 4, :<, {:integer, 0, 1}, {:integer, 0, 5}},
+                    [
+                      {:clause, 4, [{:atom, 0, false}], [], [{:atom, 7, :error}]},
+                      {:clause, 4, [{:atom, 0, true}], [], [{:atom, 5, :ok}]}
+                    ]}
+                 ]}
+              ]} = if_
     end
 
     @tag :skip
