@@ -221,6 +221,30 @@ defmodule GradualizerEx.SpecifyErlAstTest do
               ]} = if_
     end
 
+    test "unless conditional" do
+      {tokens, ast} =
+        load("/conditional/Elixir.Conditional.Unless.beam", "/conditional/unless.ex")
+
+      [block | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+      assert {
+               :function,
+               2,
+               :unless_block,
+               0,
+               [
+                 {:clause, 2, [], [],
+                  [
+                    {:case, 3, {:atom, 3, false},
+                     [
+                       {:clause, 3, [{:atom, 0, false}], [], [{:atom, 4, :ok}]},
+                       {:clause, 3, [{:atom, 0, true}], [], [{:atom, 6, :error}]}
+                     ]}
+                  ]}
+               ]
+             } == block
+    end
+
     test "cond conditional" do
       {tokens, ast} = load("/conditional/Elixir.Conditional.Cond.beam", "/conditional/cond.ex")
 

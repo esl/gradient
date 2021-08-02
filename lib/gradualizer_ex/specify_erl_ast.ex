@@ -249,7 +249,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   @spec specify_line(form(), [token()]) :: {form(), [token()]}
   def specify_line(form, tokens) do
-    #IO.puts("#{inspect(form)} --- #{inspect(tokens)}")
+    # IO.puts("#{inspect(form)} --- #{inspect(tokens)}")
 
     res =
       tokens
