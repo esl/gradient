@@ -271,7 +271,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                                    [
                                      {:call, 7,
                                       {:remote, 7, {:atom, 0, :erlang}, {:atom, 7, :error}},
-                                      [{:atom, 0, :cond_clause}]}
+                                      [{:atom, 7, :cond_clause}]}
                                    ]}
                                 ]}
                              ]}
@@ -303,7 +303,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                                    [
                                      {:call, 16,
                                       {:remote, 16, {:atom, 0, :erlang}, {:atom, 16, :error}},
-                                      [{:atom, 0, :cond_clause}]}
+                                      [{:atom, 16, :cond_clause}]}
                                    ]}
                                 ]}
                              ]}
@@ -385,6 +385,103 @@ defmodule GradualizerEx.SpecifyErlAstTest do
       {_, forms} = example_data()
       IO.inspect(forms)
     end
+  end
+
+  test "function call" do
+    {tokens, ast} = load("/Elixir.Call.beam", "/call.ex")
+
+    [_, block | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+    assert {:function, 5, :call, 0,
+            [
+              {:clause, 5, [], [],
+               [
+                 {:call, 6, {:atom, 6, :get_x},
+                  [
+                    {:bin, 7, [{:bin_element, 7, {:string, 7, 'ala'}, :default, :default}]},
+                    {:cons, 8, {:integer, 0, 97},
+                     {:cons, 0, {:integer, 0, 108}, {:cons, 0, {:integer, 0, 97}, {nil, 0}}}},
+                    {:integer, 9, 12}
+                  ]}
+               ]}
+            ]} = block
+  end
+
+  test "try" do
+    {tokens, ast} = load("/Elixir.Try.beam", "/try.ex")
+
+    [block | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+    assert {:function, 2, :try_rescue, 0,
+            [
+              {:clause, 2, [], [],
+               [
+                 {:try, 3,
+                  [
+                    {:case, 4, {:atom, 4, true},
+                     [
+                       {:clause, 4, [{:atom, 0, false}], [],
+                        [
+                          {:call, 7, {:remote, 7, {:atom, 0, :erlang}, {:atom, 7, :error}},
+                           [
+                             {:call, 7,
+                              {:remote, 7, {:atom, 0, RuntimeError}, {:atom, 7, :exception}},
+                              [
+                                {:bin, 7,
+                                 [
+                                   {:bin_element, 7, {:string, 7, 'oops'}, :default, :default}
+                                 ]}
+                              ]}
+                           ]}
+                        ]},
+                       {:clause, 4, [{:atom, 0, true}], [],
+                        [
+                          {:call, 5, {:remote, 5, {:atom, 0, :erlang}, {:atom, 5, :throw}},
+                           [
+                             {:bin, 5,
+                              [{:bin_element, 5, {:string, 5, 'good'}, :default, :default}]}
+                           ]}
+                        ]}
+                     ]}
+                  ], [],
+                  [
+                    {:clause, 10,
+                     [
+                       {:tuple, 10,
+                        [
+                          {:atom, 10, :error},
+                          {:var, 10, :_@1},
+                          {:var, 10, :___STACKTRACE__@1}
+                        ]}
+                     ],
+                     [
+                       [
+                         {:op, 10, :andalso,
+                          {:op, 10, :==,
+                           {:call, 10, {:remote, 10, {:atom, 0, :erlang}, {:atom, 10, :map_get}},
+                            [{:atom, 0, :__struct__}, {:var, 10, :_@1}]},
+                           {:atom, 0, RuntimeError}},
+                          {:call, 10, {:remote, 10, {:atom, 0, :erlang}, {:atom, 10, :map_get}},
+                           [{:atom, 0, :__exception__}, {:var, 10, :_@1}]}}
+                       ]
+                     ],
+                     [
+                       {:match, 10, {:var, 10, :_e@1}, {:var, 10, :_@1}},
+                       {:integer, 11, 11},
+                       {:var, 12, :_e@1}
+                     ]},
+                    {:clause, 14,
+                     [
+                       {:tuple, 14,
+                        [
+                          {:atom, 0, :throw},
+                          {:var, 14, :_val@1},
+                          {:var, 14, :___STACKTRACE__@1}
+                        ]}
+                     ], [], [{:integer, 15, 12}, {:var, 16, :_val@1}]}
+                  ], []}
+               ]}
+            ]} = block
   end
 
   @spec load(String.t(), String.t()) :: {list(), list()}

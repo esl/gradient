@@ -14,6 +14,8 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   import GradualizerEx.Utils
 
+  require Logger
+
   @type token :: tuple()
   @type form :: tuple()
   @type options :: keyword()
@@ -101,8 +103,9 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
-  defp mapper({:clause, loc, args, [], children}, tokens, opts) do
+  defp mapper({:clause, loc, args, guards, children}, tokens, opts) do
     # TODO Adapt the whole module to handle location
+    # FIXME handle guards
     # FIXME Handle generated clauses. Right now the literals inherit lines 
     # from the parents without checking them with tokens 
     line = get_line_from_loc(loc)
@@ -119,7 +122,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
     {children, tokens} = children |> foldl(tokens, opts)
 
-    {:clause, line, args, [], children}
+    {:clause, line, args, guards, children}
     |> pass_tokens(tokens)
   end
 
@@ -170,6 +173,27 @@ defmodule GradualizerEx.SpecifyErlAst do
         {:tuple, line, elements}
         |> pass_tokens(tokens)
     end
+  end
+
+  defp mapper({:try, line, body, [], catchers, []}, tokens, opts) do
+    Logger.debug("TRY")
+    opts = Keyword.put(opts, :line, line)
+    {body, _tokens} = foldl(body, tokens, opts)
+
+    # {catchers, _tokens} = foldl(catchers, tokens, opts)
+    catchers = Enum.map(catchers, fn x -> mapper(x, tokens, opts) |> elem(0) end)
+
+    {:try, line, body, [], catchers, []}
+    |> pass_tokens(tokens)
+  end
+
+  defp mapper({:call, line, name, args}, tokens, opts) do
+    Logger.debug("CALL")
+    opts = Keyword.put(opts, :line, line)
+    {args, tokens} = foldl(args, tokens, opts)
+
+    {:call, line, name, args}
+    |> pass_tokens(tokens)
   end
 
   defp mapper({type, 0, value}, tokens, opts)
@@ -266,7 +290,7 @@ defmodule GradualizerEx.SpecifyErlAst do
         {take_loc_from_token(token, form), tokens}
 
       [] ->
-        IO.puts("Not found - #{inspect(form)}")
+        Logger.info("Not found - #{inspect(form)}")
         {form, tokens}
     end
   end
