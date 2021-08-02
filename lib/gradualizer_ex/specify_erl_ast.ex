@@ -4,6 +4,12 @@ defmodule GradualizerEx.SpecifyErlAst do
   from Elixir AST.
 
   FIXME use anno instead of lines 
+  TODO Add mapper or test:
+  - try
+  - pipe
+  - call
+  - match
+
   """
 
   import GradualizerEx.Utils

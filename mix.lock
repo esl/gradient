@@ -1,3 +1,4 @@
 %{
   "astranaut": {:hex, :astranaut, "0.9.0", "76f94d98bb1dfadf3b53fbfa3e25d2738582aaf9607fb85a6d8b6e4b92adfbdc", [:rebar3], [], "hexpm", "cf88a1ae5702005bb005facd8702ab9fcca4645d1a06f5446171bf2bb9ca52bb"},
+  "gradualizer": {:git, "https://github.com/josefs/Gradualizer.git", "e226803c023bf9ceb94dfb517068208af37b9d7f", [ref: "master"]},
 }

@@ -23,7 +23,8 @@ defmodule GradualizerEx.MixProject do
   # Run "mix help deps" to learn about dependencies.
   def deps do
     [
-      {:gradualizer, path: "../Gradualizer", manager: :rebar3}
+      #{:gradualizer, path: "../Gradualizer", manager: :rebar3}
+      {:gradualizer, github: "josefs/Gradualizer", ref: "master", manager: :rebar3}
     ]
   end
 

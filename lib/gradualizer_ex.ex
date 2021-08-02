@@ -3,9 +3,23 @@ defmodule GradualizerEx do
   Documentation for `GradualizerEx`.
   """
 
-  def type_check_file(file, opts \\ elixir_opts()) do
-    :gradualizer.type_check_file(file, opts)
+  alias GradualizerEx.ElixirFileUtils
+  alias GradualizerEx.ElixirFmt
+
+  def type_check_file(file, opts \\ []) do
+    opts = Keyword.put(opts, :return_errors, true)
+
+    with {:ok, forms} <- ElixirFileUtils.get_forms_from_beam(file) do
+      errors = :gradualizer.type_check_forms(forms, opts)
+      opts = Keyword.put(opts, :forms, forms)
+      ElixirFmt.print_errors(errors, opts)
+      :ok
+    end
   end
+
+  # def type_check_file(file, opts \\ elixir_opts()) do
+  # :gradualizer.type_check_file(file, opts)
+  # end
 
   def type_check_files(files, opts \\ elixir_opts()) do
     :gradualizer.type_check_files(files, opts)
