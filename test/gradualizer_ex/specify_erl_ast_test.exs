@@ -326,6 +326,26 @@ defmodule GradualizerEx.SpecifyErlAstTest do
     end
   end
 
+  test "with statement" do
+    {tokens, ast} = load("/Elixir.With.beam", "/with_stmt.ex")
+
+    [block | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+    assert {:function, 6, :test_with, 0,
+            [
+              {:clause, 6, [], [],
+               [
+                 {:case, [generated: true, location: 7], {:call, 7, {:atom, 7, :ok_res}, []},
+                  [
+                    {:clause, 7, [{:tuple, 7, [{:atom, 7, :ok}, {:var, 7, :_a@1}]}], [],
+                     [{:integer, 8, 12}]},
+                    {:clause, 7, [{:var, 10, :_}], [],
+                     [{:cons, 11, {:integer, 0, 49}, {:cons, 0, {:integer, 0, 50}, {nil, 0}}}]}
+                  ]}
+               ]}
+            ]} == block
+  end
+
   test "specify_line/2" do
     {tokens, _} = example_data()
 
