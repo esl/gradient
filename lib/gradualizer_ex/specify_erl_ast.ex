@@ -9,6 +9,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   - pipe
   - call
   - match
+  - fun
 
   """
 
@@ -196,6 +197,16 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
+  defp mapper({:op, line, op, left, right}, tokens, opts) do
+    opts = Keyword.put(opts, :line, line)
+
+    {left, tokens} = mapper(left, tokens, opts)
+    {right, tokens} = mapper(right, tokens, opts)
+
+    {:op, line, op, left, right}
+    |> pass_tokens(tokens)
+  end
+
   defp mapper({type, 0, value}, tokens, opts)
        when type in [:atom, :char, :float, :integer, :string, :bin] do
     # TODO check what happend for :string
@@ -211,6 +222,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   @doc """
   Iterate over the list in abstract code format and runs mapper on each element 
+  #FIXME add specifying type for other variant
   """
   @spec list_foldl(form(), [token()], options()) :: form()
   def list_foldl({nil, 0}, _, _), do: {nil, 0}
@@ -220,6 +232,8 @@ defmodule GradualizerEx.SpecifyErlAst do
     line = elem(new_value, 1)
     {:cons, line, new_value, list_foldl(tail, tokens, opts)}
   end
+
+  def list_foldl(other, _, _), do: other
 
   @doc """
   Drop tokens to the first conditional occurance. Returns type of the encountered conditional and following tokens.

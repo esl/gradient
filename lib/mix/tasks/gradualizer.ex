@@ -3,6 +3,7 @@ defmodule Mix.Tasks.Gradualizer do
 
   @impl Mix.Task
   def run(_args) do
+    Mix.Task.run "app.start"
     Mix.Tasks.Compile.run([])
     files = get_app_paths()
     IO.puts("Found files:\n #{Enum.join(files, "\n ")}")

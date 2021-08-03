@@ -8,7 +8,8 @@ defmodule GradualizerEx.MixProject do
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      aliases: aliases()
+      aliases: aliases(),
+      dialyzer: [plt_add_apps: [:mix]]
     ]
   end
 
@@ -23,7 +24,8 @@ defmodule GradualizerEx.MixProject do
   def deps do
     [
       #{:gradualizer, path: "../Gradualizer", manager: :rebar3}
-      {:gradualizer, github: "josefs/Gradualizer", ref: "master", manager: :rebar3}
+      {:gradualizer, github: "josefs/Gradualizer", ref: "master", manager: :rebar3},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
     ]
   end
 

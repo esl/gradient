@@ -407,6 +407,39 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             ]} = block
   end
 
+  test "pipe" do
+    {tokens, ast} = load("/Elixir.Pipe.beam", "/pipe_op.ex")
+
+    [block | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+    assert {:function, 3, :pipe, 0,
+            [
+              {:clause, 3, [], [],
+               [
+                 {:call, 6, {:remote, 6, {:atom, 0, :erlang}, {:atom, 6, :length}},
+                  [
+                    {:call, 5, {:remote, 5, {:atom, 0, Enum}, {:atom, 5, :filter}},
+                     [
+                       {:cons, 5, {:integer, 0, 1},
+                        {:cons, 0,
+                         {
+                           :integer,
+                           0,
+                           2
+                         }, {:cons, 0, {:integer, 0, 3}, {nil, 0}}}},
+                       {:fun, 5,
+                        {:clauses,
+                         [
+                           {:clause, 5, [{:var, 5, :_x@1}], [],
+                            [{:op, 5, :<, {:var, 5, :_x@1}, {:integer, 5, 3}}]}
+                         ]}}
+                     ]}
+                  ]}
+               ]}
+            ]} =
+             block
+  end
+
   test "try" do
     {tokens, ast} = load("/Elixir.Try.beam", "/try.ex")
 
