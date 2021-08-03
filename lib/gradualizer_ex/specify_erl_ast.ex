@@ -11,7 +11,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   NOTE Mapper implements:
   - function [x]
   - fun [x] TODO handle e.g. &GradualizerEx.type_check_file/1 or &GradualizerEx.type_check_file(&1, [])
-  - clause [x] TODO take a look at guards
+  - clause [x] 
   - case [x]
   - try [x] TODO some variants could be not implemented
   - pipe [x]
@@ -38,7 +38,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   - receive [ ]
   - maps [ ]
   - record [ ]
-  - guards [ ]
+  - guards [X]
 
   """
 
@@ -140,6 +140,8 @@ defmodule GradualizerEx.SpecifyErlAst do
     # from the parents without checking them with tokens 
     line = get_line_from_loc(loc)
     opts = Keyword.put(opts, :line, line)
+
+    {guards, tokens} = guards_foldl(guards, tokens, opts)
 
     # NOTE take a look at this returned tokens
     # 
@@ -261,6 +263,24 @@ defmodule GradualizerEx.SpecifyErlAst do
   defp mapper(form, tokens, _opts) do
     Logger.warn("Not found mapper for #{inspect(form)}")
     pass_tokens(form, tokens)
+  end
+
+  @doc """
+  Adds missing location to the literals in the guards
+  """
+  @spec guards_foldl([form()], [token()], options()) :: {[form()], [token()]}
+  def guards_foldl([], tokens, _opts), do: {[], tokens}
+
+  def guards_foldl(guards, tokens, opts) do
+    List.foldl(guards, {[], tokens}, fn
+      [guard], {gs, tokens} ->
+        {g, ts} = mapper(guard, tokens, opts)
+        {[[g] | gs], ts}
+
+      gs, {ags, ts} ->
+        Logger.error("Unsupported guards format #{inspect(gs)}")
+        {gs ++ ags, ts}
+    end)
   end
 
   @doc """

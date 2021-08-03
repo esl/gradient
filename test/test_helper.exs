@@ -12,4 +12,4 @@ end
 
 TestHelper.compile_test_examples("test/examples")
 # TestHelper.compile_test_examples("test/examples/basic")
-# TestHelper.compile_test_examples("test/examples/conditional")
+TestHelper.compile_test_examples("test/examples/conditional")

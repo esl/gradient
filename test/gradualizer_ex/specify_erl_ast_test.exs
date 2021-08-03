@@ -439,42 +439,83 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             ]} = block
   end
 
+  test "guards" do
+    {tokens, ast} = load("/conditional/Elixir.Conditional.Guard.beam", "/conditional/guards.ex")
+
+    [guarded_fun, guarded_case | _] =
+      SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+    assert {:function, 3, :guarded_fun, 1,
+            [
+              {:clause, 3, [{:var, 3, :_x@1}],
+               [
+                 [
+                   {:call, 3, {:remote, 3, {:atom, 0, :erlang}, {:atom, 3, :is_integer}},
+                    [{:var, 3, :_x@1}]}
+                 ],
+                 [
+                   {:op, 3, :andalso, {:op, 3, :>, {:var, 3, :_x@1}, {:integer, 3, 3}},
+                    {:op, 3, :<, {:var, 3, :_x@1}, {:integer, 3, 6}}}
+                 ]
+               ], [{:atom, 3, :ok}]}
+            ]} = guarded_fun
+
+    assert {:function, 6, :guarded_case, 1,
+            [
+              {:clause, 6, [{:var, 6, :_x@1}], [],
+               [
+                 {:case, 7, {:var, 7, :_x@1},
+                  [
+                    {:clause, 8, [{:integer, 8, 0}], [],
+                     [{:tuple, 8, [{:atom, 8, :ok}, {:integer, 8, 1}]}]},
+                    {:clause, 9, [{:var, 9, :_i@1}],
+                     [[{:op, 9, :>, {:var, 9, :_i@1}, {:integer, 9, 0}}]],
+                     [
+                       {:tuple, 9,
+                        [{:atom, 9, :ok}, {:op, 9, :+, {:var, 9, :_i@1}, {:integer, 9, 1}}]}
+                     ]},
+                    {:clause, 10, [{:var, 10, :__otherwise@1}], [], [{:atom, 10, :error}]}
+                  ]}
+               ]}
+            ]} = guarded_case
+  end
+
   test "list comprehension" do
     {tokens, ast} = load("/Elixir.ListComprehension.beam", "/list_comprehension.ex")
 
     [block | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
 
-    assert {:function, 3, :lc, 0,
+    assert {:function, 2, :lc, 0,
             [
-              {:clause, 3, [], [],
+              {:clause, 2, [], [],
                [
-                 {:call, 4, {:remote, 4, {:atom, 4, :lists}, {:atom, 4, :reverse}},
+                 {:call, 3, {:remote, 3, {:atom, 3, :lists}, {:atom, 3, :reverse}},
                   [
-                    {:call, 4, {:remote, 4, {:atom, 4, Enum}, {:atom, 4, :reduce}},
+                    {:call, 3, {:remote, 3, {:atom, 3, Enum}, {:atom, 3, :reduce}},
                      [
-                       {:map, 4,
+                       {:map, 3,
                         [
-                          {:map_field_assoc, 4, {:atom, 0, :__struct__}, {:atom, 0, Range}},
-                          {:map_field_assoc, 4, {:atom, 0, :first}, {:integer, 0, 0}},
-                          {:map_field_assoc, 4, {:atom, 0, :last}, {:integer, 0, 5}}
+                          {:map_field_assoc, 3, {:atom, 0, :__struct__}, {:atom, 0, Range}},
+                          {:map_field_assoc, 3, {:atom, 0, :first}, {:integer, 0, 0}},
+                          {:map_field_assoc, 3, {:atom, 0, :last}, {:integer, 0, 5}}
                         ]},
-                       {nil, 4},
-                       {:fun, 4,
+                       {nil, 3},
+                       {:fun, 3,
                         {:clauses,
                          [
-                           {:clause, 4, [{:var, 4, :_n@1}, {:var, 4, :_@1}], [],
+                           {:clause, 3, [{:var, 3, :_n@1}, {:var, 3, :_@1}], [],
                             [
-                              {:case, [generated: true, location: 4],
-                               {:op, 4, :==, {:op, 4, :rem, {:var, 4, :_n@1}, {:integer, 4, 3}},
-                                {:integer, 4, 0}},
+                              {:case, [generated: true, location: 3],
+                               {:op, 3, :==, {:op, 3, :rem, {:var, 3, :_n@1}, {:integer, 3, 3}},
+                                {:integer, 3, 0}},
                                [
-                                 {:clause, 4, [{:atom, [generated: true, location: 4], true}], [],
+                                 {:clause, 3, [{:atom, [generated: true, location: 3], true}], [],
                                   [
-                                    {:cons, 4, {:op, 4, :*, {:var, 4, :_n@1}, {:var, 4, :_n@1}},
-                                     {:var, 4, :_@1}}
+                                    {:cons, 3, {:op, 3, :*, {:var, 3, :_n@1}, {:var, 3, :_n@1}},
+                                     {:var, 3, :_@1}}
                                   ]},
-                                 {:clause, 4, [{:atom, [generated: true, location: 4], false}],
-                                  [], [{:var, 4, :_@1}]}
+                                 {:clause, 3, [{:atom, [generated: true, location: 3], false}],
+                                  [], [{:var, 3, :_@1}]}
                                ]}
                             ]}
                          ]}}
@@ -536,10 +577,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                          {:op, 10, :andalso,
                           {:op, 10, :==,
                            {:call, 10, {:remote, 10, {:atom, 0, :erlang}, {:atom, 10, :map_get}},
-                            [{:atom, 0, :__struct__}, {:var, 10, :_@1}]},
-                           {:atom, 0, RuntimeError}},
+                            [{:atom, 10, :__struct__}, {:var, 10, :_@1}]},
+                           {:atom, 10, RuntimeError}},
                           {:call, 10, {:remote, 10, {:atom, 0, :erlang}, {:atom, 10, :map_get}},
-                           [{:atom, 0, :__exception__}, {:var, 10, :_@1}]}}
+                           [{:atom, 10, :__exception__}, {:var, 10, :_@1}]}}
                        ]
                      ],
                      [
