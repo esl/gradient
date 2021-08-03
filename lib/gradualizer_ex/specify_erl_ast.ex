@@ -23,7 +23,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   - string [x]
   - charlist [x]
   - tuple [X]
-  - var [ ] TODO
+  - var [X]
   - list [ ] TODO add line propagation to each element
   - binary [ ] TODO bitstring
   - map [ ] TODO
@@ -33,7 +33,8 @@ defmodule GradualizerEx.SpecifyErlAst do
   - receive [ ] TODO
 
   NOTE Elixir expressions to handle or test:
-  - list-comprehension [ ]
+  - list-comprehension [X]
+  - pipe [X]
   - receive [ ]
   - maps [ ]
   - record [ ]

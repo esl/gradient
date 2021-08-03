@@ -439,6 +439,51 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             ]} = block
   end
 
+  test "list comprehension" do
+    {tokens, ast} = load("/Elixir.ListComprehension.beam", "/list_comprehension.ex")
+
+    [block | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+    assert {:function, 3, :lc, 0,
+            [
+              {:clause, 3, [], [],
+               [
+                 {:call, 4, {:remote, 4, {:atom, 4, :lists}, {:atom, 4, :reverse}},
+                  [
+                    {:call, 4, {:remote, 4, {:atom, 4, Enum}, {:atom, 4, :reduce}},
+                     [
+                       {:map, 4,
+                        [
+                          {:map_field_assoc, 4, {:atom, 0, :__struct__}, {:atom, 0, Range}},
+                          {:map_field_assoc, 4, {:atom, 0, :first}, {:integer, 0, 0}},
+                          {:map_field_assoc, 4, {:atom, 0, :last}, {:integer, 0, 5}}
+                        ]},
+                       {nil, 4},
+                       {:fun, 4,
+                        {:clauses,
+                         [
+                           {:clause, 4, [{:var, 4, :_n@1}, {:var, 4, :_@1}], [],
+                            [
+                              {:case, [generated: true, location: 4],
+                               {:op, 4, :==, {:op, 4, :rem, {:var, 4, :_n@1}, {:integer, 4, 3}},
+                                {:integer, 4, 0}},
+                               [
+                                 {:clause, 4, [{:atom, [generated: true, location: 4], true}], [],
+                                  [
+                                    {:cons, 4, {:op, 4, :*, {:var, 4, :_n@1}, {:var, 4, :_n@1}},
+                                     {:var, 4, :_@1}}
+                                  ]},
+                                 {:clause, 4, [{:atom, [generated: true, location: 4], false}],
+                                  [], [{:var, 4, :_@1}]}
+                               ]}
+                            ]}
+                         ]}}
+                     ]}
+                  ]}
+               ]}
+            ]} = block
+  end
+
   test "try" do
     {tokens, ast} = load("/Elixir.Try.beam", "/try.ex")
 
