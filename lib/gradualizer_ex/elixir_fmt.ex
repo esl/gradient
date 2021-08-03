@@ -5,6 +5,7 @@ defmodule GradualizerEx.ElixirFmt do
   @behaviour GradualizerEx.Fmt
 
   alias :gradualizer_fmt, as: FmtLib
+  import GradualizerEx.Utils
 
   def print_errors(errors, opts) do
     for {file, e} <- errors do
@@ -106,7 +107,8 @@ defmodule GradualizerEx.ElixirFmt do
     |> Enum.join("\n")
   end
 
-  def filter_context(lines, line, ctx_size \\ 1) do
+  def filter_context(lines, loc, ctx_size \\ 1) do
+    line = get_line_from_loc(loc)
     range = (line - ctx_size)..(line + ctx_size)
 
     Enum.filter(lines, fn {_, number} -> number in range end)

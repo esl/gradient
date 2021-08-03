@@ -2,12 +2,12 @@ defmodule Try do
   def try_rescue do
     try do
       if true do
-        throw "good"
+        throw("good")
       else
         raise "oops"
       end
     rescue
-      e in RuntimeError -> 
+      e in RuntimeError ->
         11
         e
     catch

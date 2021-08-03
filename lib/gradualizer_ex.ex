@@ -6,7 +6,9 @@ defmodule GradualizerEx do
   alias GradualizerEx.ElixirFileUtils
   alias GradualizerEx.ElixirFmt
 
-  @spec type_check_file(String.t(), :gradualizer.options()) :: :ok | :error
+  require Logger
+
+  @spec type_check_file(String.t(), Keyword.t()) :: :ok | :error
   def type_check_file(file, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
 
@@ -20,6 +22,10 @@ defmodule GradualizerEx do
           ElixirFmt.print_errors(errors, opts)
           :error
       end
+    else
+      error ->
+        Logger.error("Can't load file - #{inspect(error)}")
+        :error
     end
   end
 end

@@ -188,7 +188,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
               [
                 {:clause, 12, [], [],
                  [
-                   {:case, 13, {:op, 13, :<, {:integer, 0, 1}, {:integer, 0, 5}},
+                   {:case, 13, {:op, 13, :<, {:integer, 13, 1}, {:integer, 13, 5}},
                     [
                       {:clause, 13, [{:atom, 0, false}], [], [{:atom, 16, :error}]},
                       {:clause, 13, [{:atom, 0, true}], [], [{:atom, 14, :ok}]}
@@ -200,7 +200,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
               [
                 {:clause, 10, [], [],
                  [
-                   {:case, 10, {:op, 10, :<, {:integer, 0, 1}, {:integer, 0, 5}},
+                   {:case, 10, {:op, 10, :<, {:integer, 10, 1}, {:integer, 10, 5}},
                     [
                       {:clause, 10, [{:atom, 0, false}], [], [{:atom, 10, :error}]},
                       {:clause, 10, [{:atom, 0, true}], [], [{:atom, 10, :ok}]}
@@ -212,7 +212,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
               [
                 {:clause, 2, [], [],
                  [
-                   {:case, 4, {:op, 4, :<, {:integer, 0, 1}, {:integer, 0, 5}},
+                   {:case, 4, {:op, 4, :<, {:integer, 4, 1}, {:integer, 4, 5}},
                     [
                       {:clause, 4, [{:atom, 0, false}], [], [{:atom, 7, :error}]},
                       {:clause, 4, [{:atom, 0, true}], [], [{:atom, 5, :ok}]}
@@ -254,12 +254,12 @@ defmodule GradualizerEx.SpecifyErlAstTest do
               [
                 {:clause, 2, [{:var, 2, :_a@1}], [],
                  [
-                   {:case, 4, {:op, 5, :==, {:var, 5, :_a@1}, {:atom, 0, :ok}},
+                   {:case, 4, {:op, 5, :==, {:var, 5, :_a@1}, {:atom, 5, :ok}},
                     [
                       {:clause, 5, [{:atom, 7, true}], [], [{:atom, 5, :ok}]},
                       {:clause, 6, [{:atom, 6, false}], [],
                        [
-                         {:case, 6, {:op, 6, :>, {:var, 6, :_a@1}, {:integer, 0, 5}},
+                         {:case, 6, {:op, 6, :>, {:var, 6, :_a@1}, {:integer, 6, 5}},
                           [
                             {:clause, 6, [{:atom, 7, true}], [], [{:atom, 6, :ok}]},
                             {:clause, 7, [{:atom, 7, false}], [],
@@ -286,12 +286,12 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                 {:clause, 10, [], [],
                  [
                    {:match, 11, {:var, 11, :_a@1}, {:integer, 11, 5}},
-                   {:case, 13, {:op, 14, :==, {:var, 14, :_a@1}, {:atom, 0, :ok}},
+                   {:case, 13, {:op, 14, :==, {:var, 14, :_a@1}, {:atom, 14, :ok}},
                     [
                       {:clause, 14, [{:atom, 16, true}], [], [{:atom, 14, :ok}]},
                       {:clause, 15, [{:atom, 15, false}], [],
                        [
-                         {:case, 15, {:op, 15, :>, {:var, 15, :_a@1}, {:integer, 0, 5}},
+                         {:case, 15, {:op, 15, :>, {:var, 15, :_a@1}, {:integer, 15, 5}},
                           [
                             {:clause, 15, [{:atom, 16, true}], [], [{:atom, 15, :ok}]},
                             {:clause, 16, [{:atom, 16, false}], [],
@@ -412,32 +412,31 @@ defmodule GradualizerEx.SpecifyErlAstTest do
 
     [block | _] = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
 
-    assert {:function, 3, :pipe, 0,
+    assert {:function, 2, :pipe, 0,
             [
-              {:clause, 3, [], [],
+              {:clause, 2, [], [],
                [
-                 {:call, 6, {:remote, 6, {:atom, 0, :erlang}, {:atom, 6, :length}},
+                 {:call, 5, {:remote, 5, {:atom, 0, :erlang}, {:atom, 5, :length}},
                   [
-                    {:call, 5, {:remote, 5, {:atom, 0, Enum}, {:atom, 5, :filter}},
+                    {:call, 4, {:remote, 4, {:atom, 0, Enum}, {:atom, 4, :filter}},
                      [
-                       {:cons, 5, {:integer, 0, 1},
+                       {:cons, 4, {:integer, 0, 1},
                         {:cons, 0,
                          {
                            :integer,
                            0,
                            2
                          }, {:cons, 0, {:integer, 0, 3}, {nil, 0}}}},
-                       {:fun, 5,
+                       {:fun, 4,
                         {:clauses,
                          [
-                           {:clause, 5, [{:var, 5, :_x@1}], [],
-                            [{:op, 5, :<, {:var, 5, :_x@1}, {:integer, 5, 3}}]}
+                           {:clause, 4, [{:var, 4, :_x@1}], [],
+                            [{:op, 4, :<, {:var, 4, :_x@1}, {:integer, 4, 3}}]}
                          ]}}
                      ]}
                   ]}
                ]}
-            ]} =
-             block
+            ]} = block
   end
 
   test "try" do

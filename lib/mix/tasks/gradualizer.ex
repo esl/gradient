@@ -3,7 +3,9 @@ defmodule Mix.Tasks.Gradualizer do
 
   @impl Mix.Task
   def run(_args) do
-    Mix.Task.run "app.start"
+    # Starting app to format logger 
+    Mix.Task.run("app.start")
+    # Compile the project before the analysis
     Mix.Tasks.Compile.run([])
     files = get_app_paths()
     IO.puts("Found files:\n #{Enum.join(files, "\n ")}")
