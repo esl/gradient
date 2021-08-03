@@ -328,7 +328,18 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                       {:clause, 7, [{:tuple, 7, [{:atom, 7, :ok}, {:var, 7, :__a@1}]}], [],
                        [{:integer, 8, 12}]},
                       {:clause, 7, [{:var, 10, :_}], [],
-                       [{:cons, 11, {:integer, 0, 49}, {:cons, 0, {:integer, 0, 50}, {nil, 0}}}]}
+                       [
+                         {:block, 7,
+                          [
+                            {:call, 11, {:remote, 11, {:atom, 0, IO}, {:atom, 11, :puts}},
+                             [
+                               {:bin, 11,
+                                [{:bin_element, 11, {:string, 11, 'error'}, :default, :default}]}
+                             ]},
+                            {:cons, 12, {:integer, 0, 49},
+                             {:cons, 0, {:integer, 0, 50}, {nil, 0}}}
+                          ]}
+                       ]}
                     ]}
                  ]}
               ]} == block

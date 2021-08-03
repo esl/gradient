@@ -8,6 +8,7 @@ defmodule Conditional.With do
       12
     else
       _ ->
+        IO.puts("error")
         '12'
     end
   end

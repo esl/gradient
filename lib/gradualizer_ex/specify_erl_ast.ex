@@ -3,10 +3,10 @@ defmodule GradualizerEx.SpecifyErlAst do
   Module adds missing line information to the Erlang abstract code produced 
   from Elixir AST.
 
-  FIXME Use anno instead of lines 
+  TODO Use anno instead of lines, Attach full location not only the line
+
   FIXME Optimize tokens searching. Find out why some tokens are dropped 
 
-  TODO Attach full location not only the line
 
   NOTE Mapper implements:
   - function [x]
@@ -27,13 +27,14 @@ defmodule GradualizerEx.SpecifyErlAst do
   - list [ ] TODO add line propagation to each element
   - binary [ ] TODO bitstring
   - map [ ] TODO
+  - receive [ ] TODO
+
   - record [ ] TODO record_field, record_index, record_pattern, record
   - block [ ] is block used by elixir? 
   - named_fun [ ] is named_fun used by elixir? 
-  - receive [ ] TODO
 
   NOTE Elixir expressions to handle or test:
-  - list-comprehension [X]
+  - list comprehension [X]
   - pipe [X]
   - receive [ ]
   - maps [ ]
@@ -158,6 +159,15 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
+  defp mapper({:block, line, body}, tokens, opts) do
+    {:ok, line} = if line == 0, do: Keyword.fetch(opts, :line), else: {:ok, line}
+
+    {body, tokens} = foldl(body, tokens, opts)
+
+    {:block, line, body}
+    |> pass_tokens(tokens)
+  end
+
   defp mapper({:match, line, left, right}, tokens, opts) do
     opts = Keyword.put(opts, :line, line)
     {right, tokens} = mapper(right, tokens, opts)
@@ -255,7 +265,8 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> specify_line(tokens)
   end
 
-  defp mapper(skip, tokens, _opts) when elem(skip, 0) in [:attribute, :var, nil] do
+  defp mapper(skip, tokens, _opts) when elem(skip, 0) in [:fun, :attribute, :var, nil] do
+    # NOTE fun - I skipped here checking &name/arity or &module.name/arity
     # skip forms that don't need analysis and do not display warning
     pass_tokens(skip, tokens)
   end
