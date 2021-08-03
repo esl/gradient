@@ -3,13 +3,41 @@ defmodule GradualizerEx.SpecifyErlAst do
   Module adds missing line information to the Erlang abstract code produced 
   from Elixir AST.
 
-  FIXME use anno instead of lines 
-  TODO Add mapper or test:
-  - try
-  - pipe
-  - call
-  - match
-  - fun
+  FIXME Use anno instead of lines 
+  FIXME Optimize tokens searching. Find out why some tokens are dropped 
+
+  TODO Attach full location not only the line
+
+  NOTE Mapper implements:
+  - function [x]
+  - fun [x] TODO handle e.g. &GradualizerEx.type_check_file/1 or &GradualizerEx.type_check_file(&1, [])
+  - clause [x] TODO take a look at guards
+  - case [x]
+  - try [x] TODO some variants could be not implemented
+  - pipe [x]
+  - call [x]
+  - match [x]
+  - op [x]
+  - integer [x]
+  - float [x]
+  - string [x]
+  - charlist [x]
+  - tuple [X]
+  - var [ ] TODO
+  - list [ ] TODO add line propagation to each element
+  - binary [ ] TODO bitstring
+  - map [ ] TODO
+  - record [ ] TODO record_field, record_index, record_pattern, record
+  - block [ ] is block used by elixir? 
+  - named_fun [ ] is named_fun used by elixir? 
+  - receive [ ] TODO
+
+  NOTE Elixir expressions to handle or test:
+  - list-comprehension [ ]
+  - receive [ ]
+  - maps [ ]
+  - record [ ]
+  - guards [ ]
 
   """
 
@@ -69,15 +97,15 @@ defmodule GradualizerEx.SpecifyErlAst do
   @spec mapper(form(), [token()], options()) :: {form(), [token()]}
   defp mapper(form, tokens, opts)
 
-  defp mapper({:function, _line, :__info__, _args_numb, _children} = form, tokens, _opts) do
+  defp mapper({:function, _line, :__info__, _arity, _children} = form, tokens, _opts) do
     pass_tokens(form, tokens)
   end
 
-  defp mapper({:function, line, name, args_numb, children}, tokens, opts) do
+  defp mapper({:function, line, name, arity, children}, tokens, opts) do
     opts = Keyword.put(opts, :line, line)
     {children, tokens} = foldl(children, tokens, opts)
 
-    {:function, line, name, args_numb, children}
+    {:function, line, name, arity, children}
     |> pass_tokens(tokens)
   end
 
@@ -156,8 +184,9 @@ defmodule GradualizerEx.SpecifyErlAst do
     end
   end
 
-  defp mapper({:tuple, 0, elements}, tokens, opts) do
-    {:ok, line} = Keyword.fetch(opts, :line)
+  defp mapper({:tuple, line, elements}, tokens, opts) do
+    # TODO find out when line for tuple is 0
+    {:ok, line} = if line == 0, do: Keyword.fetch(opts, :line), else: {:ok, line}
 
     tokens
     |> drop_tokens_to_line(line)
@@ -177,7 +206,6 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp mapper({:try, line, body, [], catchers, []}, tokens, opts) do
-    Logger.debug("TRY")
     opts = Keyword.put(opts, :line, line)
     {body, _tokens} = foldl(body, tokens, opts)
 
@@ -189,7 +217,6 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp mapper({:call, line, name, args}, tokens, opts) do
-    Logger.debug("CALL")
     opts = Keyword.put(opts, :line, line)
     {args, tokens} = foldl(args, tokens, opts)
 
@@ -207,6 +234,15 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
+  defp mapper({:op, line, op, right}, tokens, opts) do
+    opts = Keyword.put(opts, :line, line)
+
+    {right, tokens} = mapper(right, tokens, opts)
+
+    {:op, line, op, right}
+    |> pass_tokens(tokens)
+  end
+
   defp mapper({type, 0, value}, tokens, opts)
        when type in [:atom, :char, :float, :integer, :string, :bin] do
     # TODO check what happend for :string
@@ -216,7 +252,13 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> specify_line(tokens)
   end
 
+  defp mapper(skip, tokens, _opts) when elem(skip, 0) in [:attribute, :var, nil] do
+    # skip forms that don't need analysis and do not display warning
+    pass_tokens(skip, tokens)
+  end
+
   defp mapper(form, tokens, _opts) do
+    Logger.warn("Not found mapper for #{inspect(form)}")
     pass_tokens(form, tokens)
   end
 
@@ -293,7 +335,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   @spec specify_line(form(), [token()]) :: {form(), [token()]}
   def specify_line(form, tokens) do
-    # IO.puts("#{inspect(form)} --- #{inspect(tokens)}")
+    Logger.debug("#{inspect(form)} --- #{inspect(tokens)}")
 
     res =
       tokens
