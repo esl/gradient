@@ -141,11 +141,74 @@ defmodule GradualizerEx.SpecifyErlAstTest do
               ]} = block
     end
 
-    @tag :skip
     test "binary" do
-      {_tokens, _ast} = load("/basic/Elixir.Basic.Binary.beam", "/basic/binary.ex")
+      {tokens, ast} = load("/basic/Elixir.Basic.Binary.beam", "/basic/binary.ex")
 
-      assert false
+      [complex2, complex, bin_block, bin | _] =
+        SpecifyErlAst.add_missing_loc_literals(tokens, ast)
+        |> Enum.reverse()
+
+      assert {:function, 13, :complex2, 0,
+              [
+                {:clause, 13, [], [],
+                 [
+                   {:bin, 14,
+                    [
+                      {:bin_element, 14, {:string, 14, 'abc '}, :default, :default},
+                      {:bin_element, 14,
+                       {:call, 14, {:remote, 14, {:atom, 0, Kernel}, {:atom, 14, :inspect}},
+                        [{:integer, 14, 12}]}, :default, [:binary]},
+                      {:bin_element, 14, {:string, 14, ' cba'}, :default, :default}
+                    ]}
+                 ]}
+              ]} = complex2
+
+      assert {:function, 8, :complex, 0,
+              [
+                {:clause, 8, [], [],
+                 [
+                   {:match, 9, {:var, 9, :_x@2},
+                    {:fun, 9,
+                     {:clauses,
+                      [
+                        {:clause, 9, [{:var, 9, :_x@1}], [],
+                         [{:op, 9, :+, {:var, 9, :_x@1}, {:integer, 9, 1}}]}
+                      ]}}},
+                   {:bin, 10,
+                    [
+                      {:bin_element, 10, {:integer, 10, 49}, :default, [:integer]},
+                      {:bin_element, 10, {:integer, 10, 48}, :default, [:integer]},
+                      {:bin_element, 10, {:call, 10, {:var, 10, :_x@2}, [{:integer, 10, 50}]},
+                       :default, [:integer]}
+                    ]}
+                 ]}
+              ]} = complex
+
+      assert {:function, 4, :bin_block, 0,
+              [
+                {:clause, 4, [], [],
+                 [
+                   {:bin, 5,
+                    [
+                      {:bin_element, 5, {:integer, 5, 49}, :default, [:integer]},
+                      {:bin_element, 5, {:integer, 5, 48}, :default, [:integer]},
+                      {:bin_element, 5, {:integer, 5, 48}, :default, [:integer]}
+                    ]}
+                 ]}
+              ]} = bin_block
+
+      assert {:function, 2, :bin, 0,
+              [
+                {:clause, 2, [], [],
+                 [
+                   {:bin, 2,
+                    [
+                      {:bin_element, 2, {:integer, 2, 49}, :default, [:integer]},
+                      {:bin_element, 2, {:integer, 2, 48}, :default, [:integer]},
+                      {:bin_element, 2, {:integer, 2, 48}, :default, [:integer]}
+                    ]}
+                 ]}
+              ]} = bin
     end
 
     test "case conditional" do
@@ -539,7 +602,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
 
   test "list" do
     {tokens, ast} = load("/Elixir.ListEx.beam", "/list.ex")
-    
+
     [_wrap, list, ht2, ht | _] =
       SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
 

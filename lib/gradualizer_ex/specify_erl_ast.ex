@@ -27,7 +27,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   - var [X]
   - list [X] 
   - keyword [X]
-  - binary [ ] TODO bitstring
+  - binary [X] 
   - map [ ] TODO
   - receive [ ] TODO
 
@@ -37,6 +37,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   NOTE Elixir expressions to handle or test:
   - list comprehension [X]
   - pipe [X]
+  - binary [X]
   - range [ ]
   - receive [ ]
   - maps [ ]
@@ -260,7 +261,28 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
-  defp mapper({type, 0, value}, tokens, opts)
+  defp mapper({:bin, loc, elements}, tokens, opts) do
+    {:ok, loc} =
+      case loc do
+        0 -> Keyword.fetch(opts, :line)
+        _ -> {:ok, loc}
+      end
+
+    # TODO find a way to merge this cases
+    case elements do
+      [{:bin_element, _, {:string, _, _}, :default, :default}] = e ->
+        {:bin, loc, e}
+        |> specify_line(tokens)
+
+      _ ->
+        {elements, tokens} = bin_element_foldl(elements, tokens, opts)
+
+        {:bin, loc, elements}
+        |> pass_tokens(tokens)
+    end
+  end
+
+  defp mapper({type, _, value}, tokens, opts)
        when type in [:atom, :char, :float, :integer, :string, :bin] do
     # TODO check what happend for :string
     {:ok, line} = Keyword.fetch(opts, :line)
@@ -298,12 +320,28 @@ defmodule GradualizerEx.SpecifyErlAst do
     end)
   end
 
+  def bin_element_foldl(elements, tokens, opts) do
+    {elements, tokens} =
+      List.foldl(elements, {[], tokens}, fn e, {es, tokens} ->
+        {e, tokens} = bin_element(e, tokens, opts)
+        {[e | es], tokens}
+      end)
+
+    {Enum.reverse(elements), tokens}
+  end
+
+  def bin_element({:bin_element, line, value, size, tsl}, tokens, opts) do
+    opts = Keyword.put(opts, :line, line)
+    {value, tokens} = mapper(value, tokens, opts)
+
+    {:bin_element, line, value, size, tsl}
+    |> pass_tokens(tokens)
+  end
+
   @doc """
   Iterate over the list in abstract code format and runs mapper on each element 
-  #FIXME add specifying type for other variant
   """
   @spec list_foldl(form(), [token()], options()) :: form()
-  # def list_foldl({nil, 0}, _, _), do: {nil, 0}
 
   def list_foldl({:cons, line, value, tail}, tokens, opts) do
     {new_value, tokens} = mapper(value, tokens, opts)
@@ -380,7 +418,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   @spec specify_line(form(), [token()]) :: {form(), [token()]}
   def specify_line(form, tokens) do
-    Logger.debug("#{inspect(form)} --- #{inspect(tokens)}")
+    Logger.debug("#{inspect(form)} --- #{inspect(tokens, limit: :infinity)}")
 
     res =
       tokens
@@ -398,18 +436,22 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   @spec match_token_to_form(token(), form()) :: boolean()
   defp match_token_to_form({:int, {l1, _, v1}, _}, {:integer, l2, v2}) do
+    l2 = :erl_anno.line(l2)
     l2 <= l1 && v1 == v2
   end
 
   defp match_token_to_form({:char, {l1, _, _}, v1}, {:integer, l2, v2}) do
+    l2 = :erl_anno.line(l2)
     l2 <= l1 && v1 == v2
   end
 
   defp match_token_to_form({:flt, {l1, _, v1}, _}, {:float, l2, v2}) do
+    l2 = :erl_anno.line(l2)
     l2 <= l1 && v1 == v2
   end
 
   defp match_token_to_form({:atom, {l1, _, _}, v1}, {:atom, l2, v2}) do
+    l2 = :erl_anno.line(l2)
     l2 <= l1 && v1 == v2
   end
 
@@ -425,6 +467,14 @@ defmodule GradualizerEx.SpecifyErlAst do
        ) do
     # string
     l2 <= l1 && to_charlist(v1) == v2
+  end
+
+  defp match_token_to_form({:bin_string, _, elems}, form) do
+    Enum.any?(elems, &match_token_to_form(&1, form))
+  end
+
+  defp match_token_to_form({{_, _, nil}, {_, _, nil}, elems}, form) do
+    Enum.any?(elems, &match_token_to_form(&1, form))
   end
 
   defp match_token_to_form({true, {l1, _, _}}, {:atom, l2, true}) do
@@ -468,6 +518,17 @@ defmodule GradualizerEx.SpecifyErlAst do
     {:bin, l1, [{:bin_element, l1, {:string, l1, v2}, :default, :default}]}
   end
 
+  defp take_loc_from_token({:bin_string, _, elems}, form) do
+    elems
+    |> Enum.map(&take_loc_from_token(&1, form))
+    |> Enum.find(&(&1 != nil))
+  end
+
+  defp take_loc_from_token({{_, _, nil}, {_, _, nil}, elems}, form) do
+    elem = Enum.find(elems, &match_token_to_form(&1, form))
+    take_loc_from_token(elem, form)
+  end
+
   defp take_loc_from_token({true, {line, _, _}}, {:atom, _, true}) do
     {:atom, line, true}
   end
@@ -475,6 +536,8 @@ defmodule GradualizerEx.SpecifyErlAst do
   defp take_loc_from_token({false, {line, _, _}}, {:atom, _, false}) do
     {:atom, line, false}
   end
+
+  defp take_loc_from_token(_, _), do: nil
 
   def cons_to_charlist({nil, _}), do: []
 
