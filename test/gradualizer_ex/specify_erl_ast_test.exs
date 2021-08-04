@@ -108,8 +108,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
               [
                 {:clause, 2, [], [],
                  [
-                   {:cons, 2, {:integer, 0, 97},
-                    {:cons, 0, {:integer, 0, 98}, {:cons, 0, {:integer, 0, 99}, {nil, 0}}}}
+                   {:cons, 2, {:integer, 2, 97},
+                    {:cons, 2, {:integer, 2, 98}, {:cons, 2, {:integer, 2, 99}, {nil, 0}}}}
                  ]}
               ]} = inline
 
@@ -117,8 +117,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
               [
                 {:clause, 4, [], [],
                  [
-                   {:cons, 5, {:integer, 0, 97},
-                    {:cons, 0, {:integer, 0, 98}, {:cons, 0, {:integer, 0, 99}, {nil, 0}}}}
+                   {:cons, 5, {:integer, 5, 97},
+                    {:cons, 5, {:integer, 5, 98}, {:cons, 5, {:integer, 5, 99}, {nil, 0}}}}
                  ]}
               ]} = block
     end
@@ -336,8 +336,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                                {:bin, 11,
                                 [{:bin_element, 11, {:string, 11, 'error'}, :default, :default}]}
                              ]},
-                            {:cons, 12, {:integer, 0, 49},
-                             {:cons, 0, {:integer, 0, 50}, {nil, 0}}}
+                            {:cons, 12, {:integer, 12, 49},
+                             {:cons, 12, {:integer, 12, 50}, {nil, 0}}}
                           ]}
                        ]}
                     ]}
@@ -410,8 +410,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                  {:call, 6, {:atom, 6, :get_x},
                   [
                     {:bin, 7, [{:bin_element, 7, {:string, 7, 'ala'}, :default, :default}]},
-                    {:cons, 8, {:integer, 0, 97},
-                     {:cons, 0, {:integer, 0, 108}, {:cons, 0, {:integer, 0, 97}, {nil, 0}}}},
+                    {:cons, 8, {:integer, 8, 97},
+                     {:cons, 8, {:integer, 8, 108}, {:cons, 8, {:integer, 8, 97}, {nil, 0}}}},
                     {:integer, 9, 12}
                   ]}
                ]}
@@ -508,7 +508,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                         [
                           {:map_field_assoc, 3, {:atom, 0, :__struct__}, {:atom, 0, Range}},
                           {:map_field_assoc, 3, {:atom, 0, :first}, {:integer, 0, 0}},
-                          {:map_field_assoc, 3, {:atom, 0, :last}, {:integer, 0, 5}}
+                          {:map_field_assoc, 3, {:atom, 0, :last}, {:integer, 0, 5}},
+                          {:map_field_assoc, 3, {:atom, 0, :step}, {:integer, 0, 1}}
                         ]},
                        {nil, 3},
                        {:fun, 3,
@@ -534,6 +535,47 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                   ]}
                ]}
             ]} = block
+  end
+
+  test "list" do
+    {tokens, ast} = load("/Elixir.ListEx.beam", "/list.ex")
+    
+    [_wrap, list, ht2, ht | _] =
+      SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+    assert {:function, 5, :list, 0,
+            [
+              {:clause, 5, [], [],
+               [
+                 {:cons, 6,
+                  {:cons, 6, {:integer, 6, 49}, {:cons, 6, {:integer, 6, 49}, {nil, 0}}},
+                  {:cons, 6,
+                   {:bin, 6, [{:bin_element, 6, {:string, 6, '12'}, :default, :default}]},
+                   {:cons, 6, {:integer, 6, 1},
+                    {:cons, 6, {:integer, 6, 2},
+                     {:cons, 6, {:integer, 6, 3},
+                      {:cons, 6, {:call, 6, {:atom, 6, :wrap}, [{:integer, 6, 4}]}, {nil, 0}}}}}}}
+               ]}
+            ]} = list
+
+    assert {:function, 9, :ht, 1,
+            [
+              {:clause, 9, [{:cons, 9, {:var, 9, :_a@1}, {:var, 9, :_}}], [],
+               [
+                 {:cons, 10, {:var, 10, :_a@1},
+                  {:cons, 10, {:integer, 10, 1},
+                   {:cons, 10, {:integer, 10, 2}, {:cons, 10, {:integer, 10, 3}, {nil, 0}}}}}
+               ]}
+            ]} = ht
+
+    assert {:function, 13, :ht2, 1,
+            [
+              {:clause, 13, [{:cons, 13, {:var, 13, :_a@1}, {:var, 13, :_}}], [],
+               [
+                 {:cons, 14, {:var, 14, :_a@1},
+                  {:call, 14, {:atom, 14, :wrap}, [{:integer, 14, 1}]}}
+               ]}
+            ]} = ht2
   end
 
   test "try" do

@@ -10,10 +10,11 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   NOTE Mapper implements:
   - function [x]
-  - fun [x] TODO handle e.g. &GradualizerEx.type_check_file/1 or &GradualizerEx.type_check_file(&1, [])
+  - fun [x] 
   - clause [x] 
   - case [x]
   - try [x] TODO some variants could be not implemented
+  - block [X] 
   - pipe [x]
   - call [x]
   - match [x]
@@ -24,18 +25,19 @@ defmodule GradualizerEx.SpecifyErlAst do
   - charlist [x]
   - tuple [X]
   - var [X]
-  - list [ ] TODO add line propagation to each element
+  - list [X] 
+  - keyword [X]
   - binary [ ] TODO bitstring
   - map [ ] TODO
   - receive [ ] TODO
 
   - record [ ] TODO record_field, record_index, record_pattern, record
-  - block [ ] is block used by elixir? 
   - named_fun [ ] is named_fun used by elixir? 
 
   NOTE Elixir expressions to handle or test:
   - list comprehension [X]
   - pipe [X]
+  - range [ ]
   - receive [ ]
   - maps [ ]
   - record [ ]
@@ -176,16 +178,18 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
-  defp mapper({:cons, 0, value, more} = cons, tokens, opts) do
-    {:ok, line} = Keyword.fetch(opts, :line)
+  defp mapper({:cons, line, value, more} = cons, tokens, opts) do
+    {:ok, line} =
+      case line do
+        0 -> Keyword.fetch(opts, :line)
+        l -> {:ok, l}
+      end
 
     tokens = drop_tokens_to_line(tokens, line)
 
     case get_list_from_tokens(tokens) do
       {:list, tokens} ->
-        # FIXME probably tokens should be returned from list_foldl/3
         list_foldl(cons, tokens, opts)
-        |> pass_tokens(tokens)
 
       {:charlist, tokens} ->
         {:cons, line, value, more}
@@ -299,15 +303,24 @@ defmodule GradualizerEx.SpecifyErlAst do
   #FIXME add specifying type for other variant
   """
   @spec list_foldl(form(), [token()], options()) :: form()
-  def list_foldl({nil, 0}, _, _), do: {nil, 0}
+  # def list_foldl({nil, 0}, _, _), do: {nil, 0}
 
-  def list_foldl({:cons, 0, value, tail}, tokens, opts) do
+  def list_foldl({:cons, line, value, tail}, tokens, opts) do
     {new_value, tokens} = mapper(value, tokens, opts)
-    line = elem(new_value, 1)
-    {:cons, line, new_value, list_foldl(tail, tokens, opts)}
+
+    line =
+      case line do
+        0 -> elem(new_value, 1)
+        l -> l
+      end
+
+    {tail, tokens} = list_foldl(tail, tokens, opts)
+
+    {:cons, line, new_value, tail}
+    |> pass_tokens(tokens)
   end
 
-  def list_foldl(other, _, _), do: other
+  def list_foldl(other, tokens, opts), do: mapper(other, tokens, opts)
 
   @doc """
   Drop tokens to the first conditional occurance. Returns type of the encountered conditional and following tokens.
@@ -344,7 +357,7 @@ defmodule GradualizerEx.SpecifyErlAst do
       end)
 
     case res do
-      [{:"[", _} | _] = list -> {:list, list}
+      [{:"[", _} | list] -> {:list, list}
       [{:list_string, _, _} | _] = list -> {:charlist, list}
       _ -> :undefined
     end
@@ -444,9 +457,8 @@ defmodule GradualizerEx.SpecifyErlAst do
     {:atom, line, value}
   end
 
-  defp take_loc_from_token({:list_string, {l1, _, _}, _}, {:cons, _, value, tail}) do
-    # FIXME propagate line to each list element
-    {:cons, l1, value, tail}
+  defp take_loc_from_token({:list_string, {l1, _, _}, _}, {:cons, _, _, _} = charlist) do
+    charlist_set_loc(charlist, l1)
   end
 
   defp take_loc_from_token(
@@ -469,4 +481,10 @@ defmodule GradualizerEx.SpecifyErlAst do
   def cons_to_charlist({:cons, _, {:integer, _, value}, tail}) do
     [value | cons_to_charlist(tail)]
   end
+
+  def charlist_set_loc({:cons, _, {:integer, _, value}, tail}, loc) do
+    {:cons, loc, {:integer, loc, value}, charlist_set_loc(tail, loc)}
+  end
+
+  def charlist_set_loc({nil, loc}, _), do: {nil, loc}
 end

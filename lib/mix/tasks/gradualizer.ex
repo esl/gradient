@@ -4,7 +4,7 @@ defmodule Mix.Tasks.Gradualizer do
   @impl Mix.Task
   def run(_args) do
     # Starting app to format logger 
-    Mix.Task.run("app.start")
+    # Mix.Task.run("app.start")
     # Compile the project before the analysis
     Mix.Tasks.Compile.run([])
     files = get_app_paths()
