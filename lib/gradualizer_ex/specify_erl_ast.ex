@@ -59,6 +59,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   """
   @spec specify([form()]) :: [form()]
   def specify(forms) do
+    # FIXME allow to specify path to file with code
     with {:attribute, 1, :file, {path, 1}} <- hd(forms),
          path <- to_string(path),
          {:ok, code} <- File.read(path),
@@ -66,7 +67,7 @@ defmodule GradualizerEx.SpecifyErlAst do
       add_missing_loc_literals(tokens, forms)
     else
       error ->
-        IO.puts("Error occured when specifying forms : #{error}")
+        IO.puts("Error occured when specifying forms : #{inspect(error)}")
         forms
     end
   end
@@ -192,11 +193,16 @@ defmodule GradualizerEx.SpecifyErlAst do
       {:list, tokens} ->
         list_foldl(cons, tokens, opts)
 
+      {:keyword, tokens} ->
+        list_foldl(cons, tokens, opts)
+
       {:charlist, tokens} ->
         {:cons, line, value, more}
         |> specify_line(tokens)
 
       :undefined ->
+        Logger.warn("Undefined cons type #{inspect(cons)} -- #{inspect(Enum.take(tokens, 5))}")
+
         {:cons, line, value, more}
         |> pass_tokens(tokens)
     end
@@ -275,6 +281,7 @@ defmodule GradualizerEx.SpecifyErlAst do
         |> specify_line(tokens)
 
       _ ->
+        tokens = cut_tokens_to_bin(tokens, loc)
         {elements, tokens} = bin_element_foldl(elements, tokens, opts)
 
         {:bin, loc, elements}
@@ -321,13 +328,20 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   def bin_element_foldl(elements, tokens, opts) do
-    {elements, tokens} =
-      List.foldl(elements, {[], tokens}, fn e, {es, tokens} ->
-        {e, tokens} = bin_element(e, tokens, opts)
-        {[e | es], tokens}
+    # {elements, tokens} =
+    # List.foldl(elements, {[], tokens}, fn e, {es, tokens} ->
+    # {e, tokens} = bin_element(e, tokens, opts)
+    # {[e | es], tokens}
+    # end)
+    # {Enum.reverse(elements), tokens}
+    # TODO find a way to restrict tokens only to :bin or maybe unwrap :bin_string token
+    elements =
+      Enum.map(elements, fn e ->
+        {e, _} = bin_element(e, tokens, opts)
+        e
       end)
 
-    {Enum.reverse(elements), tokens}
+    {elements, tokens}
   end
 
   def bin_element({:bin_element, line, value, size, tsl}, tokens, opts) do
@@ -385,18 +399,22 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   @spec get_list_from_tokens([token()]) ::
-          {:list, [token()]} | {:charlist, [token()]} | :undefined
+          {:list, [token()]} | {:keyword, [token()]} | {:charlist, [token()]} | :undefined
   def get_list_from_tokens(tokens) do
+    tokens = flat_tokens(tokens)
+
     res =
       Enum.drop_while(tokens, fn
         {:"[", _} -> false
         {:list_string, _, _} -> false
+        {:kw_identifier, _, id} when id not in [:do] -> false
         _ -> true
       end)
 
     case res do
       [{:"[", _} | list] -> {:list, list}
       [{:list_string, _, _} | _] = list -> {:charlist, list}
+      [{:kw_identifier, _, _} | _] = list -> {:keyword, list}
       _ -> :undefined
     end
   end
@@ -461,6 +479,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     l2 <= l1 && to_charlist(v1) == v2
   end
 
+  # BINARY
   defp match_token_to_form(
          {:bin_string, {l1, _, _}, [v1]},
          {:bin, l2, [{:bin_element, _, {:string, _, v2}, :default, :default}]}
@@ -469,13 +488,23 @@ defmodule GradualizerEx.SpecifyErlAst do
     l2 <= l1 && to_charlist(v1) == v2
   end
 
-  defp match_token_to_form({:bin_string, _, elems}, form) do
-    Enum.any?(elems, &match_token_to_form(&1, form))
+  # defp match_token_to_form({:bin_string, _, elems}, form) do
+  # Enum.any?(elems, &match_token_to_form(&1, form))
+  # end
+
+  # defp match_token_to_form({{_, _, nil}, {_, _, nil}, elems}, form) do
+  # Enum.any?(elems, &match_token_to_form(&1, form))
+  # end
+
+  defp match_token_to_form({:str, _, v}, {:string, _, v1}) do
+    v == v1
   end
 
-  defp match_token_to_form({{_, _, nil}, {_, _, nil}, elems}, form) do
-    Enum.any?(elems, &match_token_to_form(&1, form))
-  end
+  # defp match_token_to_form(v, {:string, _, v1}) when is_binary(v) do
+  # String.to_charlist(v) == v1
+  # end
+
+  # END BIANRY
 
   defp match_token_to_form({true, {l1, _, _}}, {:atom, l2, true}) do
     l2 <= l1
@@ -511,6 +540,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     charlist_set_loc(charlist, l1)
   end
 
+  # BINARY
   defp take_loc_from_token(
          {:bin_string, {l1, _, _}, _},
          {:bin, _, [{:bin_element, _, {:string, _, v2}, :default, :default}]}
@@ -518,16 +548,26 @@ defmodule GradualizerEx.SpecifyErlAst do
     {:bin, l1, [{:bin_element, l1, {:string, l1, v2}, :default, :default}]}
   end
 
-  defp take_loc_from_token({:bin_string, _, elems}, form) do
-    elems
-    |> Enum.map(&take_loc_from_token(&1, form))
-    |> Enum.find(&(&1 != nil))
+  # defp take_loc_from_token({:bin_string, _, elems}, form) do
+  # elems
+  # |> Enum.map(&take_loc_from_token(&1, form))
+  # |> Enum.find(&(&1 != nil))
+  # end
+
+  # defp take_loc_from_token({{_, _, nil}, {_, _, nil}, elems}, form) do
+  # elem = Enum.find(elems, &match_token_to_form(&1, form))
+  # take_loc_from_token(elem, form)
+  # end
+
+  # defp take_loc_from_token(v, {:string, loc, v2}) when is_binary(v) do
+  # {:string, loc, v2}
+  # end
+
+  defp take_loc_from_token({:str, _, _}, {:string, loc, v2}) do
+    {:string, loc, v2}
   end
 
-  defp take_loc_from_token({{_, _, nil}, {_, _, nil}, elems}, form) do
-    elem = Enum.find(elems, &match_token_to_form(&1, form))
-    take_loc_from_token(elem, form)
-  end
+  # END BINARY
 
   defp take_loc_from_token({true, {line, _, _}}, {:atom, _, true}) do
     {:atom, line, true}
