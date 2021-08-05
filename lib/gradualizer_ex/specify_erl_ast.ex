@@ -28,6 +28,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   - list [X] 
   - keyword [X]
   - binary [X] 
+  - remote [ ] TODO
   - map [ ] TODO
   - receive [ ] TODO
 
@@ -51,7 +52,9 @@ defmodule GradualizerEx.SpecifyErlAst do
   require Logger
 
   @type token :: tuple()
-  @type form :: :erl_parse.abstract_form()
+  @type tokens :: [tuple()]
+  @type form :: :erl_parse.erl_parse_tree()
+  @type forms :: [form()]
   @type options :: keyword()
 
   @doc """
@@ -95,7 +98,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> update_in([Access.elem(0)], &Enum.reverse/1)
   end
 
-  @spec pass_tokens(form(), [token()]) :: {form(), [token()]}
+  @spec pass_tokens(form(), tokens()) :: {form(), tokens()}
   defp pass_tokens(form, tokens) do
     {form, tokens}
   end
@@ -355,7 +358,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   @doc """
   Iterate over the list in abstract code format and runs mapper on each element 
   """
-  @spec list_foldl(form(), [token()], options()) :: form()
+  @spec list_foldl(form(), [token()], options()) :: {form(), tokens()}
 
   def list_foldl({:cons, line, value, tail}, tokens, opts) do
     {new_value, tokens} = mapper(value, tokens, opts)
@@ -425,11 +428,13 @@ defmodule GradualizerEx.SpecifyErlAst do
     res =
       Enum.drop_while(tokens, fn
         {:"{", _} -> false
+        {:kw_identifier, _, _} -> false
         _ -> true
       end)
 
     case res do
       [{:"{", _} | _] = tuple -> {:tuple, tuple}
+        [{:kw_identifier, _, _} | _] = tuple -> {:tuple, tuple} 
       _ -> :undefined
     end
   end

@@ -141,17 +141,113 @@ defmodule GradualizerEx.SpecifyErlAstTest do
               ]} = block
     end
 
-    @tag :skip
     test "tuple" do
       {tokens, ast} = load("/Elixir.Tuple.beam", "/tuple.ex")
 
-      IO.inspect(tokens, pretty: true, limit: :infinity)
-
-      [_complex2, _complex, _bin_block, _bin | _] =
-        SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse() |> IO.inspect()
+      [tuple_in_str2, tuple_in_str, tuple_in_list, tuple | _] =
+        SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
 
       # FIXME
-      assert false
+      assert {:function, 18, :tuple_in_str2, 0,
+              [
+                {:clause, 18, [], [],
+                 [
+                   {:match, 19, {:var, 19, :_msg@1},
+                    {:bin, 20,
+                     [
+                       {:bin_element, 20, {:string, 20, '\nElixir formatter not exist for '},
+                        :default, :default},
+                       {:bin_element, 20,
+                        {:call, 20, {:remote, 20, {:atom, 0, Kernel}, {:atom, 20, :inspect}},
+                         [
+                           {:tuple, 20, []},
+                           {:cons, 20, {:tuple, 20, [{:atom, 20, :pretty}, {:atom, 20, true}]},
+                            {:cons, 20,
+                             {:tuple, 20, [{:atom, 20, :limit}, {:atom, 20, :infinity}]},
+                             {nil, 0}}}
+                         ]}, :default, [:binary]},
+                       {:bin_element, 20, {:string, 20, ' using default \n'}, :default, :default}
+                     ]}},
+                   {:call, 22, {:remote, 22, {:atom, 0, String}, {:atom, 22, :to_charlist}},
+                    [
+                      {:bin, 22,
+                       [
+                         {:bin_element, 22,
+                          {:call, 22,
+                           {:remote, 22, {:atom, 0, IO.ANSI}, {:atom, 22, :light_yellow}}, []},
+                          :default, [:binary]},
+                         {:bin_element, 22, {:var, 22, :_msg@1}, :default, [:binary]},
+                         {:bin_element, 22,
+                          {:call, 22, {:remote, 22, {:atom, 0, IO.ANSI}, {:atom, 22, :reset}},
+                           []}, :default, [:binary]}
+                       ]}
+                    ]}
+                 ]}
+              ]} = tuple_in_str2
+
+      assert {:function, 14, :tuple_in_str, 0,
+              [
+                {:clause, 14, [], [],
+                 [
+                   {:bin, 15,
+                    [
+                      {:bin_element, 15, {:string, 15, 'abc '}, :default, :default},
+                      {:bin_element, 15,
+                       {:call, 15, {:remote, 15, {:atom, 0, Kernel}, {:atom, 15, :inspect}},
+                        [
+                          {:atom, 15, :abc},
+                          {:cons, 15, {:tuple, 15, [{:atom, 15, :limit}, {:atom, 15, :infinity}]},
+                           {:cons, 15,
+                            {:tuple, 15,
+                             [
+                               {:atom, 15, :label},
+                               {:bin, 15,
+                                [
+                                  {:bin_element, 15, {:string, 15, 'abc '}, :default, :default},
+                                  {:bin_element, 15,
+                                   {:case, [generated: true, location: 15],
+                                    {:integer, [generated: true, location: 15], 13},
+                                    [
+                                      {:clause, 15,
+                                       [{:var, [generated: true, location: 15], :_@1}],
+                                       [
+                                         [
+                                           {:call, [generated: true, location: 15],
+                                            {:remote, [generated: true, location: 15],
+                                             {:atom, [generated: true, location: 15], :erlang},
+                                             {:atom, [generated: true, location: 15], :is_binary}},
+                                            [{:var, [generated: true, location: 15], :_@1}]}
+                                         ]
+                                       ], [{:var, [generated: true, location: 15], :_@1}]},
+                                      {:clause, 15,
+                                       [{:var, [generated: true, location: 15], :_@1}], [],
+                                       [
+                                         {:call, [generated: true, location: 15],
+                                          {:remote, [generated: true, location: 15],
+                                           {:atom, [generated: true, location: 15], String.Chars},
+                                           {:atom, [generated: true, location: 15], :to_string}},
+                                          [{:var, [generated: true, location: 15], :_@1}]}
+                                       ]}
+                                    ]}, :default, [:binary]}
+                                ]}
+                             ]}, {nil, 0}}}
+                        ]}, :default, [:binary]},
+                      {:bin_element, 15, {:integer, 15, 12}, :default, [:integer]}
+                    ]}
+                 ]}
+              ]} = tuple_in_str
+
+      assert {:function, 10, :tuple_in_list, 0,
+              [
+                {:clause, 10, [], [],
+                 [
+                   {:cons, 11, {:tuple, 11, [{:atom, 11, :a}, {:integer, 11, 12}]},
+                    {:cons, 11, {:tuple, 11, [{:atom, 11, :b}, {:atom, 11, :ok}]}, {nil, 0}}}
+                 ]}
+              ]} = tuple_in_list
+
+      assert {:function, 2, :tuple, 0,
+              [{:clause, 2, [], [], [{:tuple, 3, [{:atom, 3, :ok}, {:integer, 3, 12}]}]}]} = tuple
     end
 
     test "binary" do
