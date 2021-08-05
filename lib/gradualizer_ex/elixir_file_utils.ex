@@ -3,11 +3,21 @@ defmodule GradualizerEx.ElixirFileUtils do
   Module used to load beam files generated from Elixir.
   """
 
+  @type path() :: :file.filename() | String.t()
+
+  @type abstract_forms() :: [:erl_parse.abstract_form() | :erl_parse.form_info()]
+
+  @type parsed_file_error() ::
+          {:file_not_found, path()}
+          | {:file_open_error, {:file.posix() | :badarg | :system_limit, path()}}
+          | {:forms_not_found, path()}
+          | {:forms_error, reason :: any()}
+
   @doc """
   Accepts a filename or the beam code as a binary
   """
-  @spec get_forms_from_beam(:file.filename() | String.t()) ::
-          {:ok, [:erl_parse.abstract_form()]} | {:error, any()}
+  @spec get_forms_from_beam(path()) ::
+          {:ok, abstract_forms()} | parsed_file_error()
   def get_forms_from_beam(path) when is_binary(path),
     do: get_forms_from_beam(String.to_charlist(path))
 

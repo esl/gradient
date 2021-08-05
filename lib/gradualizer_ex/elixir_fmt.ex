@@ -129,7 +129,7 @@ defmodule GradualizerEx.ElixirFmt do
   # String.to_charlist(IO.ANSI.light_yellow() <> msg <> IO.ANSI.reset())
   # end
 
-  @spec describe_expr(:gradualizer_type.abstract_expr()) :: :io_lib.chars()
+  @spec describe_expr(:gradualizer_type.abstract_expr()) :: binary()
   def describe_expr({:atom, _, _}), do: "atom"
   def describe_expr({:bc, _, _, _}), do: "binary comprehension"
   def describe_expr({:bin, _, _}), do: "bit expression"
@@ -151,7 +151,7 @@ defmodule GradualizerEx.ElixirFmt do
   def describe_expr({nil, _}), do: "empty list"
   def describe_expr({:op, _, 'not', _}), do: "negation"
   def describe_expr({:op, _, '-', _}), do: "negation"
-  def describe_expr({:op, _, op, _, _}), do: :io_lib.format("~w expression", [op])
+  def describe_expr({:op, _, op, _, _}), do: to_string(:io_lib.format("~w expression", [op]))
   def describe_expr({:record, _, _, _}), do: "record"
   def describe_expr({:receive, _, _, _, _}), do: "receive expression"
   def describe_expr({:record, _, _, _, _}), do: "record update"

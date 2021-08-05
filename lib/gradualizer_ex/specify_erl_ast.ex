@@ -53,21 +53,25 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   @type token :: tuple()
   @type tokens :: [tuple()]
-  @type form :: :erl_parse.erl_parse_tree()
+  @type form ::
+          :erl_parse.abstract_clause()
+          | :erl_parse.abstract_expr()
+          | :erl_parse.abstract_form()
+          | :erl_parse.abstract_type()
   @type forms :: [form()]
   @type options :: keyword()
 
   @doc """
 
   """
-  @spec specify([form()]) :: [form()]
+  @spec specify(nonempty_list(:erl_parse.abstract_form())) :: [:erl_parse.abstract_form()]
   def specify(forms) do
     # FIXME allow to specify path to file with code
     with {:attribute, 1, :file, {path, 1}} <- hd(forms),
          path <- to_string(path),
          {:ok, code} <- File.read(path),
          {:ok, tokens} <- :elixir.string_to_tokens(String.to_charlist(code), 1, 1, path, []) do
-      add_missing_loc_literals(tokens, forms)
+      add_missing_loc_literals(forms, tokens)
     else
       error ->
         IO.puts("Error occured when specifying forms : #{inspect(error)}")
@@ -80,13 +84,12 @@ defmodule GradualizerEx.SpecifyErlAst do
   Firstly the parent location is set, then it is matched 
   with tokens to precise the literal line.
   """
-  @spec add_missing_loc_literals([token()], [form()]) :: [form()]
-  def add_missing_loc_literals(tokens, abstract_code) do
-    # For now works only for integers and atoms 
-    # FIXME handle binary, charlist, float and others if needed
-
+  @spec add_missing_loc_literals([:erl_parse.abstract_form()], tokens()) :: [
+          :erl_parse.abstract_form()
+        ]
+  def add_missing_loc_literals(forms, tokens) do
     opts = []
-    Enum.map(abstract_code, fn x -> mapper(x, tokens, opts) |> elem(0) end)
+    Enum.map(forms, fn x -> mapper(x, tokens, opts) |> elem(0) end)
   end
 
   @spec foldl([form()], [token()], options()) :: {[form()], [token()]}
@@ -98,7 +101,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> update_in([Access.elem(0)], &Enum.reverse/1)
   end
 
-  @spec pass_tokens(form(), tokens()) :: {form(), tokens()}
+  @spec pass_tokens(any(), tokens()) :: {any(), tokens()}
   defp pass_tokens(form, tokens) do
     {form, tokens}
   end
@@ -219,8 +222,8 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> drop_tokens_to_line(line)
     |> get_tuple_from_tokens()
     |> case do
-      {:tuple, tokens} ->
-        line = get_line_from_token(hd(tokens))
+      {:tuple, [t | _] = tokens} ->
+        line = get_line_from_token(t)
         {elements, tokens} = foldl(elements, tokens, opts)
 
         {:tuple, line, elements}
@@ -434,7 +437,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
     case res do
       [{:"{", _} | _] = tuple -> {:tuple, tuple}
-        [{:kw_identifier, _, _} | _] = tuple -> {:tuple, tuple} 
+      [{:kw_identifier, _, _} | _] = tuple -> {:tuple, tuple}
       _ -> :undefined
     end
   end
