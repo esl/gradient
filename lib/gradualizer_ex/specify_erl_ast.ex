@@ -36,7 +36,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   NOTE Elixir expressions to handle or test:
   - list comprehension [X]
-  - pipe [X]
+  - pipe [ ] TODO decide how to search for line in reversed form order 
   - binary [X]
   - range [ ]
   - receive [ ]
@@ -217,8 +217,8 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> get_tuple_from_tokens()
     |> case do
       {:tuple, tokens} ->
-        {elements, tokens} = foldl(elements, tokens, opts)
         line = get_line_from_token(hd(tokens))
+        {elements, tokens} = foldl(elements, tokens, opts)
 
         {:tuple, line, elements}
         |> pass_tokens(tokens)

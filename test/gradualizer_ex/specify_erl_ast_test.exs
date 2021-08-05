@@ -148,12 +148,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
       IO.inspect(tokens, pretty: true, limit: :infinity)
 
       [_complex2, _complex, _bin_block, _bin | _] =
-        SpecifyErlAst.add_missing_loc_literals(tokens, ast)
-        |> Enum.reverse() |> IO.inspect()
+        SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse() |> IO.inspect()
 
-      #FIXME
+      # FIXME
       assert false
-      
     end
 
     test "binary" do
