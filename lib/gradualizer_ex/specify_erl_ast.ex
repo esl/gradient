@@ -51,7 +51,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   require Logger
 
   @type token :: tuple()
-  @type form :: tuple()
+  @type form :: :erl_parse.abstract_form()
   @type options :: keyword()
 
   @doc """

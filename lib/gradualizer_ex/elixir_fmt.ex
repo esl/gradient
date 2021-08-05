@@ -34,10 +34,7 @@ defmodule GradualizerEx.ElixirFmt do
   end
 
   def format_type_error(error, opts) do
-    warning_msg = warning_error_not_handled(error)
-    formatted = :gradualizer_fmt.format_type_error(error, opts)
-
-    warning_msg ++ formatted
+    :gradualizer_fmt.format_type_error(error, opts) ++ '\n'
   end
 
   def format_expr_type_error(expression, actual_type, expected_type, opts) do
@@ -127,10 +124,10 @@ defmodule GradualizerEx.ElixirFmt do
   def get_ex_file_path([{:attribute, 1, :file, {path, 1}} | _]), do: {:ok, path}
   def get_ex_file_path(_), do: {:error, :not_found}
 
-  defp warning_error_not_handled(error) do
-    msg = "\nElixir formatter not exist for #{inspect(error, pretty: true)} using default \n"
-    String.to_charlist(IO.ANSI.light_yellow() <> msg <> IO.ANSI.reset())
-  end
+  # defp warning_error_not_handled(error) do
+  # msg = "\nElixir formatter not exist for #{inspect(error, pretty: true)} using default \n"
+  # String.to_charlist(IO.ANSI.light_yellow() <> msg <> IO.ANSI.reset())
+  # end
 
   @spec describe_expr(:gradualizer_type.abstract_expr()) :: :io_lib.chars()
   def describe_expr({:atom, _, _}), do: "atom"

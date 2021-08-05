@@ -731,6 +731,14 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             ]} = block
   end
 
+  test "record test" do
+    {tokens, ast} = load("/record/Elixir.Test.beam", "/record/test.ex")
+
+    res = SpecifyErlAst.add_missing_loc_literals(tokens, ast) |> Enum.reverse()
+
+    assert is_list(res)
+  end
+
   @spec load(String.t(), String.t()) :: {list(), list()}
   def load(beam_file, ex_file) do
     beam_file = String.to_charlist(@examples_path <> beam_file)
