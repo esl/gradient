@@ -1088,6 +1088,55 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             ]} = update
   end
 
+  test "receive" do
+    {tokens, ast} = load("/Elixir.Receive.beam", "/receive.ex")
+
+    [recv2, recv | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+
+    assert {:function, 2, :recv2, 0,
+            [
+              {:clause, 2, [], [],
+               [
+                 {:call, 3, {:remote, 3, {:atom, 0, :erlang}, {:atom, 3, :send}},
+                  [
+                    {:call, 3, {:remote, 3, {:atom, 0, :erlang}, {:atom, 3, :self}}, []},
+                    {:tuple, 3,
+                     [
+                       {:atom, 3, :hello},
+                       {:bin, 3, [{:bin_element, 3, {:string, 3, 'All'}, :default, :default}]}
+                     ]}
+                  ]},
+                 {:receive, 5,
+                  [
+                    {:clause, 6, [{:tuple, 6, [{:atom, 6, :hello}, {:var, 6, :_to@1}]}], [],
+                     [
+                       {:call, 7, {:remote, 7, {:atom, 0, IO}, {:atom, 7, :puts}},
+                        [
+                          {:bin, 7,
+                           [
+                             {:bin_element, 7, {:string, 7, 'Hello, '}, :default, :default},
+                             {:bin_element, 7, {:var, 7, :_to@1}, :default, [:binary]}
+                           ]}
+                        ]}
+                     ]},
+                    {:clause, 9, [{:atom, 9, :skip}], [], [{:atom, 9, :ok}]}
+                  ], {:integer, 12, 1000},
+                  [
+                    {:call, 13, {:remote, 13, {:atom, 0, IO}, {:atom, 13, :puts}},
+                     [
+                       {:bin, 0, [{:bin_element, 0, {:string, 0, 'Timeout'}, :default, :default}]}
+                     ]}
+                  ]}
+               ]}
+            ]} = recv2
+
+    assert {:function, 17, :recv, 0,
+            [
+              {:clause, 17, [], [],
+               [{:receive, 18, [{:clause, 19, [{:atom, 19, :ok}], [], [{:atom, 19, :ok}]}]}]}
+            ]} = recv
+  end
+
   @spec load(String.t(), String.t()) :: {list(), list()}
   def load(beam_file, ex_file) do
     beam_file = String.to_charlist(@examples_path <> beam_file)

@@ -29,8 +29,9 @@ defmodule GradualizerEx.SpecifyErlAst do
   - binary [X] 
   - map [X] 
   - try [x] TODO probably some variants could be not implemented
-  - receive [ ] TODO
-  - record [ ] TODO record_field, record_index, record_pattern, record
+  - receive [X] 
+  - record [X] elixir don't use it record_field, record_index, record_pattern, record
+
   - remote [ ] TODO maybe handle this call case
   - named_fun [ ] is named_fun used by elixir? 
 
@@ -41,8 +42,8 @@ defmodule GradualizerEx.SpecifyErlAst do
   - struct [X]
   - pipe [ ] TODO decide how to search for line in reversed form order 
   - range [ ] TODO write test
-  - receive [ ] TODO write test and implement mapper
-  - record [ ] TODO write test and implement mapper
+  - receive [X] 
+  - record [X] 
   - guards [X]
 
   """
@@ -251,6 +252,29 @@ defmodule GradualizerEx.SpecifyErlAst do
         {:tuple, line, elements}
         |> pass_tokens(tokens)
     end
+  end
+
+  defp mapper({:receive, anno, clauses}, tokens, opts) do
+    line = :erl_anno.line(anno)
+    opts = Keyword.put(opts, :line, line)
+
+    {clauses, tokens} = foldl(clauses, tokens, opts)
+
+    {:receive, anno, clauses}
+    |> pass_tokens(tokens)
+  end
+
+  defp mapper({:receive, anno, clauses, after_val, after_block}, tokens, opts) do
+    line = :erl_anno.line(anno)
+    opts = Keyword.put(opts, :line, line)
+
+    # FIXME Use when losing tokens will be fixed
+    {clauses, _tokens} = foldl(clauses, tokens, opts)
+    {after_val, tokens} = mapper(after_val, tokens, opts)
+    {after_block, tokens} = foldl(after_block, tokens, opts)
+
+    {:receive, anno, clauses, after_val, after_block}
+    |> pass_tokens(tokens)
   end
 
   defp mapper({:try, line, body, [], catchers, []}, tokens, opts) do
@@ -539,23 +563,9 @@ defmodule GradualizerEx.SpecifyErlAst do
     l2 <= l1 && to_charlist(v1) == v2
   end
 
-  # defp match_token_to_form({:bin_string, _, elems}, form) do
-  # Enum.any?(elems, &match_token_to_form(&1, form))
-  # end
-
-  # defp match_token_to_form({{_, _, nil}, {_, _, nil}, elems}, form) do
-  # Enum.any?(elems, &match_token_to_form(&1, form))
-  # end
-
   defp match_token_to_form({:str, _, v}, {:string, _, v1}) do
     v == v1
   end
-
-  # defp match_token_to_form(v, {:string, _, v1}) when is_binary(v) do
-  # String.to_charlist(v) == v1
-  # end
-
-  # END BIANRY
 
   defp match_token_to_form({true, {l1, _, _}}, {:atom, l2, true}) do
     l2 <= l1
@@ -595,7 +605,6 @@ defmodule GradualizerEx.SpecifyErlAst do
     charlist_set_loc(charlist, l1)
   end
 
-  # BINARY
   defp take_loc_from_token(
          {:bin_string, {l1, _, _}, _},
          {:bin, _, [{:bin_element, _, {:string, _, v2}, :default, :default}]}
@@ -603,26 +612,9 @@ defmodule GradualizerEx.SpecifyErlAst do
     {:bin, l1, [{:bin_element, l1, {:string, l1, v2}, :default, :default}]}
   end
 
-  # defp take_loc_from_token({:bin_string, _, elems}, form) do
-  # elems
-  # |> Enum.map(&take_loc_from_token(&1, form))
-  # |> Enum.find(&(&1 != nil))
-  # end
-
-  # defp take_loc_from_token({{_, _, nil}, {_, _, nil}, elems}, form) do
-  # elem = Enum.find(elems, &match_token_to_form(&1, form))
-  # take_loc_from_token(elem, form)
-  # end
-
-  # defp take_loc_from_token(v, {:string, loc, v2}) when is_binary(v) do
-  # {:string, loc, v2}
-  # end
-
   defp take_loc_from_token({:str, _, _}, {:string, loc, v2}) do
     {:string, loc, v2}
   end
-
-  # END BINARY
 
   defp take_loc_from_token({true, {line, _, _}}, {:atom, _, true}) do
     {:atom, line, true}
