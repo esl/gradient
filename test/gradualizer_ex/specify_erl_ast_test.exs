@@ -891,6 +891,121 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             ]} = pattern_matching_str
   end
 
+  test "struct" do
+    {tokens, ast} = load("/struct/Elixir.StructEx.beam", "/struct/struct.ex")
+
+    [update, get2, get, empty, struct | _] =
+      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+
+    assert {:function, 8, :update, 0,
+            [
+              {:clause, 8, [], [],
+               [
+                 {:map, 9, {:call, 9, {:atom, 9, :empty}, []},
+                  [{:map_field_exact, 9, {:atom, 9, :x}, {:integer, 9, 13}}]}
+               ]}
+            ]} = update
+
+    assert {:function, 16, :get2, 0,
+            [
+              {:clause, 16, [], [],
+               [
+                 {:match, 17, {:var, 17, :_x@1},
+                  {:case, [generated: true, location: 17], {:call, 17, {:atom, 17, :update}, []},
+                   [
+                     {:clause, 17,
+                      [
+                        {:map, 17,
+                         [
+                           {:map_field_exact, 17, {:atom, 17, :x},
+                            {:var, [generated: true, location: 17], :_@1}}
+                         ]}
+                      ], [], [{:var, [generated: true, location: 17], :_@1}]},
+                     {:clause, 17, [{:var, [generated: true, location: 17], :_@1}],
+                      [
+                        [
+                          {:call, [generated: true, location: 17],
+                           {:remote, [generated: true, location: 17],
+                            {:atom, [generated: true, location: 17], :erlang},
+                            {:atom, [generated: true, location: 17], :is_map}},
+                           [{:var, [generated: true, location: 17], :_@1}]}
+                        ]
+                      ],
+                      [
+                        {:call, 17, {:remote, 17, {:atom, 17, :erlang}, {:atom, 17, :error}},
+                         [
+                           {:tuple, 17,
+                            [
+                              {:atom, 17, :badkey},
+                              {:atom, 17, :x},
+                              {:var, [generated: true, location: 17], :_@1}
+                            ]}
+                         ]}
+                      ]},
+                     {:clause, 17, [{:var, [generated: true, location: 17], :_@1}], [],
+                      [
+                        {:call, [generated: true, location: 17],
+                         {:remote, [generated: true, location: 17],
+                          {:var, [generated: true, location: 17], :_@1}, {:atom, 17, :x}}, []}
+                      ]}
+                   ]}}
+               ]}
+            ]} = get2
+
+    assert {:function, 12, :get, 0,
+            [
+              {:clause, 12, [], [],
+               [
+                 {:match, 13,
+                  {:map, 13,
+                   [
+                     {:map_field_exact, 13, {:atom, 13, :__struct__}, {:atom, 13, StructEx}},
+                     {:map_field_exact, 13, {:atom, 13, :x}, {:var, 13, :_x@1}}
+                   ]}, {:call, 13, {:atom, 13, :update}, []}}
+               ]}
+            ]} = get
+
+    assert {:function, 4, :empty, 0,
+            [
+              {:clause, 4, [], [],
+               [
+                 {:map, 5,
+                  [
+                    {:map_field_assoc, 5, {:atom, 5, :__struct__}, {:atom, 5, StructEx}},
+                    {:map_field_assoc, 5, {:atom, 9, :x}, {:integer, 5, 0}},
+                    {:map_field_assoc, 5, {:atom, 5, :y}, {:integer, 5, 0}}
+                  ]}
+               ]}
+            ]} = empty
+
+    assert {:function, 2, :__struct__, 1,
+            [
+              {:clause, 2, [{:var, 2, :_@1}], [],
+               [
+                 {:call, 2, {:remote, 2, {:atom, 0, Enum}, {:atom, 2, :reduce}},
+                  [
+                    {:var, 2, :_@1},
+                    {:map, 2,
+                     [
+                       {:map_field_assoc, 2, {:atom, 2, :__struct__}, {:atom, 2, StructEx}},
+                       {:map_field_assoc, 2, {:atom, 2, :x}, {:integer, 2, 0}},
+                       {:map_field_assoc, 2, {:atom, 2, :y}, {:integer, 2, 0}}
+                     ]},
+                    {:fun, 2,
+                     {:clauses,
+                      [
+                        {:clause, 2,
+                         [{:tuple, 5, [{:var, 2, :_@2}, {:var, 2, :_@3}]}, {:var, 2, :_@4}], [],
+                         [
+                           {:call, 2, {:remote, 2, {:atom, 0, :maps}, {:atom, 2, :update}},
+                            [{:var, 2, :_@2}, {:var, 2, :_@3}, {:var, 2, :_@4}]}
+                         ]}
+                      ]}}
+                  ]}
+               ]}
+            ]} = struct
+  end
+
   test "record test" do
     {tokens, ast} = load("/record/Elixir.Test.beam", "/record/test.ex")
 

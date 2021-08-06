@@ -3,7 +3,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   Module adds missing line information to the Erlang abstract code produced 
   from Elixir AST.
 
-  TODO Use anno instead of lines, Attach full location not only the line
+  FIXME Use anno instead of lines, Attach full location not only the line
 
   FIXME Optimize tokens searching. Find out why some tokens are dropped 
 
@@ -31,7 +31,6 @@ defmodule GradualizerEx.SpecifyErlAst do
   - try [x] TODO probably some variants could be not implemented
   - receive [ ] TODO
   - record [ ] TODO record_field, record_index, record_pattern, record
-
   - remote [ ] TODO maybe handle this call case
   - named_fun [ ] is named_fun used by elixir? 
 
@@ -39,6 +38,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   - list comprehension [X]
   - binary [X]
   - maps [X]
+  - struct [X]
   - pipe [ ] TODO decide how to search for line in reversed form order 
   - range [ ] TODO write test
   - receive [ ] TODO write test and implement mapper
@@ -192,6 +192,15 @@ defmodule GradualizerEx.SpecifyErlAst do
     {pairs, tokens} = map_foldl(pairs, tokens, opts)
 
     {:map, anno, pairs}
+    |> pass_tokens(tokens)
+  end
+
+  defp mapper({:map, anno, map, pairs}, tokens, opts) do
+    # update pattern
+    {map, tokens} = mapper(map, tokens, opts)
+    {pairs, tokens} = map_foldl(pairs, tokens, opts)
+
+    {:map, anno, map, pairs}
     |> pass_tokens(tokens)
   end
 
