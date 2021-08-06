@@ -678,10 +678,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                      [
                        {:map, 3,
                         [
-                          {:map_field_assoc, 3, {:atom, 0, :__struct__}, {:atom, 0, Range}},
-                          {:map_field_assoc, 3, {:atom, 0, :first}, {:integer, 0, 0}},
-                          {:map_field_assoc, 3, {:atom, 0, :last}, {:integer, 0, 5}},
-                          {:map_field_assoc, 3, {:atom, 0, :step}, {:integer, 0, 1}}
+                          {:map_field_assoc, 3, {:atom, 3, :__struct__}, {:atom, 3, Range}},
+                          {:map_field_assoc, 3, {:atom, 3, :first}, {:integer, 3, 0}},
+                          {:map_field_assoc, 3, {:atom, 3, :last}, {:integer, 3, 5}},
+                          {:map_field_assoc, 3, {:atom, 3, :step}, {:integer, 3, 1}}
                         ]},
                        {nil, 3},
                        {:fun, 3,
@@ -825,6 +825,70 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                   ], []}
                ]}
             ]} = block
+  end
+
+  test "map" do
+    {tokens, ast} = load("/Elixir.MapEx.beam", "/map.ex")
+
+    [test_map_str, test_map, pattern_matching_str, pattern_matching, empty_map | _] =
+      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+
+    assert {:function, 2, :empty_map, 0, [{:clause, 2, [], [], [{:map, 3, []}]}]} = empty_map
+
+    assert {:function, 6, :test_map, 0,
+            [
+              {:clause, 6, [], [],
+               [
+                 {:map, 7,
+                  [
+                    {:map_field_assoc, 7, {:atom, 7, :a}, {:integer, 7, 12}},
+                    {:map_field_assoc, 7, {:atom, 7, :b}, {:call, 7, {:atom, 7, :empty_map}, []}}
+                  ]}
+               ]}
+            ]} = test_map
+
+    assert {:function, 10, :test_map_str, 0,
+            [
+              {:clause, 10, [], [],
+               [
+                 {:map, 11,
+                  [
+                    {:map_field_assoc, 11,
+                     {:bin, 11, [{:bin_element, 11, {:string, 11, 'a'}, :default, :default}]},
+                     {:integer, 11, 12}},
+                    {:map_field_assoc, 11,
+                     {:bin, 11, [{:bin_element, 11, {:string, 11, 'b'}, :default, :default}]},
+                     {:integer, 11, 0}}
+                  ]}
+               ]}
+            ]} = test_map_str
+
+    assert {:function, 14, :pattern_matching, 0,
+            [
+              {:clause, 14, [], [],
+               [
+                 {:match, 15,
+                  {:map, 15, [{:map_field_exact, 15, {:atom, 15, :a}, {:var, 15, :_a@1}}]},
+                  {:call, 15, {:atom, 15, :test_map}, []}},
+                 {:match, 16,
+                  {:map, 16, [{:map_field_exact, 16, {:atom, 16, :b}, {:var, 16, :_a@1}}]},
+                  {:call, 16, {:atom, 16, :test_map}, []}}
+               ]}
+            ]} = pattern_matching
+
+    assert {:function, 19, :pattern_matching_str, 0,
+            [
+              {:clause, 19, [], [],
+               [
+                 {:match, 20,
+                  {:map, 20,
+                   [
+                     {:map_field_exact, 20,
+                      {:bin, 20, [{:bin_element, 20, {:string, 20, 'a'}, :default, :default}]},
+                      {:var, 20, :_a@1}}
+                   ]}, {:call, 20, {:atom, 20, :test_map}, []}}
+               ]}
+            ]} = pattern_matching_str
   end
 
   test "record test" do

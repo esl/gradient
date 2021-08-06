@@ -13,7 +13,6 @@ defmodule GradualizerEx.SpecifyErlAst do
   - fun [x] 
   - clause [x] 
   - case [x]
-  - try [x] TODO some variants could be not implemented
   - block [X] 
   - pipe [x]
   - call [x]
@@ -28,21 +27,22 @@ defmodule GradualizerEx.SpecifyErlAst do
   - list [X] 
   - keyword [X]
   - binary [X] 
-  - remote [ ] TODO
-  - map [ ] TODO
+  - map [X] 
+  - try [x] TODO probably some variants could be not implemented
   - receive [ ] TODO
-
   - record [ ] TODO record_field, record_index, record_pattern, record
+
+  - remote [ ] TODO maybe handle this call case
   - named_fun [ ] is named_fun used by elixir? 
 
   NOTE Elixir expressions to handle or test:
   - list comprehension [X]
-  - pipe [ ] TODO decide how to search for line in reversed form order 
   - binary [X]
-  - range [ ]
-  - receive [ ]
-  - maps [ ]
-  - record [ ]
+  - maps [X]
+  - pipe [ ] TODO decide how to search for line in reversed form order 
+  - range [ ] TODO write test
+  - receive [ ] TODO write test and implement mapper
+  - record [ ] TODO write test and implement mapper
   - guards [X]
 
   """
@@ -178,11 +178,20 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
-  defp mapper({:match, line, left, right}, tokens, opts) do
+  defp mapper({:match, anno, left, right}, tokens, opts) do
+    line = :erl_anno.line(anno)
     opts = Keyword.put(opts, :line, line)
+    {left, tokens} = mapper(left, tokens, opts)
     {right, tokens} = mapper(right, tokens, opts)
 
-    {:match, line, left, right}
+    {:match, anno, left, right}
+    |> pass_tokens(tokens)
+  end
+
+  defp mapper({:map, anno, pairs}, tokens, opts) do
+    {pairs, tokens} = map_foldl(pairs, tokens, opts)
+
+    {:map, anno, pairs}
     |> pass_tokens(tokens)
   end
 
@@ -333,6 +342,26 @@ defmodule GradualizerEx.SpecifyErlAst do
     end)
   end
 
+  def map_foldl(pairs, tokens, opts) do
+    List.foldl(pairs, {[], tokens}, fn p, {ps, ts} ->
+      {p, ts} = map_element(p, ts, opts)
+      {[p | ps], ts}
+    end)
+    |> update_in([Access.elem(0)], &Enum.reverse/1)
+  end
+
+  def map_element({field, anno, key, value}, tokens, opts)
+      when field in [:map_field_assoc, :map_field_exact] do
+    line = :erl_anno.line(anno)
+    opts = Keyword.put(opts, :line, line)
+
+    {key, tokens} = mapper(key, tokens, opts)
+    {value, tokens} = mapper(value, tokens, opts)
+
+    {field, anno, key, value}
+    |> pass_tokens(tokens)
+  end
+
   def bin_element_foldl(elements, tokens, opts) do
     # {elements, tokens} =
     # List.foldl(elements, {[], tokens}, fn e, {es, tokens} ->
@@ -481,6 +510,11 @@ defmodule GradualizerEx.SpecifyErlAst do
     l2 <= l1 && v1 == v2
   end
 
+  defp match_token_to_form({:kw_identifier, {l1, _, _}, v1}, {:atom, l2, v2}) do
+    l2 = :erl_anno.line(l2)
+    l2 <= l1 && v1 == v2
+  end
+
   defp match_token_to_form({:list_string, {l1, _, _}, [v1]}, {:cons, l2, _, _} = cons) do
     v2 = cons_to_charlist(cons)
     # IO.puts("#{inspect v1} -- #{inspect v2}")
@@ -541,6 +575,10 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp take_loc_from_token({:atom, {line, _, _}, _}, {:atom, _, value}) do
+    {:atom, line, value}
+  end
+
+  defp take_loc_from_token({:kw_identifier, {line, _, _}, _}, {:atom, _, value}) do
     {:atom, line, value}
   end
 
