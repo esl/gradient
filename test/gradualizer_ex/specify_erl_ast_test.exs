@@ -1111,6 +1111,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                     {:clause, 6, [{:tuple, 6, [{:atom, 6, :hello}, {:var, 6, :_to@1}]}], [],
                      [
                        {:call, 7, {:remote, 7, {:atom, 0, IO}, {:atom, 7, :puts}},
+
                         [
                           {:bin, 7,
                            [
@@ -1124,7 +1125,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                   [
                     {:call, 13, {:remote, 13, {:atom, 0, IO}, {:atom, 13, :puts}},
                      [
-                       {:bin, 0, [{:bin_element, 0, {:string, 0, 'Timeout'}, :default, :default}]}
+                       {:bin, 13, [{:bin_element, 13, {:string, 13, 'Timeout'}, :default, :default}]}
                      ]}
                   ]}
                ]}
