@@ -1006,12 +1006,86 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             ]} = struct
   end
 
-  test "record test" do
-    {tokens, ast} = load("/record/Elixir.Test.beam", "/record/test.ex")
+  test "record" do
+    {tokens, ast} = load("/record/Elixir.RecordEx.beam", "/record/record.ex")
 
-    res = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [update, macro3, macro2, macro1, init, empty | _] =
+      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
-    assert is_list(res)
+    assert {:function, 7, :empty, 0,
+            [
+              {:clause, 7, [], [],
+               [{:tuple, 12, [{:atom, 7, :record_ex}, {:integer, 7, 0}, {:integer, 7, 0}]}]}
+              # FIXME Should be a tuple with line 7, not 12. The line is taken from a token that is in another scope. Related to the cutting out tokens at the bottom
+            ]} = empty
+
+    assert {:function, 11, :init, 0,
+            [
+              {:clause, 11, [], [],
+               [{:tuple, 12, [{:atom, 11, :record_ex}, {:integer, 12, 1}, {:integer, 11, 0}]}]}
+            ]} = init
+
+    assert {:function, 5, :"MACRO-record_ex", 1,
+            [
+              {:clause, 5, [{:var, 5, :_@CALLER}], [],
+               [
+                 {:match, 5, {:var, 5, :__CALLER__},
+                  {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, :linify}},
+                   [{:var, 5, :_@CALLER}]}},
+                 {:call, 5, {:atom, 5, :"MACRO-record_ex"}, [{:var, 5, :__CALLER__}, {nil, 0}]}
+               ]}
+            ]} = macro1
+
+    assert {:function, 5, :"MACRO-record_ex", 2,
+            [
+              {:clause, 5, [{:var, 5, :_@CALLER}, {:var, 5, :_@1}], [],
+               [
+                 {:match, 5, {:var, 5, :__CALLER__},
+                  {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, :linify}},
+                   [{:var, 5, :_@CALLER}]}},
+                 {:call, 5, {:remote, 5, {:atom, 0, Record}, {:atom, 5, :__access__}},
+                  [
+                    {:atom, 5, :record_ex},
+                    {:cons, 5, {:tuple, 5, [{:atom, 5, :x}, {:integer, 5, 0}]},
+                     {:cons, 5, {:tuple, 5, [{:atom, 5, :y}, {:integer, 5, 0}]}, {nil, 0}}},
+                    {:var, 5, :_@1},
+                    {:var, 5, :__CALLER__}
+                  ]}
+               ]}
+            ]} = macro2
+
+    assert {:function, 5, :"MACRO-record_ex", 3,
+            [
+              {:clause, 5, [{:var, 5, :_@CALLER}, {:var, 5, :_@1}, {:var, 5, :_@2}], [],
+               [
+                 {:match, 5, {:var, 5, :__CALLER__},
+                  {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, :linify}},
+                   [{:var, 5, :_@CALLER}]}},
+                 {:call, 5, {:remote, 5, {:atom, 0, Record}, {:atom, 5, :__access__}},
+                  [
+                    {:atom, 5, :record_ex},
+                    {:cons, 5, {:tuple, 5, [{:atom, 5, :x}, {:integer, 5, 0}]},
+                     {:cons, 5, {:tuple, 5, [{:atom, 5, :y}, {:integer, 5, 0}]}, {nil, 0}}},
+                    {:var, 5, :_@1},
+                    {:var, 5, :_@2},
+                    {:var, 5, :__CALLER__}
+                  ]}
+               ]}
+            ]} = macro3
+
+    assert {:function, 16, :update, 1,
+            [
+              {:clause, 16, [{:var, 16, :_record@1}], [],
+               [
+                 {:call, 17, {:remote, 17, {:atom, 0, :erlang}, {:atom, 17, :setelement}},
+                  [
+                    {:integer, 17, 2},
+                    {:call, 17, {:remote, 17, {:atom, 0, :erlang}, {:atom, 17, :setelement}},
+                     [{:integer, 17, 3}, {:var, 17, :_record@1}, {:integer, 17, 3}]},
+                    {:integer, 17, 2}
+                  ]}
+               ]}
+            ]} = update
   end
 
   @spec load(String.t(), String.t()) :: {list(), list()}
