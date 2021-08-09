@@ -205,10 +205,9 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                                 [
                                   {:bin_element, 15, {:string, 15, 'abc '}, :default, :default},
                                   {:bin_element, 15,
-                                   {:case, [generated: true, location: 15],
-                                    {:integer, [generated: true, location: 15], 13},
+                                   {:case, [generated: true, location: 15], {:integer, 15, 13},
                                     [
-                                      {:clause, 15,
+                                      {:clause, [generated: true, location: 15],
                                        [{:var, [generated: true, location: 15], :_@1}],
                                        [
                                          [
@@ -219,7 +218,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                                             [{:var, [generated: true, location: 15], :_@1}]}
                                          ]
                                        ], [{:var, [generated: true, location: 15], :_@1}]},
-                                      {:clause, 15,
+                                      {:clause, [generated: true, location: 15],
                                        [{:var, [generated: true, location: 15], :_@1}], [],
                                        [
                                          {:call, [generated: true, location: 15],
@@ -362,8 +361,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                  [
                    {:case, 13, {:op, 13, :<, {:integer, 13, 1}, {:integer, 13, 5}},
                     [
-                      {:clause, 13, [{:atom, 0, false}], [], [{:atom, 16, :error}]},
-                      {:clause, 13, [{:atom, 0, true}], [], [{:atom, 14, :ok}]}
+                      {:clause, [generated: true, location: 13], [{:atom, 0, false}], [],
+                       [{:atom, 16, :error}]},
+                      {:clause, [generated: true, location: 13], [{:atom, 0, true}], [],
+                       [{:atom, 14, :ok}]}
                     ]}
                  ]}
               ]} = block
@@ -374,8 +375,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                  [
                    {:case, 10, {:op, 10, :<, {:integer, 10, 1}, {:integer, 10, 5}},
                     [
-                      {:clause, 10, [{:atom, 0, false}], [], [{:atom, 10, :error}]},
-                      {:clause, 10, [{:atom, 0, true}], [], [{:atom, 10, :ok}]}
+                      {:clause, [generated: true, location: 10], [{:atom, 0, false}], [],
+                       [{:atom, 10, :error}]},
+                      {:clause, [generated: true, location: 10], [{:atom, 0, true}], [],
+                       [{:atom, 10, :ok}]}
                     ]}
                  ]}
               ]} = inline
@@ -386,8 +389,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                  [
                    {:case, 4, {:op, 4, :<, {:integer, 4, 1}, {:integer, 4, 5}},
                     [
-                      {:clause, 4, [{:atom, 0, false}], [], [{:atom, 7, :error}]},
-                      {:clause, 4, [{:atom, 0, true}], [], [{:atom, 5, :ok}]}
+                      {:clause, [generated: true, location: 4], [{:atom, 0, false}], [],
+                       [{:atom, 7, :error}]},
+                      {:clause, [generated: true, location: 4], [{:atom, 0, true}], [],
+                       [{:atom, 5, :ok}]}
                     ]}
                  ]}
               ]} = if_
@@ -409,8 +414,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                   [
                     {:case, 3, {:atom, 3, false},
                      [
-                       {:clause, 3, [{:atom, 0, false}], [], [{:atom, 4, :ok}]},
-                       {:clause, 3, [{:atom, 0, true}], [], [{:atom, 6, :error}]}
+                       {:clause, [generated: true, location: 3], [{:atom, 0, false}], [], [{:atom, 4, :ok}]},
+                       {:clause, [generated: true, location: 3], [{:atom, 0, true}], [], [{:atom, 6, :error}]}
                      ]}
                   ]}
                ]
@@ -439,7 +444,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                                {:case, 7, {:atom, 7, true},
                                 [
                                   {:clause, 7, [{:atom, 7, true}], [], [{:atom, 7, :error}]},
-                                  {:clause, 7, [{:atom, 0, false}], [],
+                                  {:clause, [generated: true, location: 7], [{:atom, 0, false}],
+                                   [],
                                    [
                                      {:call, 7,
                                       {:remote, 7, {:atom, 0, :erlang}, {:atom, 7, :error}},
@@ -471,7 +477,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                                {:case, 16, {:atom, 16, true},
                                 [
                                   {:clause, 16, [{:atom, 16, true}], [], [{:atom, 16, :error}]},
-                                  {:clause, 16, [{:atom, 0, false}], [],
+                                  {:clause, [generated: true, location: 16], [{:atom, 0, false}],
+                                   [],
                                    [
                                      {:call, 16,
                                       {:remote, 16, {:atom, 0, :erlang}, {:atom, 16, :error}},
@@ -499,7 +506,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                     [
                       {:clause, 7, [{:tuple, 7, [{:atom, 7, :ok}, {:var, 7, :__a@1}]}], [],
                        [{:integer, 8, 12}]},
-                      {:clause, 7, [{:var, 10, :_}], [],
+                      {:clause, [generated: true, location: 7], [{:var, 10, :_}], [],
                        [
                          {:block, 7,
                           [
@@ -693,13 +700,15 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                                {:op, 3, :==, {:op, 3, :rem, {:var, 3, :_n@1}, {:integer, 3, 3}},
                                 {:integer, 3, 0}},
                                [
-                                 {:clause, 3, [{:atom, [generated: true, location: 3], true}], [],
+                                 {:clause, [generated: true, location: 3],
+                                  [{:atom, [generated: true, location: 3], true}], [],
                                   [
                                     {:cons, 3, {:op, 3, :*, {:var, 3, :_n@1}, {:var, 3, :_n@1}},
                                      {:var, 3, :_@1}}
                                   ]},
-                                 {:clause, 3, [{:atom, [generated: true, location: 3], false}],
-                                  [], [{:var, 3, :_@1}]}
+                                 {:clause, [generated: true, location: 3],
+                                  [{:atom, [generated: true, location: 3], false}], [],
+                                  [{:var, 3, :_@1}]}
                                ]}
                             ]}
                          ]}}
@@ -763,7 +772,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                   [
                     {:case, 4, {:atom, 4, true},
                      [
-                       {:clause, 4, [{:atom, 0, false}], [],
+                       {:clause, [generated: true, location: 4], [{:atom, 0, false}], [],
                         [
                           {:call, 7, {:remote, 7, {:atom, 0, :erlang}, {:atom, 7, :error}},
                            [
@@ -777,7 +786,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                               ]}
                            ]}
                         ]},
-                       {:clause, 4, [{:atom, 0, true}], [],
+                       {:clause, [generated: true, location: 4], [{:atom, 0, true}], [],
                         [
                           {:call, 5, {:remote, 5, {:atom, 0, :erlang}, {:atom, 5, :throw}},
                            [
@@ -913,7 +922,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                  {:match, 17, {:var, 17, :_x@1},
                   {:case, [generated: true, location: 17], {:call, 17, {:atom, 17, :update}, []},
                    [
-                     {:clause, 17,
+                     {:clause, [generated: true, location: 17],
                       [
                         {:map, 17,
                          [
@@ -921,7 +930,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                             {:var, [generated: true, location: 17], :_@1}}
                          ]}
                       ], [], [{:var, [generated: true, location: 17], :_@1}]},
-                     {:clause, 17, [{:var, [generated: true, location: 17], :_@1}],
+                     {:clause, [generated: true, location: 17],
+                      [{:var, [generated: true, location: 17], :_@1}],
                       [
                         [
                           {:call, [generated: true, location: 17],
@@ -942,7 +952,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                             ]}
                          ]}
                       ]},
-                     {:clause, 17, [{:var, [generated: true, location: 17], :_@1}], [],
+                     {:clause, [generated: true, location: 17],
+                      [{:var, [generated: true, location: 17], :_@1}], [],
                       [
                         {:call, [generated: true, location: 17],
                          {:remote, [generated: true, location: 17],
@@ -1111,7 +1122,6 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                     {:clause, 6, [{:tuple, 6, [{:atom, 6, :hello}, {:var, 6, :_to@1}]}], [],
                      [
                        {:call, 7, {:remote, 7, {:atom, 0, IO}, {:atom, 7, :puts}},
-
                         [
                           {:bin, 7,
                            [
@@ -1125,7 +1135,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                   [
                     {:call, 13, {:remote, 13, {:atom, 0, IO}, {:atom, 13, :puts}},
                      [
-                       {:bin, 13, [{:bin_element, 13, {:string, 13, 'Timeout'}, :default, :default}]}
+                       {:bin, 13,
+                        [{:bin_element, 13, {:string, 13, 'Timeout'}, :default, :default}]}
                      ]}
                   ]}
                ]}
