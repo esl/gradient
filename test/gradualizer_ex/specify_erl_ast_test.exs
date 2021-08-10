@@ -16,20 +16,20 @@ defmodule GradualizerEx.SpecifyErlAstTest do
     test "case" do
       {tokens, _ast} = load("/conditional/Elixir.Conditional.Case.beam", "/conditional/case.ex")
       tokens = drop_tokens_to_line(tokens, 2)
-      assert {:case, _} = SpecifyErlAst.get_conditional(tokens)
+      assert {:case, _} = SpecifyErlAst.get_conditional(tokens, 4)
 
       tokens = drop_tokens_to_line(tokens, 9)
-      assert {:case, _} = SpecifyErlAst.get_conditional(tokens)
+      assert {:case, _} = SpecifyErlAst.get_conditional(tokens, 10)
     end
 
     test "if" do
       {tokens, _ast} = load("/conditional/Elixir.Conditional.If.beam", "/conditional/if.ex")
 
       tokens = drop_tokens_to_line(tokens, 2)
-      assert {:if, _} = SpecifyErlAst.get_conditional(tokens)
+      assert {:if, _} = SpecifyErlAst.get_conditional(tokens, 4)
 
       tokens = drop_tokens_to_line(tokens, 12)
-      assert {:if, _} = SpecifyErlAst.get_conditional(tokens)
+      assert {:if, _} = SpecifyErlAst.get_conditional(tokens, 13)
     end
 
     test "unless" do
@@ -37,17 +37,24 @@ defmodule GradualizerEx.SpecifyErlAstTest do
         load("/conditional/Elixir.Conditional.Unless.beam", "/conditional/unless.ex")
 
       tokens = drop_tokens_to_line(tokens, 2)
-      assert {:unless, _} = SpecifyErlAst.get_conditional(tokens)
+      assert {:unless, _} = SpecifyErlAst.get_conditional(tokens, 3)
     end
 
     test "cond" do
       {tokens, _ast} = load("/conditional/Elixir.Conditional.Cond.beam", "/conditional/cond.ex")
 
       tokens = drop_tokens_to_line(tokens, 2)
-      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens)
+      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens, 4)
 
       tokens = drop_tokens_to_line(tokens, 10)
-      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens)
+      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens, 13)
+    end
+
+    test "with" do
+      {tokens, _ast} = load("/conditional/Elixir.Conditional.With.beam", "/conditional/with.ex")
+
+      tokens = drop_tokens_to_line(tokens, 6)
+      assert {:with, _} = SpecifyErlAst.get_conditional(tokens, 7)
     end
   end
 
@@ -414,8 +421,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                   [
                     {:case, 3, {:atom, 3, false},
                      [
-                       {:clause, [generated: true, location: 3], [{:atom, 0, false}], [], [{:atom, 4, :ok}]},
-                       {:clause, [generated: true, location: 3], [{:atom, 0, true}], [], [{:atom, 6, :error}]}
+                       {:clause, [generated: true, location: 3], [{:atom, 0, false}], [],
+                        [{:atom, 4, :ok}]},
+                       {:clause, [generated: true, location: 3], [{:atom, 0, true}], [],
+                        [{:atom, 6, :error}]}
                      ]}
                   ]}
                ]
@@ -433,17 +442,17 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                  [
                    {:case, 4, {:op, 5, :==, {:var, 5, :_a@1}, {:atom, 5, :ok}},
                     [
-                      {:clause, 5, [{:atom, 7, true}], [], [{:atom, 5, :ok}]},
-                      {:clause, 6, [{:atom, 6, false}], [],
+                      {:clause, 5, [{:atom, 0, true}], [], [{:atom, 5, :ok}]},
+                      {:clause, 6, [{:atom, 0, false}], [],
                        [
                          {:case, 6, {:op, 6, :>, {:var, 6, :_a@1}, {:integer, 6, 5}},
                           [
-                            {:clause, 6, [{:atom, 7, true}], [], [{:atom, 6, :ok}]},
-                            {:clause, 7, [{:atom, 7, false}], [],
+                            {:clause, 6, [{:atom, 0, true}], [], [{:atom, 6, :ok}]},
+                            {:clause, 7, [{:atom, 0, false}], [],
                              [
                                {:case, 7, {:atom, 7, true},
                                 [
-                                  {:clause, 7, [{:atom, 7, true}], [], [{:atom, 7, :error}]},
+                                  {:clause, 7, [{:atom, 0, true}], [], [{:atom, 7, :error}]},
                                   {:clause, [generated: true, location: 7], [{:atom, 0, false}],
                                    [],
                                    [
@@ -466,17 +475,17 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                    {:match, 11, {:var, 11, :_a@1}, {:integer, 11, 5}},
                    {:case, 13, {:op, 14, :==, {:var, 14, :_a@1}, {:atom, 14, :ok}},
                     [
-                      {:clause, 14, [{:atom, 16, true}], [], [{:atom, 14, :ok}]},
-                      {:clause, 15, [{:atom, 15, false}], [],
+                      {:clause, 14, [{:atom, 0, true}], [], [{:atom, 14, :ok}]},
+                      {:clause, 15, [{:atom, 0, false}], [],
                        [
                          {:case, 15, {:op, 15, :>, {:var, 15, :_a@1}, {:integer, 15, 5}},
                           [
-                            {:clause, 15, [{:atom, 16, true}], [], [{:atom, 15, :ok}]},
-                            {:clause, 16, [{:atom, 16, false}], [],
+                            {:clause, 15, [{:atom, 0, true}], [], [{:atom, 15, :ok}]},
+                            {:clause, 16, [{:atom, 0, false}], [],
                              [
                                {:case, 16, {:atom, 16, true},
                                 [
-                                  {:clause, 16, [{:atom, 16, true}], [], [{:atom, 16, :error}]},
+                                  {:clause, 16, [{:atom, 0, true}], [], [{:atom, 16, :error}]},
                                   {:clause, [generated: true, location: 16], [{:atom, 0, false}],
                                    [],
                                    [

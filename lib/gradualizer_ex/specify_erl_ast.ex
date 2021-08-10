@@ -3,10 +3,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   Module adds missing line information to the Erlang abstract code produced 
   from Elixir AST.
 
-  FIXME Use anno instead of lines, Attach full location not only the line
-
   FIXME Optimize tokens searching. Find out why some tokens are dropped 
-
 
   NOTE Mapper implements:
   - function [x]
@@ -89,7 +86,8 @@ defmodule GradualizerEx.SpecifyErlAst do
           :erl_parse.abstract_form()
         ]
   def add_missing_loc_literals(forms, tokens) do
-    opts = []
+    {:ok, ast} = :elixir.tokens_to_quoted(tokens, "", token_metadata: true)
+    opts = [ast: ast]
     Enum.map(forms, fn x -> mapper(x, tokens, opts) |> elem(0) end)
   end
 
@@ -115,8 +113,6 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp mapper({:function, anno, name, arity, clauses}, tokens, opts) do
-    # line = :erl_anno.line(anno)
-    # opts = Keyword.put(opts, :line, line)
     {clauses, tokens} = foldl(clauses, tokens, opts)
 
     {:function, anno, name, arity, clauses}
@@ -133,12 +129,24 @@ defmodule GradualizerEx.SpecifyErlAst do
   defp mapper({:case, anno, condition, clauses}, tokens, opts) do
     # NOTE In Elixir `if`, `case` and `cond` statements are represented 
     # as a `case` in abstract code.
-    # line = :erl_anno.line(anno)
-    # opts = Keyword.put(opts, :line, line)
+    line = :erl_anno.line(anno)
+    opts = Keyword.put(opts, :line, line)
 
     # TODO figure out how to use this tokens
     # right now it works wrong for generated forms
     {new_condition, _tokens} = mapper(condition, tokens, opts)
+
+    opts =
+      case get_conditional(tokens, line) do
+        {type, _} when type in [:case, :with] ->
+          Keyword.put(opts, :case_type, :case)
+
+        {type, _} when type in [:cond, :if, :unless] ->
+          Keyword.put(opts, :case_type, :gen)
+
+        :undefined ->
+          Keyword.put(opts, :case_type, :gen)
+      end
 
     # NOTE use map because generated clauses can be in wrong order
     clauses = Enum.map(clauses, fn x -> mapper(x, tokens, opts) |> elem(0) end)
@@ -148,40 +156,45 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp mapper({:clause, anno, args, guards, children}, tokens, opts) do
-    # TODO Adapt the whole module to handle location
-    # FIXME handle guards
     # FIXME Handle generated clauses. Right now the literals inherit lines 
     # from the parents without checking them with tokens 
     line = :erl_anno.line(anno)
     opts = Keyword.put(opts, :line, line)
+    case_type = Keyword.get(opts, :case_type, :case)
 
     tokens = drop_tokens_to_line(tokens, line)
 
-    {guards, tokens} = guards_foldl(guards, tokens, opts)
+    if case_type == :case do
+      {guards, tokens} = guards_foldl(guards, tokens, opts)
 
-    # NOTE take a look at this returned tokens
-    # 
-    {args, _tokens} =
-      if not :erl_anno.generated(anno) do
-        foldl(args, tokens, opts)
-      else
-        {args, tokens}
-      end
+      # NOTE take a look at this returned tokens
+      # 
+      {args, _tokens} =
+        if not :erl_anno.generated(anno) do
+          foldl(args, tokens, opts)
+        else
+          {args, tokens}
+        end
 
-    {children, tokens} = children |> foldl(tokens, opts)
+      {children, tokens} = children |> foldl(tokens, opts)
 
-    {:clause, anno, args, guards, children}
-    |> pass_tokens(tokens)
+      {:clause, anno, args, guards, children}
+      |> pass_tokens(tokens)
+    else
+      {children, tokens} = children |> foldl(tokens, opts)
+
+      {:clause, anno, args, guards, children}
+      |> pass_tokens(tokens)
+    end
   end
 
-  defp mapper({:block, line, body}, tokens, opts) do
-    # FIXME
-    # could have no line
-    {:ok, line} = if line == 0, do: Keyword.fetch(opts, :line), else: {:ok, line}
+  defp mapper({:block, anno, body}, tokens, opts) do
+    {:ok, line} = get_line(anno, opts)
+    anno = :erl_anno.set_line(line, anno)
 
     {body, tokens} = foldl(body, tokens, opts)
 
-    {:block, line, body}
+    {:block, anno, body}
     |> pass_tokens(tokens)
   end
 
@@ -211,13 +224,9 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
-  defp mapper({:cons, line, value, more} = cons, tokens, opts) when is_integer(line) do
-    # could have no line
-    {:ok, line} =
-      case line do
-        0 -> Keyword.fetch(opts, :line)
-        l -> {:ok, l}
-      end
+  defp mapper({:cons, anno, value, more} = cons, tokens, opts) do
+    {:ok, line} = get_line(anno, opts)
+    anno = :erl_anno.set_line(line, anno)
 
     tokens = drop_tokens_to_line(tokens, line)
 
@@ -229,19 +238,20 @@ defmodule GradualizerEx.SpecifyErlAst do
         list_foldl(cons, tokens, opts)
 
       {:charlist, tokens} ->
-        {:cons, line, value, more}
+        {:cons, anno, value, more}
         |> specify_line(tokens)
 
       :undefined ->
         Logger.warn("Undefined cons type #{inspect(cons)} -- #{inspect(Enum.take(tokens, 5))}")
 
-        {:cons, line, value, more}
+        {:cons, anno, value, more}
         |> pass_tokens(tokens)
     end
   end
 
-  defp mapper({:tuple, line, elements}, tokens, opts) when is_integer(line) do
-    # TODO find out when line for tuple is 0
+  defp mapper({:tuple, anno, elements}, tokens, opts) do
+    {:ok, line} = get_line(anno, opts)
+    anno = :erl_anno.set_line(line, anno)
     {:ok, line} = if line == 0, do: Keyword.fetch(opts, :line), else: {:ok, line}
 
     tokens
@@ -252,11 +262,11 @@ defmodule GradualizerEx.SpecifyErlAst do
         line = get_line_from_token(t)
         {elements, tokens} = foldl(elements, tokens, opts)
 
-        {:tuple, line, elements}
+        {:tuple, anno, elements}
         |> pass_tokens(tokens)
 
       :undefined ->
-        {:tuple, line, elements}
+        {:tuple, anno, elements}
         |> pass_tokens(tokens)
     end
   end
@@ -429,18 +439,20 @@ defmodule GradualizerEx.SpecifyErlAst do
   """
   @spec list_foldl(form(), [token()], options()) :: {form(), tokens()}
 
-  def list_foldl({:cons, line, value, tail}, tokens, opts) do
+  def list_foldl({:cons, anno, value, tail}, tokens, opts) do
     {new_value, tokens} = mapper(value, tokens, opts)
 
     line =
-      case line do
+      case :erl_anno.line(anno) do
         0 -> elem(new_value, 1)
         l -> l
       end
 
+    anno = :erl_anno.set_line(line, anno)
+
     {tail, tokens} = list_foldl(tail, tokens, opts)
 
-    {:cons, line, new_value, tail}
+    {:cons, anno, new_value, tail}
     |> pass_tokens(tokens)
   end
 
@@ -449,14 +461,15 @@ defmodule GradualizerEx.SpecifyErlAst do
   @doc """
   Drop tokens to the first conditional occurance. Returns type of the encountered conditional and following tokens.
   """
-  @spec get_conditional([token()]) ::
+  @spec get_conditional([token()], integer()) ::
           {:case, [token()]}
           | {:cond, [token()]}
           | {:unless, [token()]}
           | {:if, [token()]}
+          | {:with, [token()]}
           | :undefined
-  def get_conditional(tokens) do
-    conditionals = [:if, :unless, :cond, :case]
+  def get_conditional(tokens, line) do
+    conditionals = [:if, :unless, :cond, :case, :with]
 
     Enum.drop_while(tokens, fn
       {:do_identifier, _, c} -> c not in conditionals
@@ -465,7 +478,7 @@ defmodule GradualizerEx.SpecifyErlAst do
       _ -> true
     end)
     |> case do
-      [token | _] = tokens -> {elem(token, 2), tokens}
+      [token | _] = tokens when elem(elem(token, 1), 0) == line -> {elem(token, 2), tokens}
       _ -> :undefined
     end
   end
@@ -509,6 +522,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   @spec specify_line(form(), [token()]) :: {form(), [token()]}
+  # def specify_line(form, []), do: raise("ehh -- #{inspect form}")
   def specify_line(form, tokens) do
     if not :erl_anno.generated(elem(form, 1)) do
       Logger.debug("#{inspect(form)} --- #{inspect(tokens, limit: :infinity)}")
@@ -547,6 +561,11 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp match_token_to_form({:atom, {l1, _, _}, v1}, {:atom, l2, v2}) do
+    l2 = :erl_anno.line(l2)
+    l2 <= l1 && v1 == v2
+  end
+
+  defp match_token_to_form({:alias, {l1, _, _}, v1}, {:atom, l2, v2}) do
     l2 = :erl_anno.line(l2)
     l2 <= l1 && v1 == v2
   end
@@ -602,6 +621,10 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp take_loc_from_token({:atom, {line, _, _}, _}, {:atom, _, value}) do
+    {:atom, line, value}
+  end
+
+  defp take_loc_from_token({:alias, {line, _, _}, _}, {:atom, _, value}) do
     {:atom, line, value}
   end
 
