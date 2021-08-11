@@ -86,8 +86,7 @@ defmodule GradualizerEx.SpecifyErlAst do
           :erl_parse.abstract_form()
         ]
   def add_missing_loc_literals(forms, tokens) do
-    {:ok, ast} = :elixir.tokens_to_quoted(tokens, "", token_metadata: true)
-    opts = [ast: ast]
+    opts = []
     Enum.map(forms, fn x -> mapper(x, tokens, opts) |> elem(0) end)
   end
 
@@ -189,7 +188,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp mapper({:block, anno, body}, tokens, opts) do
-    {:ok, line} = get_line(anno, opts)
+    {:ok, line, _} = get_line(anno, opts)
     anno = :erl_anno.set_line(line, anno)
 
     {body, tokens} = foldl(body, tokens, opts)
@@ -225,7 +224,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp mapper({:cons, anno, value, more} = cons, tokens, opts) do
-    {:ok, line} = get_line(anno, opts)
+    {:ok, line, _} = get_line(anno, opts)
     anno = :erl_anno.set_line(line, anno)
 
     tokens = drop_tokens_to_line(tokens, line)
@@ -250,16 +249,23 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp mapper({:tuple, anno, elements}, tokens, opts) do
-    {:ok, line} = get_line(anno, opts)
+    {:ok, line, has_line?} = get_line(anno, opts)
     anno = :erl_anno.set_line(line, anno)
-    {:ok, line} = if line == 0, do: Keyword.fetch(opts, :line), else: {:ok, line}
+    opts = Keyword.put(opts, :line, line)
 
     tokens
     |> drop_tokens_to_line(line)
     |> get_tuple_from_tokens()
     |> case do
-      {:tuple, [t | _] = tokens} ->
-        line = get_line_from_token(t)
+      {:tuple, tokens} ->
+        {anno, opts} =
+          if not has_line? do
+            line = get_line_from_token(hd(tokens))
+            {:erl_anno.set_line(line, anno), Keyword.put(opts, :line, line)}
+          else
+            {anno, opts}
+          end
+
         {elements, tokens} = foldl(elements, tokens, opts)
 
         {:tuple, anno, elements}
@@ -337,7 +343,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp mapper({:bin, anno, elements}, tokens, opts) do
-    {:ok, line} = get_line(anno, opts)
+    {:ok, line, _} = get_line(anno, opts)
     anno = :erl_anno.set_line(line, anno)
 
     # TODO find a way to merge this cases
@@ -425,7 +431,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   def bin_element({:bin_element, anno, value, size, tsl}, tokens, opts) do
-    {:ok, line} = get_line(anno, opts)
+    {:ok, line, _} = get_line(anno, opts)
     anno = :erl_anno.set_line(line, anno)
     opts = Keyword.put(opts, :line, line)
     {value, tokens} = mapper(value, tokens, opts)
@@ -439,16 +445,12 @@ defmodule GradualizerEx.SpecifyErlAst do
   """
   @spec list_foldl(form(), [token()], options()) :: {form(), tokens()}
 
-  def list_foldl({:cons, anno, value, tail}, tokens, opts) do
-    {new_value, tokens} = mapper(value, tokens, opts)
-
-    line =
-      case :erl_anno.line(anno) do
-        0 -> elem(new_value, 1)
-        l -> l
-      end
-
+  def list_foldl({:cons, anno, value, tail}, [token | _] = tokens, opts) do
+    line = get_line_from_token(token)
+    opts = Keyword.put(opts, :line, line)
     anno = :erl_anno.set_line(line, anno)
+
+    {new_value, tokens} = mapper(value, tokens, opts)
 
     {tail, tokens} = list_foldl(tail, tokens, opts)
 
@@ -497,7 +499,7 @@ defmodule GradualizerEx.SpecifyErlAst do
       end)
 
     case res do
-      [{:"[", _} | list] -> {:list, list}
+      [{:"[", _} | _] = list -> {:list, list}
       [{:list_string, _, _} | _] = list -> {:charlist, list}
       [{:kw_identifier, _, _} | _] = list -> {:keyword, list}
       _ -> :undefined
@@ -669,13 +671,17 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   def charlist_set_loc({nil, loc}, _), do: {nil, loc}
 
+  # @spec get_line(any(), options()) :: {:ok, \c 
   def get_line(anno, opts) do
     case :erl_anno.line(anno) do
       0 ->
-        Keyword.fetch(opts, :line)
+        case Keyword.fetch(opts, :line) do
+          {:ok, line} -> {:ok, line, false}
+          err -> err
+        end
 
       line ->
-        {:ok, line}
+        {:ok, line, true}
     end
   end
 end

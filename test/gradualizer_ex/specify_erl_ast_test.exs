@@ -1015,7 +1015,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                      {:clauses,
                       [
                         {:clause, 2,
-                         [{:tuple, 5, [{:var, 2, :_@2}, {:var, 2, :_@3}]}, {:var, 2, :_@4}], [],
+                         [{:tuple, 2, [{:var, 2, :_@2}, {:var, 2, :_@3}]}, {:var, 2, :_@4}], [],
                          [
                            {:call, 2, {:remote, 2, {:atom, 0, :maps}, {:atom, 2, :update}},
                             [{:var, 2, :_@2}, {:var, 2, :_@3}, {:var, 2, :_@4}]}
@@ -1035,14 +1035,14 @@ defmodule GradualizerEx.SpecifyErlAstTest do
     assert {:function, 7, :empty, 0,
             [
               {:clause, 7, [], [],
-               [{:tuple, 12, [{:atom, 7, :record_ex}, {:integer, 7, 0}, {:integer, 7, 0}]}]}
+               [{:tuple, 8, [{:atom, 8, :record_ex}, {:integer, 8, 0}, {:integer, 8, 0}]}]}
               # FIXME Should be a tuple with line 7, not 12. The line is taken from a token that is in another scope. Related to the cutting out tokens at the bottom
             ]} = empty
 
     assert {:function, 11, :init, 0,
             [
               {:clause, 11, [], [],
-               [{:tuple, 12, [{:atom, 11, :record_ex}, {:integer, 12, 1}, {:integer, 11, 0}]}]}
+               [{:tuple, 12, [{:atom, 12, :record_ex}, {:integer, 12, 1}, {:integer, 12, 0}]}]}
             ]} = init
 
     assert {:function, 5, :"MACRO-record_ex", 1,
