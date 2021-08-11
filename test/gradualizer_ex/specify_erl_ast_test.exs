@@ -619,13 +619,13 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                   [
                     {:call, 4, {:remote, 4, {:atom, 0, Enum}, {:atom, 4, :filter}},
                      [
-                       {:cons, 4, {:integer, 0, 1},
-                        {:cons, 0,
+                       {:cons, 4, {:integer, 4, 1},
+                        {:cons, 4,
                          {
                            :integer,
-                           0,
+                           4,
                            2
-                         }, {:cons, 0, {:integer, 0, 3}, {nil, 0}}}},
+                         }, {:cons, 4, {:integer, 4, 3}, {nil, 0}}}},
                        {:fun, 4,
                         {:clauses,
                          [

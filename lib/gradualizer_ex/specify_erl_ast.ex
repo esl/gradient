@@ -158,7 +158,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     # anno has line
     # FIXME Handle generated clauses. Right now the literals inherit lines 
     # from the parents without checking them with tokens 
-    
+
     {:ok, line, anno, opts, _} = get_line(anno, opts)
     case_type = Keyword.get(opts, :case_type, :case)
 
@@ -248,10 +248,13 @@ defmodule GradualizerEx.SpecifyErlAst do
         |> specify_line(tokens)
 
       :undefined ->
-        Logger.warn("Undefined cons type #{inspect(cons)} -- #{inspect(Enum.take(tokens, 5))}")
+        Logger.warn(
+          "Cons not found in tokens. Undefined cons type #{inspect(cons)} -- #{inspect(Enum.take(tokens, 5))}"
+        )
 
-        {:cons, anno, value, more}
-        |> pass_tokens(tokens)
+        {form, _} = list_foldl(cons, tokens, opts)
+
+        pass_tokens(form, tokens)
     end
   end
 
