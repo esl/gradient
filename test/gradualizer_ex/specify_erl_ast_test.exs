@@ -151,7 +151,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
     test "tuple" do
       {tokens, ast} = load("/Elixir.Tuple.beam", "/tuple.ex")
 
-      [tuple_in_str2, tuple_in_str, tuple_in_list, tuple | _] =
+      [tuple_in_str2, tuple_in_str, tuple_in_list, _list_in_tuple, tuple | _] =
         SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
       # FIXME
@@ -359,7 +359,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
     test "if conditional" do
       {tokens, ast} = load("/conditional/Elixir.Conditional.If.beam", "/conditional/if.ex")
 
-      [inline, block, if_ | _] =
+      [block, inline, if_ | _] =
         SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
       assert {:function, 12, :if_block, 0,
@@ -589,7 +589,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "function call" do
     {tokens, ast} = load("/Elixir.Call.beam", "/call.ex")
 
-    [_, block | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [call, _ | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 5, :call, 0,
             [
@@ -603,7 +603,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                     {:integer, 9, 12}
                   ]}
                ]}
-            ]} = block
+            ]} = call
   end
 
   test "pipe" do
@@ -641,7 +641,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "guards" do
     {tokens, ast} = load("/conditional/Elixir.Conditional.Guard.beam", "/conditional/guards.ex")
 
-    [guarded_fun, guarded_case | _] =
+    [guarded_case, guarded_fun | _] =
       SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 3, :guarded_fun, 1,
@@ -730,7 +730,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "list" do
     {tokens, ast} = load("/Elixir.ListEx.beam", "/list.ex")
 
-    [_wrap, list, ht2, ht | _] =
+    [ht2, ht, list, _wrap | _] =
       SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 5, :list, 0,
@@ -848,7 +848,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "map" do
     {tokens, ast} = load("/Elixir.MapEx.beam", "/map.ex")
 
-    [test_map_str, test_map, pattern_matching_str, pattern_matching, empty_map | _] =
+    [pattern_matching_str, pattern_matching, test_map_str, test_map, empty_map | _] =
       SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 2, :empty_map, 0, [{:clause, 2, [], [], [{:map, 3, []}]}]} = empty_map
@@ -912,7 +912,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "struct" do
     {tokens, ast} = load("/struct/Elixir.StructEx.beam", "/struct/struct.ex")
 
-    [update, get2, get, empty, struct | _] =
+    [get2, get, update, empty, struct | _] =
       SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 8, :update, 0,
@@ -1029,7 +1029,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "record" do
     {tokens, ast} = load("/record/Elixir.RecordEx.beam", "/record/record.ex")
 
-    [update, macro3, macro2, macro1, init, empty | _] =
+    [update, init, empty, macro3, macro2, macro1 | _] =
       SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 7, :empty, 0,
@@ -1111,7 +1111,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "receive" do
     {tokens, ast} = load("/Elixir.Receive.beam", "/receive.ex")
 
-    [recv2, recv | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [recv, recv2 | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 2, :recv2, 0,
             [

@@ -86,16 +86,50 @@ defmodule GradualizerEx.SpecifyErlAst do
         ]
   def add_missing_loc_literals(forms, tokens) do
     opts = []
-    Enum.map(forms, fn x -> mapper(x, tokens, opts) |> elem(0) end)
+
+    forms
+    |> prepare_forms_order()
+    |> context_mapper_map(tokens, opts)
   end
 
-  @spec foldl([form()], [token()], options()) :: {[form()], [token()]}
-  defp foldl(forms, tokens, opts) do
-    List.foldl(forms, {[], tokens}, fn form, {acc_forms, acc_tokens} ->
-      {res_form, res_tokens} = mapper(form, acc_tokens, opts)
-      {[res_form | acc_forms], res_tokens}
-    end)
-    |> update_in([Access.elem(0)], &Enum.reverse/1)
+  @doc """
+  Map over the forms using mapper and attach a context i.e. end line. 
+  """
+  @spec context_mapper_map(forms(), tokens(), options()) :: forms()
+  def context_mapper_map([], _tokens, _opts), do: []
+
+  def context_mapper_map([form | forms], tokens, opts) do
+    next_form_start = get_first_available_line(forms)
+    cur_opts = Keyword.put(opts, :end_line, next_form_start)
+    {form, _} = mapper(form, tokens, cur_opts)
+    [form | context_mapper_map(forms, tokens, opts)]
+  end
+
+  @doc """
+    Fold over the forms using mapper and attach a context i.e. end line.
+  """
+  @spec context_mapper_fold(forms(), tokens(), options()) :: {forms(), tokens()}
+  def context_mapper_fold([], tokens, _opts), do: {[], tokens}
+
+  def context_mapper_fold([form | forms], tokens, opts) do
+    next_form_start = get_first_available_line(forms)
+    cur_opts = Keyword.put(opts, :end_line, next_form_start)
+    {form, new_tokens} = mapper(form, tokens, cur_opts)
+    {forms, res_tokens} = context_mapper_fold(forms, new_tokens, opts)
+    {[form | forms], res_tokens}
+  end
+
+  def get_first_available_line(forms) do
+    case Enum.find(forms, fn f -> :erl_anno.line(elem(f, 1)) > 0 end) do
+      nil -> nil
+      form -> :erl_anno.line(elem(form, 1))
+    end
+  end
+
+  def prepare_forms_order(forms) do
+    forms
+    |> Enum.sort(fn l, r -> elem(l, 0) == elem(r, 0) and elem(l, 1) > elem(r, 1) end)
+    |> Enum.reverse()
   end
 
   @spec pass_tokens(any(), tokens()) :: {any(), tokens()}
@@ -113,7 +147,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   defp mapper({:function, anno, name, arity, clauses}, tokens, opts) do
     # anno has line
-    {clauses, tokens} = foldl(clauses, tokens, opts)
+    {clauses, tokens} = context_mapper_fold(clauses, tokens, opts)
 
     {:function, anno, name, arity, clauses}
     |> pass_tokens(tokens)
@@ -121,7 +155,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
   defp mapper({:fun, anno, {:clauses, clauses}}, tokens, opts) do
     # anno has line
-    {clauses, tokens} = foldl(clauses, tokens, opts)
+    {clauses, tokens} = context_mapper_fold(clauses, tokens, opts)
 
     {:fun, anno, {:clauses, clauses}}
     |> pass_tokens(tokens)
@@ -171,17 +205,17 @@ defmodule GradualizerEx.SpecifyErlAst do
       # 
       {args, _tokens} =
         if not :erl_anno.generated(anno) do
-          foldl(args, tokens, opts)
+          context_mapper_fold(args, tokens, opts)
         else
           {args, tokens}
         end
 
-      {children, tokens} = children |> foldl(tokens, opts)
+      {children, tokens} = children |> context_mapper_fold(tokens, opts)
 
       {:clause, anno, args, guards, children}
       |> pass_tokens(tokens)
     else
-      {children, tokens} = children |> foldl(tokens, opts)
+      {children, tokens} = children |> context_mapper_fold(tokens, opts)
 
       {:clause, anno, args, guards, children}
       |> pass_tokens(tokens)
@@ -192,7 +226,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     # TODO check if anno has line
     {:ok, _line, anno, opts, _} = get_line(anno, opts)
 
-    {body, tokens} = foldl(body, tokens, opts)
+    {body, tokens} = context_mapper_fold(body, tokens, opts)
 
     {:block, anno, body}
     |> pass_tokens(tokens)
@@ -269,7 +303,7 @@ defmodule GradualizerEx.SpecifyErlAst do
       {:tuple, tokens} ->
         {anno, opts} = update_line_from_tokens(tokens, anno, opts, has_line?)
 
-        {elements, tokens} = foldl(elements, tokens, opts)
+        {elements, tokens} = context_mapper_fold(elements, tokens, opts)
 
         {:tuple, anno, elements}
         |> pass_tokens(tokens)
@@ -284,7 +318,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
-    {clauses, tokens} = foldl(clauses, tokens, opts)
+    {clauses, tokens} = context_mapper_fold(clauses, tokens, opts)
 
     {:receive, anno, clauses}
     |> pass_tokens(tokens)
@@ -296,9 +330,9 @@ defmodule GradualizerEx.SpecifyErlAst do
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
     # FIXME Use when losing tokens will be fixed
-    {clauses, _tokens} = foldl(clauses, tokens, opts)
+    {clauses, _tokens} = context_mapper_fold(clauses, tokens, opts)
     {after_val, tokens} = mapper(after_val, tokens, opts)
-    {after_block, tokens} = foldl(after_block, tokens, opts)
+    {after_block, tokens} = context_mapper_fold(after_block, tokens, opts)
 
     {:receive, anno, clauses, after_val, after_block}
     |> pass_tokens(tokens)
@@ -308,7 +342,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
-    {body, _tokens} = foldl(body, tokens, opts)
+    {body, _tokens} = context_mapper_fold(body, tokens, opts)
 
     # {catchers, _tokens} = foldl(catchers, tokens, opts)
     catchers = Enum.map(catchers, fn x -> mapper(x, tokens, opts) |> elem(0) end)
@@ -321,7 +355,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
-    {args, tokens} = foldl(args, tokens, opts)
+    {args, tokens} = context_mapper_fold(args, tokens, opts)
 
     {:call, anno, name, args}
     |> pass_tokens(tokens)
