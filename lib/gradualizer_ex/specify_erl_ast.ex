@@ -85,7 +85,7 @@ defmodule GradualizerEx.SpecifyErlAst do
           :erl_parse.abstract_form()
         ]
   def add_missing_loc_literals(forms, tokens) do
-    opts = []
+    opts = [end_line: -1]
 
     forms
     |> prepare_forms_order()
@@ -96,33 +96,33 @@ defmodule GradualizerEx.SpecifyErlAst do
   Map over the forms using mapper and attach a context i.e. end line. 
   """
   @spec context_mapper_map(forms(), tokens(), options()) :: forms()
-  def context_mapper_map([], _tokens, _opts), do: []
+  def context_mapper_map(forms, tokens, opts, mapper \\ &mapper/3)
+  def context_mapper_map([], _, _, _), do: []
 
-  def context_mapper_map([form | forms], tokens, opts) do
-    next_form_start = get_first_available_line(forms)
-    cur_opts = Keyword.put(opts, :end_line, next_form_start)
-    {form, _} = mapper(form, tokens, cur_opts)
-    [form | context_mapper_map(forms, tokens, opts)]
+  def context_mapper_map([form | forms], tokens, opts, mapper) do
+    cur_opts = set_form_end_line(opts, forms)
+    {form, _} = mapper.(form, tokens, cur_opts)
+    [form | context_mapper_map(forms, tokens, opts, mapper)]
   end
 
   @doc """
     Fold over the forms using mapper and attach a context i.e. end line.
   """
   @spec context_mapper_fold(forms(), tokens(), options()) :: {forms(), tokens()}
-  def context_mapper_fold([], tokens, _opts), do: {[], tokens}
+  def context_mapper_fold(forms, tokens, opts, mapper \\ &mapper/3)
+  def context_mapper_fold([], tokens, _, _), do: {[], tokens}
 
-  def context_mapper_fold([form | forms], tokens, opts) do
-    next_form_start = get_first_available_line(forms)
-    cur_opts = Keyword.put(opts, :end_line, next_form_start)
-    {form, new_tokens} = mapper(form, tokens, cur_opts)
-    {forms, res_tokens} = context_mapper_fold(forms, new_tokens, opts)
+  def context_mapper_fold([form | forms], tokens, opts, mapper) do
+    cur_opts = set_form_end_line(opts, forms)
+    {form, new_tokens} = mapper.(form, tokens, cur_opts)
+    {forms, res_tokens} = context_mapper_fold(forms, new_tokens, opts, mapper)
     {[form | forms], res_tokens}
   end
 
-  def get_first_available_line(forms) do
+  def set_form_end_line(opts, forms) do
     case Enum.find(forms, fn f -> :erl_anno.line(elem(f, 1)) > 0 end) do
-      nil -> nil
-      form -> :erl_anno.line(elem(form, 1))
+      nil -> opts
+      form -> Keyword.put(opts, :end_line, :erl_anno.line(elem(form, 1)))
     end
   end
 
@@ -182,7 +182,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     {new_condition, tokens} = mapper(condition, tokens, opts)
 
     # NOTE use map because generated clauses can be in wrong order
-    clauses = Enum.map(clauses, fn x -> mapper(x, tokens, opts) |> elem(0) end)
+    clauses = context_mapper_map(clauses, tokens, opts)
 
     {:case, anno, new_condition, clauses}
     |> pass_tokens(tokens)
@@ -199,7 +199,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     tokens = drop_tokens_to_line(tokens, line)
 
     if case_type == :case do
-      {guards, tokens} = guards_foldl(guards, tokens, opts)
+      {guards, tokens} = guards_mapper(guards, tokens, opts)
 
       # NOTE take a look at this returned tokens
       # 
@@ -246,7 +246,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
-    {pairs, tokens} = map_foldl(pairs, tokens, opts)
+    {pairs, tokens} = context_mapper_fold(pairs, tokens, opts, &map_element/3)
 
     {:map, anno, pairs}
     |> pass_tokens(tokens)
@@ -258,7 +258,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
     {map, tokens} = mapper(map, tokens, opts)
-    {pairs, tokens} = map_foldl(pairs, tokens, opts)
+    {pairs, tokens} = context_mapper_fold(pairs, tokens, opts, &map_element/3)
 
     {:map, anno, map, pairs}
     |> pass_tokens(tokens)
@@ -272,10 +272,10 @@ defmodule GradualizerEx.SpecifyErlAst do
 
     case get_list_from_tokens(tokens) do
       {:list, tokens} ->
-        list_foldl(cons, tokens, opts)
+        cons_mapper(cons, tokens, opts)
 
       {:keyword, tokens} ->
-        list_foldl(cons, tokens, opts)
+        cons_mapper(cons, tokens, opts)
 
       {:charlist, tokens} ->
         {:cons, anno, value, more}
@@ -283,10 +283,12 @@ defmodule GradualizerEx.SpecifyErlAst do
 
       :undefined ->
         Logger.warn(
-          "Cons not found in tokens. Undefined cons type #{inspect(cons)} -- #{inspect(Enum.take(tokens, 5))}"
+          "Cons not found in tokens. Undefined cons type #{inspect(cons)} -- #{
+            inspect(Enum.take(tokens, 5))
+          }"
         )
 
-        {form, _} = list_foldl(cons, tokens, opts)
+        {form, _} = cons_mapper(cons, tokens, opts)
 
         pass_tokens(form, tokens)
     end
@@ -345,7 +347,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     {body, _tokens} = context_mapper_fold(body, tokens, opts)
 
     # {catchers, _tokens} = foldl(catchers, tokens, opts)
-    catchers = Enum.map(catchers, fn x -> mapper(x, tokens, opts) |> elem(0) end)
+    catchers = context_mapper_map(catchers, tokens, opts)
 
     {:try, anno, body, [], catchers, []}
     |> pass_tokens(tokens)
@@ -393,8 +395,8 @@ defmodule GradualizerEx.SpecifyErlAst do
         |> specify_line(tokens)
 
       _ ->
-        tokens = cut_tokens_to_bin(tokens, line)
-        {elements, tokens} = bin_element_foldl(elements, tokens, opts)
+        tokens = tokens |> cut_tokens_to_bin(line) |> flat_tokens()
+        {elements, tokens} = context_mapper_fold(elements, tokens, opts, &bin_element/3)
 
         {:bin, anno, elements}
         |> pass_tokens(tokens)
@@ -424,10 +426,10 @@ defmodule GradualizerEx.SpecifyErlAst do
   @doc """
   Adds missing location to the literals in the guards
   """
-  @spec guards_foldl([form()], [token()], options()) :: {[form()], [token()]}
-  def guards_foldl([], tokens, _opts), do: {[], tokens}
+  @spec guards_mapper([form()], [token()], options()) :: {[form()], [token()]}
+  def guards_mapper([], tokens, _opts), do: {[], tokens}
 
-  def guards_foldl(guards, tokens, opts) do
+  def guards_mapper(guards, tokens, opts) do
     List.foldl(guards, {[], tokens}, fn
       [guard], {gs, tokens} ->
         {g, ts} = mapper(guard, tokens, opts)
@@ -437,14 +439,6 @@ defmodule GradualizerEx.SpecifyErlAst do
         Logger.error("Unsupported guards format #{inspect(gs)}")
         {gs ++ ags, ts}
     end)
-  end
-
-  def map_foldl(pairs, tokens, opts) do
-    List.foldl(pairs, {[], tokens}, fn p, {ps, ts} ->
-      {p, ts} = map_element(p, ts, opts)
-      {[p | ps], ts}
-    end)
-    |> update_in([Access.elem(0)], &Enum.reverse/1)
   end
 
   def map_element({field, anno, key, value}, tokens, opts)
@@ -459,16 +453,6 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
-  def bin_element_foldl(elements, tokens, opts) do
-    tokens = flat_tokens(tokens)
-
-    List.foldl(elements, {[], tokens}, fn e, {es, ts} ->
-      {e, ts} = bin_element(e, ts, opts)
-      {[e | es], ts}
-    end)
-    |> update_in([Access.elem(0)], &Enum.reverse/1)
-  end
-
   def bin_element({:bin_element, anno, value, size, tsl}, tokens, opts) do
     {:ok, _line, anno, opts, _} = get_line(anno, opts)
 
@@ -481,22 +465,22 @@ defmodule GradualizerEx.SpecifyErlAst do
   @doc """
   Iterate over the list in abstract code format and runs mapper on each element 
   """
-  @spec list_foldl(form(), [token()], options()) :: {form(), tokens()}
+  @spec cons_mapper(form(), [token()], options()) :: {form(), tokens()}
 
-  def list_foldl({:cons, anno, value, tail}, tokens, opts) do
+  def cons_mapper({:cons, anno, value, tail}, tokens, opts) do
     {:ok, _, anno, opts, has_line?} = get_line(anno, opts)
 
     {anno, opts} = update_line_from_tokens(tokens, anno, opts, has_line?)
 
     {new_value, tokens} = mapper(value, tokens, opts)
 
-    {tail, tokens} = list_foldl(tail, tokens, opts)
+    {tail, tokens} = cons_mapper(tail, tokens, opts)
 
     {:cons, anno, new_value, tail}
     |> pass_tokens(tokens)
   end
 
-  def list_foldl(other, tokens, opts), do: mapper(other, tokens, opts)
+  def cons_mapper(other, tokens, opts), do: mapper(other, tokens, opts)
 
   @doc """
   Drop tokens to the first conditional occurance. Returns type of the encountered conditional and following tokens.

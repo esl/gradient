@@ -1,4 +1,30 @@
 defmodule GradualizerEx.Utils do
+  @moduledoc """
+  Utility functions that helps obtain info about location from data 
+  """
+
+  @doc """
+  Drop tokens till the matcher returns false or the token's line exceeds the limit.
+  """
+  def drop_tokens_while([], _matcher, _limit_line), do: []
+
+  def drop_tokens_while([token | tokens] = all, matcher, limit_line) do
+    line = get_line_from_token(token)
+
+    limit_passed = limit_line < 0 or line < limit_line
+
+    cond do
+      matcher.(token) and limit_passed ->
+        drop_tokens_while(tokens, matcher, limit_line)
+
+      not limit_passed ->
+        []
+
+      true ->
+        all
+    end
+  end
+
   def drop_tokens_to_line(tokens, line) do
     Enum.drop_while(tokens, fn t ->
       elem(elem(t, 1), 0) < line
@@ -10,22 +36,7 @@ defmodule GradualizerEx.Utils do
   def get_line_from_form(form) do
     form
     |> elem(1)
-    |> get_line_from_loc()
-  end
-
-  def get_line_from_loc(loc) when is_integer(loc), do: loc
-
-  def get_line_from_loc(loc) do
-    {:ok, line} = Keyword.fetch(loc, :location)
-    line
-  end
-
-  def was_generate?(meta) when is_integer(meta), do: false
-  def was_generate?(meta), do: Keyword.get(meta, :generated, false)
-
-  def sort_forms(forms) do
-    forms
-    |> Enum.sort_by(&get_line_from_form/1)
+    |> :erl_anno.line()
   end
 
   def cut_tokens_to_bin(tokens, line) do
@@ -80,9 +91,4 @@ defmodule GradualizerEx.Utils do
         [token]
     end
   end
-
-  # def concat_bit_string(tokens) do
-  # tokens
-  # |> Enum.map(fn {:bin_string loc, s} -> )
-  # end
 end
