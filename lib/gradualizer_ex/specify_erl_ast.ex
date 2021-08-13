@@ -100,7 +100,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   def context_mapper_map([], _, _, _), do: []
 
   def context_mapper_map([form | forms], tokens, opts, mapper) do
-    cur_opts = set_form_end_line(opts, forms)
+    cur_opts = set_form_end_line(opts, form, forms)
     {form, _} = mapper.(form, tokens, cur_opts)
     [form | context_mapper_map(forms, tokens, opts, mapper)]
   end
@@ -113,16 +113,33 @@ defmodule GradualizerEx.SpecifyErlAst do
   def context_mapper_fold([], tokens, _, _), do: {[], tokens}
 
   def context_mapper_fold([form | forms], tokens, opts, mapper) do
-    cur_opts = set_form_end_line(opts, forms)
+    cur_opts = set_form_end_line(opts, form, forms)
     {form, new_tokens} = mapper.(form, tokens, cur_opts)
     {forms, res_tokens} = context_mapper_fold(forms, new_tokens, opts, mapper)
     {[form | forms], res_tokens}
   end
 
-  def set_form_end_line(opts, forms) do
-    case Enum.find(forms, fn f -> :erl_anno.line(elem(f, 1)) > 0 end) do
-      nil -> opts
-      form -> Keyword.put(opts, :end_line, :erl_anno.line(elem(form, 1)))
+  def set_form_end_line(opts, form, forms) do
+    case Enum.find(forms, fn f ->
+           anno = elem(f, 1)
+
+           # Maybe should try to go deeper when generated and try to obtain 
+           # the line from the first child. It should work for sure for clauses, 
+           # but it has to be in the right order (e.g. if clauses are reversed)
+           :erl_anno.line(anno) > 0 and not :erl_anno.generated(anno)
+         end) do
+      nil ->
+        opts
+
+      next_form ->
+        current_line = :erl_anno.line(elem(form, 1))
+        next_line = :erl_anno.line(elem(next_form, 1))
+
+        if current_line == next_line do
+          Keyword.put(opts, :end_line, next_line + 1)
+        else
+          Keyword.put(opts, :end_line, next_line)
+        end
     end
   end
 
@@ -168,7 +185,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     {:ok, line, anno, opts, _} = get_line(anno, opts)
 
     opts =
-      case get_conditional(tokens, line) do
+      case get_conditional(tokens, line, opts) do
         {type, _} when type in [:case, :with] ->
           Keyword.put(opts, :case_type, :case)
 
@@ -270,7 +287,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
     tokens = drop_tokens_to_line(tokens, line)
 
-    case get_list_from_tokens(tokens) do
+    case get_list_from_tokens(tokens, opts) do
       {:list, tokens} ->
         cons_mapper(cons, tokens, opts)
 
@@ -279,16 +296,14 @@ defmodule GradualizerEx.SpecifyErlAst do
 
       {:charlist, tokens} ->
         {:cons, anno, value, more}
-        |> specify_line(tokens)
+        |> specify_line(tokens, opts)
 
       :undefined ->
         Logger.warn(
-          "Cons not found in tokens. Undefined cons type #{inspect(cons)} -- #{
-            inspect(Enum.take(tokens, 5))
-          }"
+          "Cons not found in tokens. Undefined cons type #{inspect(cons)} -- #{inspect(Enum.take(tokens, 5))}"
         )
 
-        {form, _} = cons_mapper(cons, tokens, opts)
+        {form, _} = cons_mapper(cons, [], opts)
 
         pass_tokens(form, tokens)
     end
@@ -300,7 +315,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
     tokens
     |> drop_tokens_to_line(line)
-    |> get_tuple_from_tokens()
+    |> get_tuple_from_tokens(opts)
     |> case do
       {:tuple, tokens} ->
         {anno, opts} = update_line_from_tokens(tokens, anno, opts, has_line?)
@@ -311,6 +326,8 @@ defmodule GradualizerEx.SpecifyErlAst do
         |> pass_tokens(tokens)
 
       :undefined ->
+        elements = context_mapper_map(elements, [], opts)
+
         {:tuple, anno, elements}
         |> pass_tokens(tokens)
     end
@@ -392,7 +409,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     case elements do
       [{:bin_element, _, {:string, _, _}, :default, :default}] = e ->
         {:bin, anno, e}
-        |> specify_line(tokens)
+        |> specify_line(tokens, opts)
 
       _ ->
         tokens = tokens |> cut_tokens_to_bin(line) |> flat_tokens()
@@ -409,7 +426,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     {:ok, line} = Keyword.fetch(opts, :line)
 
     {type, line, value}
-    |> specify_line(tokens)
+    |> specify_line(tokens, opts)
   end
 
   defp mapper(skip, tokens, _opts) when elem(skip, 0) in [:fun, :attribute, :var, nil] do
@@ -485,17 +502,18 @@ defmodule GradualizerEx.SpecifyErlAst do
   @doc """
   Drop tokens to the first conditional occurance. Returns type of the encountered conditional and following tokens.
   """
-  @spec get_conditional([token()], integer()) ::
+  @spec get_conditional([token()], integer(), options()) ::
           {:case, [token()]}
           | {:cond, [token()]}
           | {:unless, [token()]}
           | {:if, [token()]}
           | {:with, [token()]}
           | :undefined
-  def get_conditional(tokens, line) do
+  def get_conditional(tokens, line, opts) do
     conditionals = [:if, :unless, :cond, :case, :with]
+    {:ok, limit_line} = Keyword.fetch(opts, :end_line)
 
-    Enum.drop_while(tokens, fn
+    drop_tokens_while(tokens, limit_line, fn
       {:do_identifier, _, c} -> c not in conditionals
       {:paren_identifier, _, c} -> c not in conditionals
       {:identifier, _, c} -> c not in conditionals
@@ -507,13 +525,14 @@ defmodule GradualizerEx.SpecifyErlAst do
     end
   end
 
-  @spec get_list_from_tokens([token()]) ::
+  @spec get_list_from_tokens([token()], options()) ::
           {:list, [token()]} | {:keyword, [token()]} | {:charlist, [token()]} | :undefined
-  def get_list_from_tokens(tokens) do
+  def get_list_from_tokens(tokens, opts) do
     tokens = flat_tokens(tokens)
+    {:ok, limit_line} = Keyword.fetch(opts, :end_line)
 
     res =
-      Enum.drop_while(tokens, fn
+      drop_tokens_while(tokens, limit_line, fn
         {:"[", _} -> false
         {:list_string, _, _} -> false
         {:kw_identifier, _, id} when id not in [:do] -> false
@@ -528,11 +547,13 @@ defmodule GradualizerEx.SpecifyErlAst do
     end
   end
 
-  @spec get_tuple_from_tokens([token()]) ::
-          {:tuple, [token()]} | :undefined
-  def get_tuple_from_tokens(tokens) do
+  @spec get_tuple_from_tokens(tokens, options()) ::
+          {:tuple, tokens()} | :undefined
+  def get_tuple_from_tokens(tokens, opts) do
+    {:ok, limit_line} = Keyword.fetch(opts, :end_line)
+
     res =
-      Enum.drop_while(tokens, fn
+      drop_tokens_while(tokens, limit_line, fn
         {:"{", _} -> false
         {:kw_identifier, _, _} -> false
         _ -> true
@@ -545,15 +566,14 @@ defmodule GradualizerEx.SpecifyErlAst do
     end
   end
 
-  @spec specify_line(form(), [token()]) :: {form(), [token()]}
+  @spec specify_line(form(), [token()], options()) :: {form(), [token()]}
   # def specify_line(form, []), do: raise("ehh -- #{inspect form}")
-  def specify_line(form, tokens) do
+  def specify_line(form, tokens, opts) do
     if not :erl_anno.generated(elem(form, 1)) do
       Logger.debug("#{inspect(form)} --- #{inspect(tokens, limit: :infinity)}")
+      {:ok, end_line} = Keyword.fetch(opts, :end_line)
 
-      res =
-        tokens
-        |> Enum.drop_while(&(!match_token_to_form(&1, form)))
+      res = drop_tokens_while(tokens, end_line, &(!match_token_to_form(&1, form)))
 
       case res do
         [token | tokens] ->

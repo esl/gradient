@@ -6,16 +6,17 @@ defmodule GradualizerEx.Utils do
   @doc """
   Drop tokens till the matcher returns false or the token's line exceeds the limit.
   """
-  def drop_tokens_while([], _matcher, _limit_line), do: []
+  def drop_tokens_while(tokens, limit_line \\ -1, matcher)
+  def drop_tokens_while([], _, _), do: []
 
-  def drop_tokens_while([token | tokens] = all, matcher, limit_line) do
+  def drop_tokens_while([token | tokens] = all, limit_line, matcher) do
     line = get_line_from_token(token)
 
     limit_passed = limit_line < 0 or line < limit_line
 
     cond do
       matcher.(token) and limit_passed ->
-        drop_tokens_while(tokens, matcher, limit_line)
+        drop_tokens_while(tokens, limit_line, matcher)
 
       not limit_passed ->
         []
@@ -42,7 +43,7 @@ defmodule GradualizerEx.Utils do
   def cut_tokens_to_bin(tokens, line) do
     tokens = drop_tokens_to_line(tokens, line)
 
-    Enum.drop_while(tokens, fn
+    drop_tokens_while(tokens, fn
       {:"<<", _} -> false
       {:bin_string, _, _} -> false
       _ -> true

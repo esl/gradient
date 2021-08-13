@@ -16,22 +16,21 @@ defmodule GradualizerEx.UtilsTest do
     assert [] =
              Utils.drop_tokens_while(
                tokens,
-               matcher,
-               5
+               5,
+               matcher
              )
 
     refute [] ==
              Utils.drop_tokens_while(
                tokens,
-               matcher,
-               6
+               6,
+               matcher
              )
 
     refute [] ==
              Utils.drop_tokens_while(
                tokens,
-               matcher,
-               -1
+               matcher
              )
   end
 
