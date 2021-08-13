@@ -429,7 +429,19 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> specify_line(tokens, opts)
   end
 
-  defp mapper(skip, tokens, _opts) when elem(skip, 0) in [:fun, :attribute, :var, nil, :atom, :char, :float, :integer, :string, :bin] do
+  defp mapper(skip, tokens, _opts)
+       when elem(skip, 0) in [
+              :fun,
+              :attribute,
+              :var,
+              nil,
+              :atom,
+              :char,
+              :float,
+              :integer,
+              :string,
+              :bin
+            ] do
     # NOTE fun - I skipped here checking &name/arity or &module.name/arity
     # skip forms that don't need analysis and do not display warning
     pass_tokens(skip, tokens)
@@ -630,7 +642,7 @@ defmodule GradualizerEx.SpecifyErlAst do
          {:bin, l2, [{:bin_element, _, {:string, _, v2}, :default, :default}]}
        ) do
     # string
-    l2 <= l1 && to_charlist(v1) == v2
+    l2 <= l1 && :binary.bin_to_list(v1) == v2
   end
 
   defp match_token_to_form({:str, _, v}, {:string, _, v1}) do
@@ -646,7 +658,6 @@ defmodule GradualizerEx.SpecifyErlAst do
   end
 
   defp match_token_to_form(_, _) do
-    # IO.puts("#{inspect a} --- #{inspect b}")
     false
   end
 
