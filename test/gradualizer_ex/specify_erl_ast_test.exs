@@ -1206,7 +1206,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   end
 
   def example_string_tokens() do
-    file_path = @examples_path <> "/string_test.ex"
+    file_path = @examples_path <> "/string_example.ex"
 
     code =
       File.read!(file_path)

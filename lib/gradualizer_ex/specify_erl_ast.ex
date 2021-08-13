@@ -301,9 +301,7 @@ defmodule GradualizerEx.SpecifyErlAst do
 
       :undefined ->
         Logger.warn(
-          "Cons not found in tokens. Undefined cons type #{inspect(cons)} -- #{
-            inspect(Enum.take(tokens, 5))
-          }"
+          "Cons not found in tokens #{inspect(cons)} -- #{inspect(Enum.take(tokens, 5))}"
         )
 
         {form, _} = cons_mapper(cons, [], opts)
