@@ -16,20 +16,21 @@ defmodule GradualizerEx.SpecifyErlAstTest do
     test "case" do
       {tokens, _ast} = load("/conditional/Elixir.Conditional.Case.beam", "/conditional/case.ex")
       tokens = drop_tokens_to_line(tokens, 2)
-      assert {:case, _} = SpecifyErlAst.get_conditional(tokens, 4)
+      opts = [end_line: -1]
+      assert {:case, _} = SpecifyErlAst.get_conditional(tokens, 4, opts)
 
       tokens = drop_tokens_to_line(tokens, 9)
-      assert {:case, _} = SpecifyErlAst.get_conditional(tokens, 10)
+      assert {:case, _} = SpecifyErlAst.get_conditional(tokens, 10, opts)
     end
 
     test "if" do
       {tokens, _ast} = load("/conditional/Elixir.Conditional.If.beam", "/conditional/if.ex")
-
       tokens = drop_tokens_to_line(tokens, 2)
-      assert {:if, _} = SpecifyErlAst.get_conditional(tokens, 4)
+      opts = [end_line: -1]
+      assert {:if, _} = SpecifyErlAst.get_conditional(tokens, 4, opts)
 
       tokens = drop_tokens_to_line(tokens, 12)
-      assert {:if, _} = SpecifyErlAst.get_conditional(tokens, 13)
+      assert {:if, _} = SpecifyErlAst.get_conditional(tokens, 13, opts)
     end
 
     test "unless" do
@@ -37,24 +38,27 @@ defmodule GradualizerEx.SpecifyErlAstTest do
         load("/conditional/Elixir.Conditional.Unless.beam", "/conditional/unless.ex")
 
       tokens = drop_tokens_to_line(tokens, 2)
-      assert {:unless, _} = SpecifyErlAst.get_conditional(tokens, 3)
+      opts = [end_line: -1]
+      assert {:unless, _} = SpecifyErlAst.get_conditional(tokens, 3, opts)
     end
 
     test "cond" do
       {tokens, _ast} = load("/conditional/Elixir.Conditional.Cond.beam", "/conditional/cond.ex")
 
       tokens = drop_tokens_to_line(tokens, 2)
-      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens, 4)
+      opts = [end_line: -1]
+      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens, 4, opts)
 
       tokens = drop_tokens_to_line(tokens, 10)
-      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens, 13)
+      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens, 13, opts)
     end
 
     test "with" do
       {tokens, _ast} = load("/conditional/Elixir.Conditional.With.beam", "/conditional/with.ex")
 
       tokens = drop_tokens_to_line(tokens, 6)
-      assert {:with, _} = SpecifyErlAst.get_conditional(tokens, 7)
+      opts = [end_line: -1]
+      assert {:with, _} = SpecifyErlAst.get_conditional(tokens, 7, opts)
     end
   end
 
@@ -151,7 +155,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
     test "tuple" do
       {tokens, ast} = load("/Elixir.Tuple.beam", "/tuple.ex")
 
-      [tuple_in_str2, tuple_in_str, tuple_in_list, tuple | _] =
+      [tuple_in_str2, tuple_in_str, tuple_in_list, _list_in_tuple, tuple | _] =
         SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
       # FIXME
@@ -359,7 +363,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
     test "if conditional" do
       {tokens, ast} = load("/conditional/Elixir.Conditional.If.beam", "/conditional/if.ex")
 
-      [inline, block, if_ | _] =
+      [block, inline, if_ | _] =
         SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
       assert {:function, 12, :if_block, 0,
@@ -547,10 +551,13 @@ defmodule GradualizerEx.SpecifyErlAstTest do
 
   test "specify_line/2" do
     {tokens, _} = example_data()
+    opts = [end_line: -1]
 
-    assert {{:integer, 21, 12}, tokens} = SpecifyErlAst.specify_line({:integer, 21, 12}, tokens)
+    assert {{:integer, 21, 12}, tokens} =
+             SpecifyErlAst.specify_line({:integer, 21, 12}, tokens, opts)
 
-    assert {{:integer, 22, 12}, _tokens} = SpecifyErlAst.specify_line({:integer, 20, 12}, tokens)
+    assert {{:integer, 22, 12}, _tokens} =
+             SpecifyErlAst.specify_line({:integer, 20, 12}, tokens, opts)
   end
 
   test "cons_to_charlist/1" do
@@ -564,10 +571,11 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "get_list_from_tokens" do
     tokens = example_string_tokens()
     ts = drop_tokens_to_line(tokens, 4)
-    assert {:charlist, _} = SpecifyErlAst.get_list_from_tokens(ts)
+    opts = [end_line: -1]
+    assert {:charlist, _} = SpecifyErlAst.get_list_from_tokens(ts, opts)
 
     ts = drop_tokens_to_line(ts, 6)
-    assert {:list, _} = SpecifyErlAst.get_list_from_tokens(ts)
+    assert {:list, _} = SpecifyErlAst.get_list_from_tokens(ts, opts)
   end
 
   describe "test that prints result" do
@@ -589,7 +597,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "function call" do
     {tokens, ast} = load("/Elixir.Call.beam", "/call.ex")
 
-    [_, block | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [call, _ | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 5, :call, 0,
             [
@@ -603,7 +611,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                     {:integer, 9, 12}
                   ]}
                ]}
-            ]} = block
+            ]} = call
   end
 
   test "pipe" do
@@ -641,7 +649,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "guards" do
     {tokens, ast} = load("/conditional/Elixir.Conditional.Guard.beam", "/conditional/guards.ex")
 
-    [guarded_fun, guarded_case | _] =
+    [guarded_case, guarded_fun | _] =
       SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 3, :guarded_fun, 1,
@@ -730,7 +738,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "list" do
     {tokens, ast} = load("/Elixir.ListEx.beam", "/list.ex")
 
-    [_wrap, list, ht2, ht | _] =
+    [ht2, ht, list, _wrap | _] =
       SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 5, :list, 0,
@@ -835,7 +843,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                      [
                        {:tuple, 14,
                         [
-                          {:atom, 0, :throw},
+                          {:atom, 14, :throw},
                           {:var, 14, :_val@1},
                           {:var, 14, :___STACKTRACE__@1}
                         ]}
@@ -848,7 +856,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "map" do
     {tokens, ast} = load("/Elixir.MapEx.beam", "/map.ex")
 
-    [test_map_str, test_map, pattern_matching_str, pattern_matching, empty_map | _] =
+    [pattern_matching_str, pattern_matching, test_map_str, test_map, empty_map | _] =
       SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 2, :empty_map, 0, [{:clause, 2, [], [], [{:map, 3, []}]}]} = empty_map
@@ -912,7 +920,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "struct" do
     {tokens, ast} = load("/struct/Elixir.StructEx.beam", "/struct/struct.ex")
 
-    [update, get2, get, empty, struct | _] =
+    [get2, get, update, empty, struct | _] =
       SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 8, :update, 0,
@@ -992,7 +1000,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                  {:map, 5,
                   [
                     {:map_field_assoc, 5, {:atom, 5, :__struct__}, {:atom, 5, StructEx}},
-                    {:map_field_assoc, 5, {:atom, 9, :x}, {:integer, 5, 0}},
+                    {:map_field_assoc, 5, {:atom, 5, :x}, {:integer, 5, 0}},
                     {:map_field_assoc, 5, {:atom, 5, :y}, {:integer, 5, 0}}
                   ]}
                ]}
@@ -1029,14 +1037,14 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "record" do
     {tokens, ast} = load("/record/Elixir.RecordEx.beam", "/record/record.ex")
 
-    [update, macro3, macro2, macro1, init, empty | _] =
+    [update, init, empty, macro3, macro2, macro1 | _] =
       SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 7, :empty, 0,
             [
               {:clause, 7, [], [],
                [{:tuple, 8, [{:atom, 8, :record_ex}, {:integer, 8, 0}, {:integer, 8, 0}]}]}
-              # FIXME Should be a tuple with line 7, not 12. The line is taken from a token that is in another scope. Related to the cutting out tokens at the bottom
+              # FIXME Should be a tuple with line 8, not 12. The line is taken from a token that is in another scope. Related to the cutting out tokens at the bottom
             ]} = empty
 
     assert {:function, 11, :init, 0,
@@ -1111,7 +1119,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "receive" do
     {tokens, ast} = load("/Elixir.Receive.beam", "/receive.ex")
 
-    [recv2, recv | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [recv, recv2 | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 2, :recv2, 0,
             [

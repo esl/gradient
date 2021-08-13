@@ -105,7 +105,7 @@ defmodule GradualizerEx.ElixirFmt do
   end
 
   def filter_context(lines, loc, ctx_size \\ 1) do
-    line = get_line_from_loc(loc)
+    line = :erl_anno.line(loc)
     range = (line - ctx_size)..(line + ctx_size)
 
     Enum.filter(lines, fn {_, number} -> number in range end)
