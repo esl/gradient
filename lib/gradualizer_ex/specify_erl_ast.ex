@@ -375,6 +375,8 @@ defmodule GradualizerEx.SpecifyErlAst do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
+    name = remote_mapper(name)
+
     {args, tokens} = context_mapper_fold(args, tokens, opts)
 
     {:call, anno, name, args}
@@ -453,6 +455,15 @@ defmodule GradualizerEx.SpecifyErlAst do
     Logger.warn("Not found mapper for #{inspect(form)}")
     pass_tokens(form, tokens)
   end
+
+  @doc """
+  Adds missing line to the module literal
+  """
+  def remote_mapper({:remote, line, {:atom, 0, mod}, fun}) do
+    {:remote, line, {:atom, line, mod}, fun}
+  end
+
+  def remote_mapper(name), do: name
 
   @doc """
   Adds missing location to the literals in the guards

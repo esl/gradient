@@ -169,7 +169,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                        {:bin_element, 20, {:string, 20, '\nElixir formatter not exist for '},
                         :default, :default},
                        {:bin_element, 20,
-                        {:call, 20, {:remote, 20, {:atom, 0, Kernel}, {:atom, 20, :inspect}},
+                        {:call, 20, {:remote, 20, {:atom, 20, Kernel}, {:atom, 20, :inspect}},
                          [
                            {:tuple, 20, []},
                            {:cons, 20, {:tuple, 20, [{:atom, 20, :pretty}, {:atom, 20, true}]},
@@ -179,17 +179,17 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                          ]}, :default, [:binary]},
                        {:bin_element, 20, {:string, 20, ' using default \n'}, :default, :default}
                      ]}},
-                   {:call, 22, {:remote, 22, {:atom, 0, String}, {:atom, 22, :to_charlist}},
+                   {:call, 22, {:remote, 22, {:atom, 22, String}, {:atom, 22, :to_charlist}},
                     [
                       {:bin, 22,
                        [
                          {:bin_element, 22,
                           {:call, 22,
-                           {:remote, 22, {:atom, 0, IO.ANSI}, {:atom, 22, :light_yellow}}, []},
+                           {:remote, 22, {:atom, 22, IO.ANSI}, {:atom, 22, :light_yellow}}, []},
                           :default, [:binary]},
                          {:bin_element, 22, {:var, 22, :_msg@1}, :default, [:binary]},
                          {:bin_element, 22,
-                          {:call, 22, {:remote, 22, {:atom, 0, IO.ANSI}, {:atom, 22, :reset}},
+                          {:call, 22, {:remote, 22, {:atom, 22, IO.ANSI}, {:atom, 22, :reset}},
                            []}, :default, [:binary]}
                        ]}
                     ]}
@@ -204,7 +204,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                     [
                       {:bin_element, 15, {:string, 15, 'abc '}, :default, :default},
                       {:bin_element, 15,
-                       {:call, 15, {:remote, 15, {:atom, 0, Kernel}, {:atom, 15, :inspect}},
+                       {:call, 15, {:remote, 15, {:atom, 15, Kernel}, {:atom, 15, :inspect}},
                         [
                           {:atom, 15, :abc},
                           {:cons, 15, {:tuple, 15, [{:atom, 15, :limit}, {:atom, 15, :infinity}]},
@@ -275,7 +275,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                     [
                       {:bin_element, 14, {:string, 14, 'abc '}, :default, :default},
                       {:bin_element, 14,
-                       {:call, 14, {:remote, 14, {:atom, 0, Kernel}, {:atom, 14, :inspect}},
+                       {:call, 14, {:remote, 14, {:atom, 14, Kernel}, {:atom, 14, :inspect}},
                         [{:integer, 14, 12}]}, :default, [:binary]},
                       {:bin_element, 14, {:string, 14, ' cba'}, :default, :default}
                     ]}
@@ -461,7 +461,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                                    [],
                                    [
                                      {:call, 7,
-                                      {:remote, 7, {:atom, 0, :erlang}, {:atom, 7, :error}},
+                                      {:remote, 7, {:atom, 7, :erlang}, {:atom, 7, :error}},
                                       [{:atom, 7, :cond_clause}]}
                                    ]}
                                 ]}
@@ -494,7 +494,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                                    [],
                                    [
                                      {:call, 16,
-                                      {:remote, 16, {:atom, 0, :erlang}, {:atom, 16, :error}},
+                                      {:remote, 16, {:atom, 16, :erlang}, {:atom, 16, :error}},
                                       [{:atom, 16, :cond_clause}]}
                                    ]}
                                 ]}
@@ -523,7 +523,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                        [
                          {:block, 7,
                           [
-                            {:call, 11, {:remote, 11, {:atom, 0, IO}, {:atom, 11, :puts}},
+                            {:call, 11, {:remote, 11, {:atom, 11, IO}, {:atom, 11, :puts}},
                              [
                                {:bin, 11,
                                 [{:bin_element, 11, {:string, 11, 'error'}, :default, :default}]}
@@ -623,9 +623,9 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             [
               {:clause, 2, [], [],
                [
-                 {:call, 5, {:remote, 5, {:atom, 0, :erlang}, {:atom, 5, :length}},
+                 {:call, 5, {:remote, 5, {:atom, 5, :erlang}, {:atom, 5, :length}},
                   [
-                    {:call, 4, {:remote, 4, {:atom, 0, Enum}, {:atom, 4, :filter}},
+                    {:call, 4, {:remote, 4, {:atom, 4, Enum}, {:atom, 4, :filter}},
                      [
                        {:cons, 4, {:integer, 4, 1},
                         {:cons, 4,
@@ -657,7 +657,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
               {:clause, 3, [{:var, 3, :_x@1}],
                [
                  [
-                   {:call, 3, {:remote, 3, {:atom, 0, :erlang}, {:atom, 3, :is_integer}},
+                   {:call, 3, {:remote, 3, {:atom, 3, :erlang}, {:atom, 3, :is_integer}},
                     [{:var, 3, :_x@1}]}
                  ],
                  [
@@ -791,10 +791,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                      [
                        {:clause, [generated: true, location: 4], [{:atom, 0, false}], [],
                         [
-                          {:call, 7, {:remote, 7, {:atom, 0, :erlang}, {:atom, 7, :error}},
+                          {:call, 7, {:remote, 7, {:atom, 7, :erlang}, {:atom, 7, :error}},
                            [
                              {:call, 7,
-                              {:remote, 7, {:atom, 0, RuntimeError}, {:atom, 7, :exception}},
+                              {:remote, 7, {:atom, 7, RuntimeError}, {:atom, 7, :exception}},
                               [
                                 {:bin, 7,
                                  [
@@ -805,7 +805,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                         ]},
                        {:clause, [generated: true, location: 4], [{:atom, 0, true}], [],
                         [
-                          {:call, 5, {:remote, 5, {:atom, 0, :erlang}, {:atom, 5, :throw}},
+                          {:call, 5, {:remote, 5, {:atom, 5, :erlang}, {:atom, 5, :throw}},
                            [
                              {:bin, 5,
                               [{:bin_element, 5, {:string, 5, 'good'}, :default, :default}]}
@@ -827,10 +827,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                        [
                          {:op, 10, :andalso,
                           {:op, 10, :==,
-                           {:call, 10, {:remote, 10, {:atom, 0, :erlang}, {:atom, 10, :map_get}},
+                           {:call, 10, {:remote, 10, {:atom, 10, :erlang}, {:atom, 10, :map_get}},
                             [{:atom, 10, :__struct__}, {:var, 10, :_@1}]},
                            {:atom, 10, RuntimeError}},
-                          {:call, 10, {:remote, 10, {:atom, 0, :erlang}, {:atom, 10, :map_get}},
+                          {:call, 10, {:remote, 10, {:atom, 10, :erlang}, {:atom, 10, :map_get}},
                            [{:atom, 10, :__exception__}, {:var, 10, :_@1}]}}
                        ]
                      ],
@@ -1010,7 +1010,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             [
               {:clause, 2, [{:var, 2, :_@1}], [],
                [
-                 {:call, 2, {:remote, 2, {:atom, 0, Enum}, {:atom, 2, :reduce}},
+                 {:call, 2, {:remote, 2, {:atom, 2, Enum}, {:atom, 2, :reduce}},
                   [
                     {:var, 2, :_@1},
                     {:map, 2,
@@ -1025,7 +1025,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                         {:clause, 2,
                          [{:tuple, 2, [{:var, 2, :_@2}, {:var, 2, :_@3}]}, {:var, 2, :_@4}], [],
                          [
-                           {:call, 2, {:remote, 2, {:atom, 0, :maps}, {:atom, 2, :update}},
+                           {:call, 2, {:remote, 2, {:atom, 2, :maps}, {:atom, 2, :update}},
                             [{:var, 2, :_@2}, {:var, 2, :_@3}, {:var, 2, :_@4}]}
                          ]}
                       ]}}
@@ -1071,7 +1071,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                  {:match, 5, {:var, 5, :__CALLER__},
                   {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, :linify}},
                    [{:var, 5, :_@CALLER}]}},
-                 {:call, 5, {:remote, 5, {:atom, 0, Record}, {:atom, 5, :__access__}},
+                 {:call, 5, {:remote, 5, {:atom, 5, Record}, {:atom, 5, :__access__}},
                   [
                     {:atom, 5, :record_ex},
                     {:cons, 5, {:tuple, 5, [{:atom, 5, :x}, {:integer, 5, 0}]},
@@ -1089,7 +1089,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                  {:match, 5, {:var, 5, :__CALLER__},
                   {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, :linify}},
                    [{:var, 5, :_@CALLER}]}},
-                 {:call, 5, {:remote, 5, {:atom, 0, Record}, {:atom, 5, :__access__}},
+                 {:call, 5, {:remote, 5, {:atom, 5, Record}, {:atom, 5, :__access__}},
                   [
                     {:atom, 5, :record_ex},
                     {:cons, 5, {:tuple, 5, [{:atom, 5, :x}, {:integer, 5, 0}]},
@@ -1105,10 +1105,10 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             [
               {:clause, 16, [{:var, 16, :_record@1}], [],
                [
-                 {:call, 17, {:remote, 17, {:atom, 0, :erlang}, {:atom, 17, :setelement}},
+                 {:call, 17, {:remote, 17, {:atom, 17, :erlang}, {:atom, 17, :setelement}},
                   [
                     {:integer, 17, 2},
-                    {:call, 17, {:remote, 17, {:atom, 0, :erlang}, {:atom, 17, :setelement}},
+                    {:call, 17, {:remote, 17, {:atom, 17, :erlang}, {:atom, 17, :setelement}},
                      [{:integer, 17, 3}, {:var, 17, :_record@1}, {:integer, 17, 3}]},
                     {:integer, 17, 2}
                   ]}
@@ -1125,9 +1125,9 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             [
               {:clause, 2, [], [],
                [
-                 {:call, 3, {:remote, 3, {:atom, 0, :erlang}, {:atom, 3, :send}},
+                 {:call, 3, {:remote, 3, {:atom, 3, :erlang}, {:atom, 3, :send}},
                   [
-                    {:call, 3, {:remote, 3, {:atom, 0, :erlang}, {:atom, 3, :self}}, []},
+                    {:call, 3, {:remote, 3, {:atom, 3, :erlang}, {:atom, 3, :self}}, []},
                     {:tuple, 3,
                      [
                        {:atom, 3, :hello},
@@ -1138,7 +1138,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                   [
                     {:clause, 6, [{:tuple, 6, [{:atom, 6, :hello}, {:var, 6, :_to@1}]}], [],
                      [
-                       {:call, 7, {:remote, 7, {:atom, 0, IO}, {:atom, 7, :puts}},
+                       {:call, 7, {:remote, 7, {:atom, 7, IO}, {:atom, 7, :puts}},
                         [
                           {:bin, 7,
                            [
@@ -1150,7 +1150,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                     {:clause, 9, [{:atom, 9, :skip}], [], [{:atom, 10, :ok}]}
                   ], {:integer, 12, 1000},
                   [
-                    {:call, 13, {:remote, 13, {:atom, 0, IO}, {:atom, 13, :puts}},
+                    {:call, 13, {:remote, 13, {:atom, 13, IO}, {:atom, 13, :puts}},
                      [
                        {:bin, 13,
                         [{:bin_element, 13, {:string, 13, 'Timeout'}, :default, :default}]}
