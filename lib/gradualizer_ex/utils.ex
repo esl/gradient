@@ -50,24 +50,29 @@ defmodule GradualizerEx.Utils do
     end)
     |> case do
       [{:"<<", _} | _] = ts -> cut_bottom(ts, 0)
-      [{:bin_string, _, _} = t | _] -> [t]
-      otherwise -> otherwise
+      [{:bin_string, _, _} = t | ts] -> {[t], ts}
+      [] -> {[], tokens}
     end
   end
 
   defp cut_bottom([{:"<<", _} = t | ts], deep) do
-    [t | cut_bottom(ts, deep + 1)]
+    {ts, cut_ts} = cut_bottom(ts, deep + 1)
+    {[t | ts], cut_ts}
   end
 
   defp cut_bottom([{:">>", _} = t | ts], deep) do
     if deep - 1 > 0 do
-      [t | cut_bottom(ts, deep - 1)]
+      {ts, cut_ts} = cut_bottom(ts, deep - 1)
+      {[t | ts], cut_ts}
     else
-      [t]
+      {[t], ts}
     end
   end
 
-  defp cut_bottom([t | ts], deep), do: [t | cut_bottom(ts, deep)]
+  defp cut_bottom([t | ts], deep) do 
+    {ts, cut_ts} = cut_bottom(ts, deep)
+    {[t | ts], cut_ts}
+  end
 
   def flat_tokens(tokens) do
     Enum.map(tokens, &flat_token/1)

@@ -1147,7 +1147,7 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                            ]}
                         ]}
                      ]},
-                    {:clause, 9, [{:atom, 9, :skip}], [], [{:atom, 9, :ok}]}
+                    {:clause, 9, [{:atom, 9, :skip}], [], [{:atom, 10, :ok}]}
                   ], {:integer, 12, 1000},
                   [
                     {:call, 13, {:remote, 13, {:atom, 0, IO}, {:atom, 13, :puts}},

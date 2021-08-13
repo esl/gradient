@@ -218,9 +218,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     if case_type == :case do
       {guards, tokens} = guards_mapper(guards, tokens, opts)
 
-      # NOTE take a look at this returned tokens
-      # 
-      {args, _tokens} =
+      {args, tokens} =
         if not :erl_anno.generated(anno) do
           context_mapper_fold(args, tokens, opts)
         else
@@ -300,7 +298,9 @@ defmodule GradualizerEx.SpecifyErlAst do
 
       :undefined ->
         Logger.warn(
-          "Cons not found in tokens. Undefined cons type #{inspect(cons)} -- #{inspect(Enum.take(tokens, 5))}"
+          "Cons not found in tokens. Undefined cons type #{inspect(cons)} -- #{
+            inspect(Enum.take(tokens, 5))
+          }"
         )
 
         {form, _} = cons_mapper(cons, [], opts)
@@ -412,11 +412,12 @@ defmodule GradualizerEx.SpecifyErlAst do
         |> specify_line(tokens, opts)
 
       _ ->
-        tokens = tokens |> cut_tokens_to_bin(line) |> flat_tokens()
-        {elements, tokens} = context_mapper_fold(elements, tokens, opts, &bin_element/3)
+        {bin_tokens, other_tokens} = cut_tokens_to_bin(tokens, line) 
+        bin_tokens = flat_tokens(bin_tokens) 
+        {elements, _} = context_mapper_fold(elements, bin_tokens, opts, &bin_element/3)
 
         {:bin, anno, elements}
-        |> pass_tokens(tokens)
+        |> pass_tokens(other_tokens)
     end
   end
 

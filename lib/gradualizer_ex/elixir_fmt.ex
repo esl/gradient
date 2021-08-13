@@ -5,7 +5,6 @@ defmodule GradualizerEx.ElixirFmt do
   @behaviour GradualizerEx.Fmt
 
   alias :gradualizer_fmt, as: FmtLib
-  import GradualizerEx.Utils
 
   def print_errors(errors, opts) do
     for {file, e} <- errors do
