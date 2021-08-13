@@ -5,7 +5,7 @@ Adapts Gradualizer to work with the Elixir applications. This package is focused
 Also delivers a mix task that runs the Gradualizer on the Elixir project:
 > mix gradualizer
 
-## Problem with abstract code genereted from Elixir
+## Problem with abstract code generated from Elixir
 
 The Elixir AST stores literals as themselves. Thus the abstract code generated from Elixir doesn't have information about the line of the literals. This lack of information makes it hard to localize the error in a code because the line is set to 0.
 
@@ -21,12 +21,12 @@ For now, this task localizes all project beams and runs GradualizerEx on each fi
 - Ensure that deps are imported correctly to the Gradualizer.
 
 ### Printing errors
-The type errors are highlighted in the Elixir code. Erlang preaty printers are still used in the error descriptions.
+The type errors are highlighted in the Elixir code. Erlang pretty printers are still used in the error descriptions.
 
 
 ##### TODO
-- Implement expr preaty printer for Elixir expr,
-- Implement type preaty printer for Elixir.
+- Implement expr pretty printer for Elixir expr,
+- Implement type pretty printer for Elixir.
 
 ### Specyfing lines in expressions
 
