@@ -87,9 +87,12 @@ defmodule GradualizerEx.SpecifyErlAst do
   def add_missing_loc_literals(forms, tokens) do
     opts = [end_line: -1]
 
+    {forms, _} =
+      forms
+      |> prepare_forms_order()
+      |> context_mapper_fold(tokens, opts)
+
     forms
-    |> prepare_forms_order()
-    |> context_mapper_map(tokens, opts)
   end
 
   @doc """
@@ -348,8 +351,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
-    # FIXME Use when losing tokens will be fixed
-    {clauses, _tokens} = context_mapper_fold(clauses, tokens, opts)
+    {clauses, tokens} = context_mapper_fold(clauses, tokens, opts)
     {after_val, tokens} = mapper(after_val, tokens, opts)
     {after_block, tokens} = context_mapper_fold(after_block, tokens, opts)
 
@@ -361,10 +363,9 @@ defmodule GradualizerEx.SpecifyErlAst do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
-    {body, _tokens} = context_mapper_fold(body, tokens, opts)
+    {body, tokens} = context_mapper_fold(body, tokens, opts)
 
-    # {catchers, _tokens} = foldl(catchers, tokens, opts)
-    catchers = context_mapper_map(catchers, tokens, opts)
+    {catchers, tokens} = context_mapper_fold(catchers, tokens, opts)
 
     {:try, anno, body, [], catchers, []}
     |> pass_tokens(tokens)
@@ -412,8 +413,8 @@ defmodule GradualizerEx.SpecifyErlAst do
         |> specify_line(tokens, opts)
 
       _ ->
-        {bin_tokens, other_tokens} = cut_tokens_to_bin(tokens, line) 
-        bin_tokens = flat_tokens(bin_tokens) 
+        {bin_tokens, other_tokens} = cut_tokens_to_bin(tokens, line)
+        bin_tokens = flat_tokens(bin_tokens)
         {elements, _} = context_mapper_fold(elements, bin_tokens, opts, &bin_element/3)
 
         {:bin, anno, elements}

@@ -69,7 +69,7 @@ defmodule GradualizerEx.Utils do
     end
   end
 
-  defp cut_bottom([t | ts], deep) do 
+  defp cut_bottom([t | ts], deep) do
     {ts, cut_ts} = cut_bottom(ts, deep)
     {[t | ts], cut_ts}
   end
