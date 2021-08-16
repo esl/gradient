@@ -860,7 +860,8 @@ defmodule GradualizerEx.SpecifyErlAstTest do
   test "try" do
     {tokens, ast} = load("/Elixir.Try.beam", "/try.ex")
 
-    [block | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [body_after, try_after, try_else, try_rescue | _] =
+      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
 
     assert {:function, 2, :try_rescue, 0,
             [
@@ -931,7 +932,110 @@ defmodule GradualizerEx.SpecifyErlAstTest do
                      ], [], [{:integer, 15, 12}, {:var, 16, :_val@1}]}
                   ], []}
                ]}
-            ]} = block
+            ]} = try_rescue
+
+    assert {:function, 20, :try_else, 0,
+            [
+              {:clause, 20, [], [],
+               [
+                 {:match, 21, {:var, 21, :_x@1}, {:integer, 21, 2}},
+                 {:try, 23, [{:op, 24, :/, {:integer, 24, 1}, {:var, 24, :_x@1}}],
+                  [
+                    {:clause, 30, [{:var, 30, :_y@1}],
+                     [
+                       [
+                         {:op, 30, :andalso, {:op, 30, :<, {:var, 30, :_y@1}, {:integer, 30, 1}},
+                          {:op, 30, :>, {:var, 30, :_y@1}, {:op, 30, :-, {:integer, 30, 1}}}}
+                       ]
+                     ], [{:integer, 31, 2}, {:atom, 32, :small}]},
+                    {:clause, 34, [{:var, 34, :_}], [], [{:integer, 35, 3}, {:atom, 36, :large}]}
+                  ],
+                  [
+                    {:clause, 26,
+                     [
+                       {:tuple, 26,
+                        [
+                          {:atom, 26, :error},
+                          {:var, 26, :_@1},
+                          {:var, 26, :___STACKTRACE__@1}
+                        ]}
+                     ],
+                     [
+                       [{:op, 26, :==, {:var, 26, :_@1}, {:atom, 26, :badarith}}],
+                       [
+                         {:op, 26, :andalso,
+                          {:op, 26, :==,
+                           {:call, 26, {:remote, 26, {:atom, 26, :erlang}, {:atom, 26, :map_get}},
+                            [{:atom, 26, :__struct__}, {:var, 26, :_@1}]},
+                           {:atom, 26, ArithmeticError}},
+                          {:call, 26, {:remote, 26, {:atom, 26, :erlang}, {:atom, 26, :map_get}},
+                           [{:atom, 26, :__exception__}, {:var, 26, :_@1}]}}
+                       ]
+                     ], [{:integer, 27, 1}, {:atom, 28, :infinity}]}
+                  ], []}
+               ]}
+            ]} = try_else
+
+    assert {:function, 40, :try_after, 0,
+            [
+              {:clause, 40, [], [],
+               [
+                 {:match, 41, {:tuple, 41, [{:atom, 41, :ok}, {:var, 41, :_file@1}]},
+                  {:call, 41, {:remote, 41, {:atom, 41, File}, {:atom, 41, :open}},
+                   [
+                     {:bin, 41,
+                      [{:bin_element, 41, {:string, 41, 'sample'}, :default, :default}]},
+                     {:cons, 41, {:atom, 41, :utf8}, {:cons, 41, {:atom, 41, :write}, {nil, 0}}}
+                   ]}},
+                 {:try, 43,
+                  [
+                    {:call, 44, {:remote, 44, {:atom, 44, IO}, {:atom, 44, :write}},
+                     [
+                       {:var, 44, :_file@1},
+                       {:bin, 44,
+                        [
+                          {:bin_element, 44, {:string, 44, [111, 108, 195, 161]}, :default,
+                           :default}
+                        ]}
+                     ]},
+                    {:call, 45, {:remote, 45, {:atom, 45, :erlang}, {:atom, 45, :error}},
+                     [
+                       {:call, 45,
+                        {:remote, 45, {:atom, 45, RuntimeError}, {:atom, 45, :exception}},
+                        [
+                          {:bin, 45,
+                           [
+                             {:bin_element, 45, {:string, 45, 'oops, something went wrong'},
+                              :default, :default}
+                           ]}
+                        ]}
+                     ]}
+                  ], [], [],
+                  [
+                    {:call, 47, {:remote, 47, {:atom, 47, File}, {:atom, 47, :close}},
+                     [{:var, 47, :_file@1}]}
+                  ]}
+               ]}
+            ]} = try_after
+
+    assert {:function, 51, :body_after, 0,
+            [
+              {:clause, 51, [], [],
+               [
+                 {:try, 51,
+                  [
+                    {:call, 52, {:remote, 52, {:atom, 52, :erlang}, {:atom, 52, :error}},
+                     [
+                       {:call, 52, {:remote, 52, {:atom, 52, Kernel.Utils}, {:atom, 52, :raise}},
+                        [
+                          {:cons, 52, {:integer, 52, 49},
+                           {:cons, 52, {:integer, 52, 50}, {nil, 0}}}
+                        ]}
+                     ]},
+                    {:integer, 53, 1}
+                  ], [], [], [{:op, 55, :-, {:integer, 55, 1}}]}
+               ]}
+            ]} = body_after
   end
 
   test "map" do

@@ -12,7 +12,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   - case [x]
   - block [X] 
   - pipe [x]
-  - call [x]
+  - call [x] (remote [X])
   - match [x]
   - op [x]
   - integer [x]
@@ -28,8 +28,6 @@ defmodule GradualizerEx.SpecifyErlAst do
   - try [x] TODO probably some variants could be not implemented
   - receive [X] 
   - record [X] elixir don't use it record_field, record_index, record_pattern, record
-
-  - remote [ ] TODO maybe handle this call case
   - named_fun [ ] is named_fun used by elixir? 
 
   NOTE Elixir expressions to handle or test:
@@ -38,11 +36,10 @@ defmodule GradualizerEx.SpecifyErlAst do
   - maps [X]
   - struct [X]
   - pipe [ ] TODO decide how to search for line in reversed form order 
-  - range [ ] TODO write test
+  - range [X] 
   - receive [X] 
   - record [X] 
   - guards [X]
-
   """
 
   import GradualizerEx.Utils
@@ -357,7 +354,7 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
-  defp mapper({:try, anno, body, [], catchers, []}, tokens, opts) do
+  defp mapper({:try, anno, body, else_block, catchers, after_block}, tokens, opts) do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
@@ -365,7 +362,11 @@ defmodule GradualizerEx.SpecifyErlAst do
 
     {catchers, tokens} = context_mapper_fold(catchers, tokens, opts)
 
-    {:try, anno, body, [], catchers, []}
+    {else_block, tokens} = context_mapper_fold(else_block, tokens, opts)
+
+    {after_block, tokens} = context_mapper_fold(after_block, tokens, opts)
+
+    {:try, anno, body, else_block, catchers, after_block}
     |> pass_tokens(tokens)
   end
 
