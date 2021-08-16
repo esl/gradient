@@ -1,34 +1,23 @@
 defmodule SimpleApp.Box do
-  # def x, do: 10
-  # def y, do: true
 
-  # @spec to_int(String.t()) :: charlist()
-  # def to_int(_square), do: "100"
+  @spec get_l() :: {:ok, integer()} | :error
+  def get_l, do: {:ok, 5}
 
-  # @spec to_int2(String.t()) :: String.t()
-  # def to_int2(square) do
-  # if String.length(square) > 10 do
-  # "ok"
-  # else
-  # if square == "abcd" do
-  # "ok"
-  # else
-  # "error"
-  # end
-  # end
-  # end
+  @spec get_w() :: {:ok, integer()} | :error
+  def get_w, do: {:ok, 4}
 
-  @spec ok_res() :: {:ok, list(integer)} | {:error, term()}
-  def ok_res, do: {:ok, [1, 2, 3]}
+  @spec get_h() :: {:ok, integer()} | :error
+  def get_h, do: {:ok, 10}
 
-  @spec test_with() :: integer()
-  def test_with do
-    with {:ok, _a} <- ok_res(),
-         {:ok, _b} <- ok_res() do
-      1
+  @spec volume() :: integer()
+  def volume do
+    with {:ok, l} <- get_l(),
+         {:ok, w} <- get_w(),
+         {:ok, h} <- get_h() do
+      l * w * h
     else
       _ ->
-        '12'
+        "wrong parameter"
     end
   end
 end

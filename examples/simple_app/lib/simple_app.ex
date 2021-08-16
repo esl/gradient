@@ -17,18 +17,14 @@ defmodule SimpleApp do
   end
 
   @spec wrong_return_a(boolean()) :: integer()
-  def wrong_return_a(_x) do
-    y = 12
-    12
+  def wrong_return_a(x) do
+    x
   end
-
-  # @spec wrong_return_b(boolean()) :: boolean()
-  # def wrong_return_b(_x), do: 10
 
   @spec bool_id(boolean()) :: boolean()
   def bool_id(x) do
-    _x = 13
-    12
+    y = 13
+    x + y + 12
   end
 
   @spec one_line() :: atom()
@@ -40,12 +36,4 @@ defmodule SimpleApp do
     l.()
   end
 
-  # @spec copy_bool_id(boolean()) :: integer()
-  # def copy_bool_id(x), do: x
-
-  # def test do
-  # bool_id(false)
-  # xd = 123
-  # bool_id(xd)
-  # end 
 end

@@ -594,7 +594,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   # def specify_line(form, []), do: raise("ehh -- #{inspect form}")
   def specify_line(form, tokens, opts) do
     if not :erl_anno.generated(elem(form, 1)) do
-      Logger.debug("#{inspect(form)} --- #{inspect(tokens, limit: :infinity)}")
+      #Logger.debug("#{inspect(form)} --- #{inspect(tokens, limit: :infinity)}")
       {:ok, end_line} = Keyword.fetch(opts, :end_line)
 
       res = drop_tokens_while(tokens, end_line, &(!match_token_to_form(&1, form)))
@@ -604,7 +604,7 @@ defmodule GradualizerEx.SpecifyErlAst do
           {take_loc_from_token(token, form), tokens}
 
         [] ->
-          Logger.info("Not found - #{inspect(form)}")
+          #Logger.info("Not found - #{inspect(form)}")
           {form, tokens}
       end
     else
