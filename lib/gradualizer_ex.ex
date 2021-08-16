@@ -3,7 +3,8 @@ defmodule GradualizerEx do
   Documentation for `GradualizerEx`.
 
   Options:
-  - `code_path` - Path to a file with code.
+  - `app_path` - Path to the app that contains file with code (for umbrella apps).
+  - `code_path` - Path to a file with code (e.g. when beam was compiled without project).
   """
 
   alias GradualizerEx.ElixirFileUtils
@@ -12,7 +13,9 @@ defmodule GradualizerEx do
 
   require Logger
 
-  @spec type_check_file(String.t(), Keyword.t()) :: :ok | :error
+  @type options() :: [{:app_path, String.t()}, {:code_path, String.t()}]
+
+  @spec type_check_file(String.t(), options()) :: :ok | :error
   def type_check_file(file, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
 
@@ -40,8 +43,18 @@ defmodule GradualizerEx do
 
   defp put_code_path(forms, opts) do
     case Keyword.fetch(opts, :code_path) do
-      {:ok, path} -> [{:attribute, 1, :file, {path, 1}} | tl(forms)]
-      _ -> forms
+      {:ok, path} ->
+        [{:attribute, 1, :file, {path, 1}} | tl(forms)]
+
+      :error ->
+        case Keyword.fetch(opts, :app_path) do
+          {:ok, app_path} ->
+            {:attribute, anno, :file, {path, line}} = hd(forms)
+            [{:attribute, anno, :file, {String.to_charlist(app_path) ++ '/' ++ path, line}} | tl(forms)]
+
+          :error ->
+            forms
+        end
     end
   end
 end
