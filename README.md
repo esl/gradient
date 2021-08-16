@@ -13,11 +13,10 @@ To overcome this problem GradualizerEx reads the abstract code from beam files, 
 ## Progress
 
 ### Mix task
-For now, this task localizes all project beams and runs GradualizerEx on each file. What's more, it tries to import all dependencies to Gradualizer.
+For now, this task localizes all project beams and runs GradualizerEx on each file. What's more, it tries to import all dependencies to Gradualizer. Umbrella project is supported. 
 
 ##### TODO
 - Support options,
-- Support umbrella project,
 - Ensure that deps are imported correctly to the Gradualizer.
 
 ### Printing errors

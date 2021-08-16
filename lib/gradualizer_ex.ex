@@ -50,7 +50,11 @@ defmodule GradualizerEx do
         case Keyword.fetch(opts, :app_path) do
           {:ok, app_path} ->
             {:attribute, anno, :file, {path, line}} = hd(forms)
-            [{:attribute, anno, :file, {String.to_charlist(app_path) ++ '/' ++ path, line}} | tl(forms)]
+
+            [
+              {:attribute, anno, :file, {String.to_charlist(app_path) ++ '/' ++ path, line}}
+              | tl(forms)
+            ]
 
           :error ->
             forms

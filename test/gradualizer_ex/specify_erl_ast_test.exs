@@ -687,6 +687,87 @@ defmodule GradualizerEx.SpecifyErlAstTest do
             ]} = guarded_case
   end
 
+  test "range" do
+    {tokens, ast} = load("/Elixir.RangeEx.beam", "/range.ex")
+
+    [to_list, match_range, rev_range_step, range_step, range | _] =
+      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+
+    assert {:function, 18, :to_list, 0,
+            [
+              {:clause, 18, [], [],
+               [
+                 {:call, 19, {:remote, 19, {:atom, 19, Enum}, {:atom, 19, :to_list}},
+                  [
+                    {:map, 19,
+                     [
+                       {:map_field_assoc, 19, {:atom, 19, :__struct__}, {:atom, 19, Range}},
+                       {:map_field_assoc, 19, {:atom, 19, :first}, {:integer, 19, 1}},
+                       {:map_field_assoc, 19, {:atom, 19, :last}, {:integer, 19, 100}},
+                       {:map_field_assoc, 19, {:atom, 19, :step}, {:integer, 19, 5}}
+                     ]}
+                  ]}
+               ]}
+            ]} = to_list
+
+    assert {:function, 14, :match_range, 0,
+            [
+              {:clause, 14, [], [],
+               [
+                 {:match, 15,
+                  {:map, 15,
+                   [
+                     {:map_field_exact, 15, {:atom, 15, :__struct__}, {:atom, 15, Range}},
+                     {:map_field_exact, 15, {:atom, 15, :first}, {:var, 15, :_first@1}},
+                     {:map_field_exact, 15, {:atom, 15, :last}, {:var, 15, :_last@1}},
+                     {:map_field_exact, 15, {:atom, 15, :step}, {:var, 15, :_step@1}}
+                   ]}, {:call, 15, {:atom, 15, :range_step}, []}}
+               ]}
+            ]} = match_range
+
+    assert {:function, 10, :rev_range_step, 0,
+            [
+              {:clause, 10, [], [],
+               [
+                 {:map, 11,
+                  [
+                    {:map_field_assoc, 11, {:atom, 11, :__struct__}, {:atom, 11, Range}},
+                    {:map_field_assoc, 11, {:atom, 11, :first}, {:integer, 11, 12}},
+                    {:map_field_assoc, 11, {:atom, 11, :last}, {:integer, 11, 1}},
+                    {:map_field_assoc, 11, {:atom, 11, :step}, {:integer, 11, -2}}
+                  ]}
+               ]}
+            ]} = rev_range_step
+
+    assert {:function, 6, :range_step, 0,
+            [
+              {:clause, 6, [], [],
+               [
+                 {:map, 7,
+                  [
+                    {:map_field_assoc, 7, {:atom, 7, :__struct__}, {:atom, 7, Range}},
+                    {:map_field_assoc, 7, {:atom, 7, :first}, {:integer, 7, 1}},
+                    {:map_field_assoc, 7, {:atom, 7, :last}, {:integer, 7, 12}},
+                    {:map_field_assoc, 7, {:atom, 7, :step}, {:integer, 7, 2}}
+                  ]}
+               ]}
+            ]} = range_step
+
+    assert {:function, 2, :range, 0,
+            [
+              {:clause, 2, [], [],
+               [
+                 {:map, 3,
+                  [
+                    {:map_field_assoc, 3, {:atom, 3, :__struct__}, {:atom, 3, Range}},
+                    {:map_field_assoc, 3, {:atom, 3, :first}, {:integer, 3, 1}},
+                    {:map_field_assoc, 3, {:atom, 3, :last}, {:integer, 3, 12}},
+                    {:map_field_assoc, 3, {:atom, 3, :step}, {:integer, 3, 1}}
+                  ]}
+               ]}
+            ]} = range
+  end
+
   test "list comprehension" do
     {tokens, ast} = load("/Elixir.ListComprehension.beam", "/list_comprehension.ex")
 
