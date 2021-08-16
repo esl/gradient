@@ -3,17 +3,15 @@ defmodule Mix.Tasks.Gradualizer do
 
   @impl Mix.Task
   def run(_args) do
-    # Starting app to format logger 
-    # Mix.Task.run("app.start")
     # Compile the project before the analysis
     Mix.Tasks.Compile.run([])
-    files = get_app_beam_paths()
+
+    files = get_beams_paths()
     IO.puts("Found files:\n #{Enum.join(files, "\n ")}")
 
     Application.ensure_all_started(:gradualizer)
 
-    (files ++ get_deps_beam_paths())
-    |> :gradualizer_db.import_beam_files()
+    :gradualizer_db.import_beam_files(get_deps_beam_paths())
 
     IO.puts("Gradualizing files...")
     res = Enum.map(files, &GradualizerEx.type_check_file(&1))
@@ -25,16 +23,36 @@ defmodule Mix.Tasks.Gradualizer do
     :ok
   end
 
-  def get_app_beam_paths() do
+  def get_beams_paths() do
+    if Mix.Project.umbrella?() do
+      get_umbrella_app_beams_paths()
+    else
+      get_app_beams_paths()
+    end
+  end
+
+  def get_app_beams_paths() do
     (Mix.Project.app_path() <> "/ebin/**/*.beam")
     |> Path.wildcard()
     |> Enum.map(&String.to_charlist/1)
   end
 
-  def get_deps_beam_paths() do
-    Mix.Project.deps_paths()
-    |> Enum.map(fn {_, path} -> Path.wildcard(path <> "/ebin/**/*.beam") end)
+  def get_umbrella_app_beams_paths() do
+    Mix.Project.apps_paths()
+    |> Map.keys()
+    |> Enum.map(fn app_name ->
+      app_name = Atom.to_string(app_name)
+
+      (Mix.Project.build_path() <> "/lib/" <> app_name <> "/ebin/**/*.beam")
+      |> Path.wildcard()
+    end)
     |> Enum.concat()
-    |> Enum.map(&to_charlist/1)
+    |> Enum.map(&String.to_charlist/1)
+  end
+
+  def get_deps_beam_paths() do
+    (Mix.Project.build_path() <> "/lib/*/**/*.beam")
+    |> Path.wildcard()
+    |> Enum.map(&String.to_charlist/1)
   end
 end
