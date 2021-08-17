@@ -25,7 +25,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   - keyword [X]
   - binary [X] 
   - map [X] 
-  - try [x] TODO probably some variants could be not implemented
+  - try [x] 
   - receive [X] 
   - record [X] elixir don't use it record_field, record_index, record_pattern, record
   - named_fun [ ] is named_fun used by elixir? 
@@ -297,10 +297,6 @@ defmodule GradualizerEx.SpecifyErlAst do
         |> specify_line(tokens, opts)
 
       :undefined ->
-        Logger.warn(
-          "Cons not found in tokens #{inspect(cons)} -- #{inspect(Enum.take(tokens, 5))}"
-        )
-
         {form, _} = cons_mapper(cons, [], opts)
 
         pass_tokens(form, tokens)
@@ -594,7 +590,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   # def specify_line(form, []), do: raise("ehh -- #{inspect form}")
   def specify_line(form, tokens, opts) do
     if not :erl_anno.generated(elem(form, 1)) do
-      #Logger.debug("#{inspect(form)} --- #{inspect(tokens, limit: :infinity)}")
+      # Logger.debug("#{inspect(form)} --- #{inspect(tokens, limit: :infinity)}")
       {:ok, end_line} = Keyword.fetch(opts, :end_line)
 
       res = drop_tokens_while(tokens, end_line, &(!match_token_to_form(&1, form)))
@@ -604,7 +600,7 @@ defmodule GradualizerEx.SpecifyErlAst do
           {take_loc_from_token(token, form), tokens}
 
         [] ->
-          #Logger.info("Not found - #{inspect(form)}")
+          # Logger.info("Not found - #{inspect(form)}")
           {form, tokens}
       end
     else
