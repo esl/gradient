@@ -366,6 +366,18 @@ defmodule GradualizerEx.SpecifyErlAst do
     |> pass_tokens(tokens)
   end
 
+  defp mapper(
+         {:call, anno, {:atom, _, name_atom} = name,
+          [expr, {:bin, _, [{:bin_element, _, {:string, _, _} = val, :default, :default}]}]},
+         tokens,
+         _opts
+       )
+       when name_atom in [:"::", :":::"] do
+    # unwrap string from binary for correct type annotation matching
+    {:call, anno, name, [expr, val]}
+    |> pass_tokens(tokens)
+  end
+
   defp mapper({:call, anno, name, args}, tokens, opts) do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
