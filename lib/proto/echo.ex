@@ -1,5 +1,4 @@
 defmodule Proto.Echo do
-  @type t :: req() | res()
-  @type req :: {:echo, pid(), any()}
-  @type res :: {:echo, any()}
+  @type req :: {:echo_req, any()}
+  @type res :: {:echo_res, any()}
 end

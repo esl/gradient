@@ -1,7 +1,7 @@
-defmodule TypedGenServer.EchoServer do
+defmodule TypedGenServer.MultiServer do
   use GenServer
 
-  @type protocol :: Proto.Echo.req()
+  @type protocol :: Proto.Echo.req() | Proto.Hello.req()
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, %{})
