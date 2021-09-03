@@ -1,0 +1,4 @@
+%{
+  "gradualizer": {:git, "https://github.com/josefs/Gradualizer.git", "e226803c023bf9ceb94dfb517068208af37b9d7f", [ref: "master"]},
+  "gradualizer_ex": {:git, "https://github.com/Premwoik/gradualizer-ex.git", "b6c840f4e3addffa716cf95a611267d0e42c02b4", [branch: "master"]},
+}
