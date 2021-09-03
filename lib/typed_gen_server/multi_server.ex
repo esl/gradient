@@ -2,6 +2,7 @@ defmodule TypedGenServer.MultiServer do
   use GenServer
 
   @type protocol :: Proto.Echo.req() | Proto.Hello.req()
+  #@type protocol :: {:echo_req, any()} | {:hello, list()}
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, %{})
@@ -9,7 +10,6 @@ defmodule TypedGenServer.MultiServer do
 
   @impl true
   def init(state) do
-    # Schedule work to be performed on start
     {:ok, state}
   end
 
