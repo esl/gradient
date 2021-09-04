@@ -2,7 +2,8 @@ defmodule TypedGenServer.MultiServer do
   use GenServer
 
   @type protocol :: Proto.Echo.req() | Proto.Hello.req()
-  #@type protocol :: {:echo_req, any()} | {:hello, list()}
+  # @type protocol :: {:echo_req, String.t()} | {:hello, String.t()}
+  @type state :: map()
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, %{})
@@ -15,13 +16,18 @@ defmodule TypedGenServer.MultiServer do
 
   @impl true
   def handle_call(m, from, state) do
-    handle(m, from, state)
-    {:noreply, state}
+    {:noreply, handle(m, from, state)}
   end
 
-  @spec handle(protocol(), any, any) :: :ok
-  defp handle({:echo_req, payload}, from, _state) do
+  @spec handle(protocol(), any, any) :: state()
+  def handle({:echo_reqz, payload}, from, state) do
     GenServer.reply(from, {:echo_res, payload})
-    :ok
+    state
   end
+
+  # def handle({:hello, name}, from, state) do
+  #  IO.puts("Hello, #{name}!")
+  #  GenServer.reply(from, :ok)
+  #  state
+  # end
 end

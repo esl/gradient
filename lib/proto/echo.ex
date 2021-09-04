@@ -1,4 +1,4 @@
 defmodule Proto.Echo do
-  @type req :: {:echo_req, any()}
-  @type res :: {:echo_res, any()}
+  @type req :: {:echo_req, String.t()}
+  @type res :: {:echo_res, String.t()}
 end
