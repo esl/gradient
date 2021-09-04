@@ -1,6 +1,8 @@
 defmodule TypedGenServer.MultiServer do
   use GenServer
 
+  ## recompile(); GradualizerEx.type_check_file(:code.which(TypedGenServer.MultiServer), [:infer])
+
   @type message :: Proto.Echo.req() | Proto.Hello.req()
   # @type message :: {:echo_req, String.t()} | {:hello, String.t()}
   @type state :: map()
