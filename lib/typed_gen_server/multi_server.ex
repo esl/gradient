@@ -1,5 +1,6 @@
 defmodule TypedGenServer.MultiServer do
   use GenServer
+  use GradualizerEx.TypeAnnotation
 
   ## recompile(); GradualizerEx.type_check_file(:code.which(TypedGenServer.MultiServer), [:infer])
 
@@ -13,7 +14,12 @@ defmodule TypedGenServer.MultiServer do
 
   @spec echo(pid(), String.t()) :: Proto.Echo.res()
   def echo(pid, message) do
-    case GenServer.call(pid, {:echo_req, message})
+    case annotate_type(
+           GenServer.call(pid, {:echo_req, message}),
+           Proto.Echo.res()
+         ) do
+      {:echo_ressdasdz, ^message} -> message
+    end
   end
 
   @spec hello(pid, String.t()) :: Proto.Hello.res()
