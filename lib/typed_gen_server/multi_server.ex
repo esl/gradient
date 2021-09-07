@@ -9,8 +9,8 @@ defmodule TypedGenServer.MultiServer do
   ##   recompile(); GradualizerEx.type_check_file(:code.which(TypedGenServer.MultiServer), [:infer])
 
   ## Try switching between the definitions and see what happens
-  @type message :: Proto.Echo.req() | Proto.Hello.req()
-  #@type message :: Proto.Echo.req()
+  @type message :: Contract.Echo.req() | Contract.Hello.req()
+  #@type message :: Contract.Echo.req()
   #@type message :: {:echo_req, String.t()} | {:hello, String.t()}
 
   @type state :: map()
@@ -22,7 +22,7 @@ defmodule TypedGenServer.MultiServer do
   @spec echo(pid(), String.t()) :: String.t()
   #@spec echo(pid(), String.t()) :: {:echo_req, String.t()}
   def echo(pid, message) do
-    case annotate_type( GenServer.call(pid, {:echo_req, message}), Proto.Echo.res() ) do
+    case annotate_type( GenServer.call(pid, {:echo_req, message}), Contract.Echo.res() ) do
       ## Try changing the pattern or the returned response
       {:echo_res, response} -> response
     end
@@ -30,7 +30,7 @@ defmodule TypedGenServer.MultiServer do
 
   @spec hello(pid, String.t()) :: :ok
   def hello(pid, name) do
-    case annotate_type( GenServer.call(pid, {:hello, name}), Proto.Hello.res() ) do
+    case annotate_type( GenServer.call(pid, {:hello, name}), Contract.Hello.res() ) do
       :ok -> :ok
     end
   end
