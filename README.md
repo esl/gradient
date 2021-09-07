@@ -1,21 +1,21 @@
 # TypedGenServer
 
-**TODO: Add description**
+This is an experiment which abuses Gradualizer's exhaustiveness checking
+to type message passing protocols.
 
-## Installation
+This does not automatically determine the types of messages passed around - it's
+the programmer who's responsbile for providing this information in form of a type
+defining the message.
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `typed_gen_server` to your list of dependencies in `mix.exs`:
+However, given that type in place, the techniques used here make it easier
+to catch bugs if:
 
-```elixir
-def deps do
-  [
-    {:typed_gen_server, "~> 0.1.0"}
-  ]
-end
-```
+- some messages are not handled (completely forgotten or added to the
+  protocol, but not to the implementation)
+- some messages get malformed (think typos, pattern match mistakes, etc)
+- some responses are not handled (i.e. response handlers are incomplete,
+  for example if new response types were introduced after the handler was
+  in place)
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/typed_gen_server](https://hexdocs.pm/typed_gen_server).
-
+I hope you're interested ;)
+If so, please check out [`lib/typed_gen_server/multi_server.ex`](/lib/typed_gen_server/multi_server.ex).
