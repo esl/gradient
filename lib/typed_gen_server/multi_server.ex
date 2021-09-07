@@ -2,7 +2,11 @@ defmodule TypedGenServer.MultiServer do
   use GenServer
   use GradualizerEx.TypeAnnotation
 
-  ## recompile(); GradualizerEx.type_check_file(:code.which(TypedGenServer.MultiServer), [:infer])
+  ## Start IEx with:
+  ##   iex -S mix run --no-start
+  ##
+  ## Then use the following to recheck the file on any change:
+  ##   recompile(); GradualizerEx.type_check_file(:code.which(TypedGenServer.MultiServer), [:infer])
 
   ## Try switching between the definitions and see what happens
   @type message :: Proto.Echo.req() | Proto.Hello.req()
@@ -19,7 +23,7 @@ defmodule TypedGenServer.MultiServer do
   #@spec echo(pid(), String.t()) :: {:echo_req, String.t()}
   def echo(pid, message) do
     case annotate_type( GenServer.call(pid, {:echo_req, message}), Proto.Echo.res() ) do
-      ## Try changing the pattern
+      ## Try changing the pattern or the returned response
       {:echo_res, response} -> response
     end
   end
