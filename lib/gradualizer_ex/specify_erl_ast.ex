@@ -61,10 +61,10 @@ defmodule GradualizerEx.SpecifyErlAst do
   """
   @spec specify(nonempty_list(:erl_parse.abstract_form())) :: [:erl_parse.abstract_form()]
   def specify(forms) do
-    with {:attribute, 1, :file, {path, 1}} <- hd(forms),
+    with {:attribute, line, :file, {path, _}} <- hd(forms),
          path <- to_string(path),
          {:ok, code} <- File.read(path),
-         {:ok, tokens} <- :elixir.string_to_tokens(String.to_charlist(code), 1, 1, path, []) do
+         {:ok, tokens} <- :elixir.string_to_tokens(String.to_charlist(code), line, line, path, []) do
       add_missing_loc_literals(forms, tokens)
     else
       error ->
