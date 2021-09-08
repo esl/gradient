@@ -43,10 +43,11 @@ defmodule TypedGenServer.Stage2.Server do
     end
   end
 
-  #@spec call_echo(t(), String.t()) :: Contract.Echo.res()
-  #defp call_echo({__MODULE__, pid}, message) do
-  #  GenServer.call(pid, {:echo_req, message})
-  #end
+  ## This could be generated based on present handle clauses - thanks, Robert!
+  @spec call_echo(t(), String.t()) :: Contract.Echo.res()
+  defp call_echo({__MODULE__, pid}, message) do
+    GenServer.call(pid, {:echo_req, message})
+  end
 
   @spec hello(t(), String.t()) :: :ok
   def hello({__MODULE__, pid}, name) do
@@ -68,7 +69,11 @@ defmodule TypedGenServer.Stage2.Server do
   @spec handle(message(), any, any) :: state()
   ## Try breaking the pattern match, e.g. by changing 'echo_req'
   def handle({:echo_req, payload}, from, state) do
-    GenServer.reply(from, {:echo_res, payload})
+    ## This could register {:echo_req, payload} <-> {:echo_res, payload} mapping
+    ## and response type at compile time to generate call_echo() automatically.
+    ## Thanks Robert!
+    #TypedServer.reply( from, {:echo_res, payload}, Contract.Echo.res() )
+    GenServer.reply( from, {:echo_res, payload} )
     state
   end
 
