@@ -1,4 +1,4 @@
-defmodule TypedServer do
+defmodule Stage2.TypedServer do
   def wrap(on_start, module) do
     case on_start do
       {:ok, pid} -> {:ok, {module, pid}}
@@ -8,15 +8,16 @@ defmodule TypedServer do
   end
 end
 
-defmodule TypedGenServer.Stage2.MultiServer do
+defmodule TypedGenServer.Stage2.Server do
   use GenServer
   use GradualizerEx.TypeAnnotation
+  alias Stage2.TypedServer
 
   ## Start IEx with:
   ##   iex -S mix run --no-start
   ##
   ## Then use the following to recheck the file on any change:
-  ##   recompile(); GradualizerEx.type_check_file(:code.which(TypedGenServer.MultiServer), [:infer])
+  ##   recompile(); GradualizerEx.type_check_file(:code.which( TypedGenServer.Stage2.Server ), [:infer])
 
   @opaque t :: {__MODULE__, pid()}
 
@@ -79,15 +80,18 @@ defmodule TypedGenServer.Stage2.MultiServer do
   end
 end
 
-defmodule Test.TypedGenServer.Stage2.MultiServer do
-  alias TypedGenServer.Stage2.MultiServer
+defmodule Test.TypedGenServer.Stage2.Server do
+  alias TypedGenServer.Stage2.Server
+
+  ## Typecheck with:
+  ##   recompile(); GradualizerEx.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [:infer])
 
   @spec test :: any()
   def test do
-    {:ok, srv} = MultiServer.start_link()
+    {:ok, srv} = Server.start_link()
     pid = self()
-    "payload" = MultiServer.echo(srv, "payload")
-    ## This won't typecheck, since MultiServer.echo only accepts MultiServer.t(), that is MultiServer pids
-    #"payload" = MultiServer.echo(pid, "payload")
+    "payload" = Server.echo(srv, "payload")
+    ## This won't typecheck, since Server.echo only accepts Server.t(), that is our Server pids
+    #"payload" = Server.echo(pid, "payload")
   end
 end

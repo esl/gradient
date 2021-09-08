@@ -1,4 +1,12 @@
-defmodule TypedServer do
+defmodule Stage3.TypedServer do
+
+  ## This doesn't play well with:
+  ##   {:ok, srv} = MultiServer.start_link()
+  ## Due to:
+  ##   The pattern {ok, _srv@1} on line 90 doesn't have the type 'Elixir.TypedServer':on_start(t())
+  ## A bug/limitation in Gradualizer pattern match typing?
+  @type on_start(t) :: {:ok, t} | :ignore | {:error, {:already_started, t} | any()}
+
   def wrap(on_start, module) do
     case on_start do
       {:ok, pid} -> {:ok, {module, pid}}
@@ -8,15 +16,16 @@ defmodule TypedServer do
   end
 end
 
-defmodule TypedGenServer.Stage2.MultiServer do
+defmodule TypedGenServer.Stage3.Server do
   use GenServer
   use GradualizerEx.TypeAnnotation
+  alias Stage3.TypedServer
 
   ## Start IEx with:
   ##   iex -S mix run --no-start
   ##
   ## Then use the following to recheck the file on any change:
-  ##   recompile(); GradualizerEx.type_check_file(:code.which(TypedGenServer.MultiServer), [:infer])
+  ##   recompile(); GradualizerEx.type_check_file(:code.which( TypedGenServer.Stage3.Server ), [:infer])
 
   @opaque t :: {__MODULE__, pid()}
 
@@ -27,7 +36,7 @@ defmodule TypedGenServer.Stage2.MultiServer do
 
   @type state :: map()
 
-  @spec start_link() :: {:ok, t()} | :ignore | {:error, {:already_started, t()} | any()}
+  @spec start_link() :: TypedServer.on_start(t())
   def start_link() do
     GenServer.start_link(__MODULE__, %{}) |> TypedServer.wrap(__MODULE__)
   end
@@ -79,15 +88,18 @@ defmodule TypedGenServer.Stage2.MultiServer do
   end
 end
 
-defmodule Test.TypedGenServer.Stage2.MultiServer do
-  alias TypedGenServer.Stage2.MultiServer
+defmodule Test.TypedGenServer.Stage3.Server do
+  alias TypedGenServer.Stage3.Server
+
+  ## Typecheck with:
+  ##   recompile(); GradualizerEx.type_check_file(:code.which( Test.TypedGenServer.Stage3.Server ), [:infer])
 
   @spec test :: any()
   def test do
-    {:ok, srv} = MultiServer.start_link()
+    {:ok, srv} = Server.start_link()
     pid = self()
-    "payload" = MultiServer.echo(srv, "payload")
-    ## This won't typecheck, since MultiServer.echo only accepts MultiServer.t(), that is MultiServer pids
-    #"payload" = MultiServer.echo(pid, "payload")
+    "payload" = Server.echo(srv, "payload")
+    ## This won't typecheck, since Server.echo only accepts Server.t(), that is Server pids
+    #"payload" = Server.echo(pid, "payload")
   end
 end
