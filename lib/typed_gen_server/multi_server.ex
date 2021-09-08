@@ -22,11 +22,19 @@ defmodule TypedGenServer.MultiServer do
   @spec echo(pid(), String.t()) :: String.t()
   #@spec echo(pid(), String.t()) :: {:echo_req, String.t()}
   def echo(pid, message) do
+    ## These three annotation forms are all equivalent
     case annotate_type( GenServer.call(pid, {:echo_req, message}), Contract.Echo.res() ) do
+    #case GenServer.call(pid, {:echo_req, message}) |> annotate_type(Contract.Echo.res()) do
+    #case call_echo(pid, message) do
       ## Try changing the pattern or the returned response
       {:echo_res, response} -> response
     end
   end
+
+  #@spec call_echo(any, any) :: Contract.Echo.res()
+  #def call_echo(pid, message) do
+  #  GenServer.call(pid, {:echo_req, message})
+  #end
 
   @spec hello(pid, String.t()) :: :ok
   def hello(pid, name) do
