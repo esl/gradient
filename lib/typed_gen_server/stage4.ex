@@ -74,6 +74,12 @@ defmodule Stage4.TypedServer do
     end
   end
 
+  defmacro reply(client, reply, type) do
+    quote do
+      annotate_type(unquote(reply), unquote(type))
+    end
+  end
+
   #defmacro reply(client, reply, type) do
   #  #IO.inspect(__ENV__, label: "__ENV__", limit: :infinity)
   #  IO.inspect(__CALLER__, label: "__CALLER__", limit: :infinity)
