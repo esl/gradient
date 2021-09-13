@@ -138,7 +138,9 @@ defmodule TypedGenServer.Stage4.Server do
   # @spec echo(t(), String.t()) :: {:echo_req, String.t()}
   def echo(_server = {__MODULE__, _pid}, message) do
     #case annotate_type(GenServer.call(_pid, {:echo_req, message}), Contract.Echo.res()) do
-    case call_echo(_server, message) do
+    #case call_echo(_server, message) do
+    impl = TypedServer.impl(__MODULE__)
+    case impl.echo_req(_server, message) do
       ## Try changing the pattern or the returned response
       {:echo_res, response} -> response
     end
