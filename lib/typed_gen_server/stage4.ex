@@ -91,7 +91,7 @@ defmodule Stage4.TypedServer do
     end
   end
 
-  def wrap(on_start, module) do
+  def on_start(on_start, module) do
     case on_start do
       {:ok, pid} -> {:ok, {module, pid}}
       {:error, {:already_started, pid}} -> {:error, {:already_started, {module, pid}}}
@@ -131,7 +131,7 @@ defmodule TypedGenServer.Stage4.Server do
 
   @spec start_link() :: {:ok, t()} | :ignore | {:error, {:already_started, t()} | any()}
   def start_link() do
-    GenServer.start_link(__MODULE__, %{}) |> TypedServer.wrap(__MODULE__)
+    GenServer.start_link(__MODULE__, %{}) |> TypedServer.on_start(__MODULE__)
   end
 
   @spec echo(t(), String.t()) :: String.t()
