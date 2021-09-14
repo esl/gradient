@@ -1,16 +1,16 @@
 defmodule GradualizerEx.TypeAnnotation do
 
   defmacro annotate_type(expr, type),
-    do: cast(:'::', expr, type)
+    do: annotate(:'::', expr, type)
 
   defmacro assert_type(expr, type),
-    do: cast(:':::', expr, type)
+    do: annotate(:':::', expr, type)
 
-  defp cast(type_op, expr, type) do
+  defp annotate(type_op, expr, type) do
     erlang_type = elixir_type_to_erlang(type)
     #IO.inspect(erlang_type, label: "erlang type")
     {type_op, [], [expr, Macro.to_string(erlang_type)]}
-    #|> IO.inspect(label: "translate type")
+    #|> IO.inspect(label: "annotation node")
   end
 
   defp elixir_type_to_erlang(type) do
