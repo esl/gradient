@@ -91,14 +91,6 @@ defmodule Stage4.TypedServer do
     end
   end
 
-  def on_start(on_start, module) do
-    case on_start do
-      {:ok, pid} -> {:ok, {module, pid}}
-      {:error, {:already_started, pid}} -> {:error, {:already_started, {module, pid}}}
-      other -> other
-    end
-  end
-
   defmacro reply(client, reply, type) do
     quote do
       reply = unquote(reply)
@@ -120,7 +112,7 @@ defmodule TypedGenServer.Stage4.Server do
   ## Then use the following to recheck the file on any change:
   ##   recompile(); GradualizerEx.type_check_file(:code.which( TypedGenServer.Stage4.Server ), [:infer])
 
-  @opaque t :: {__MODULE__, pid()}
+  @opaque t :: pid()
 
   ## Try switching between the definitions and see what happens
   @type message :: Contract.Echo.req() | Contract.Hello.req()
@@ -131,29 +123,29 @@ defmodule TypedGenServer.Stage4.Server do
 
   @spec start_link() :: {:ok, t()} | :ignore | {:error, {:already_started, t()} | any()}
   def start_link() do
-    GenServer.start_link(__MODULE__, %{}) |> TypedServer.on_start(__MODULE__)
+    GenServer.start_link(__MODULE__, %{})
   end
 
   @spec echo(t(), String.t()) :: String.t()
   # @spec echo(t(), String.t()) :: {:echo_req, String.t()}
-  def echo(_server = {__MODULE__, _pid}, message) do
-    #case annotate_type(GenServer.call(_pid, {:echo_req, message}), Contract.Echo.res()) do
-    #case call_echo(_server, message) do
-    impl = TypedServer.impl(__MODULE__)
-    case impl.echo_req(_server, message) do
+  def echo(pid, message) do
+    #case annotate_type(GenServer.call(pid, {:echo_req, message}), Contract.Echo.res()) do
+    case call_echo_req(pid, message) do
+    #impl = TypedServer.impl(__MODULE__)
+    #case impl.echo_req(pid, message) do
       ## Try changing the pattern or the returned response
       {:echo_res, response} -> response
     end
   end
 
   ## This could be generated based on present handle clauses - thanks, Robert!
-  @spec call_echo(t(), String.t()) :: Contract.Echo.res()
-  defp call_echo({__MODULE__, pid}, message) do
-    GenServer.call(pid, {:echo_req, message})
-  end
+  #@spec call_echo_req(t(), String.t()) :: Contract.Echo.res()
+  #defp call_echo_req(pid, message) do
+  #  GenServer.call(pid, {:echo_req, message})
+  #end
 
   @spec hello(t(), String.t()) :: :ok
-  def hello({__MODULE__, pid}, name) do
+  def hello(pid, name) do
     #case GenServer.call(pid, {:hello, name}) |> annotate_type(Contract.Hello.res()) do
     #  :ok -> :ok
     #end
