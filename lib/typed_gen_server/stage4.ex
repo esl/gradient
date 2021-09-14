@@ -1,48 +1,38 @@
 defmodule Stage4.TypedServer.CompileHooks do
   @moduledoc false
 
-  def __before_compile__(env) do
-    #IO.inspect(env, limit: :infinity)
-    IO.inspect(Module.get_attribute(env.module, :call_types), label: "call types")
+  defmacro __before_compile__(env) do
+    response_types = Module.get_attribute(env.module, :response_types)
+    #IO.inspect(response_types, label: "response types")
+    for {request_tag, response_type} <- response_types do
+      name = Macro.escape(:'call_#{request_tag}')
+      quote do
+        @spec unquote(name)(t(), any) :: unquote(response_type)
+        defp unquote(name)(pid, arg) do
+          GenServer.call(pid, {unquote(request_tag), arg})
+        end
+      end
+    end
   end
 
-  #defmacro __before_compile__(env) do
-  #  #IO.inspect(env, limit: :infinity)
-  #  quote do
-  #    @spec call_example(pid(), any()) :: any()
-  #    def call_example(pid, req) do
-  #      GenServer.call(pid, req)
-  #    end
-  #  end
-  #end
-
   def __on_definition__(env, kind, name, args, guards, body) do
-    request_handler = Module.get_attribute(env.module, :request_handler)
+    request_handler = Module.get_attribute(env.module, :request_handler, :handle)
     case request_handler do
       ^name ->
-        #Module.put_attribute(env.module, :call_types, {Enum.at(args, 0), response_type})
-        #IO.inspect(env, label: "env")
         response_type = find_response_type(env, body)
-        #response_type = Macro.to_string(body)
-        Module.put_attribute(env.module, :call_types, {Enum.at(args, 0), response_type})
+        if response_type != nil do
+          {request_tag, _} = Enum.at(args, 0)
+          Module.put_attribute(env.module, :response_types, {request_tag, response_type})
+        end
       _ ->
         :ok
     end
-    #IO.puts("Defining #{kind} named #{name} with args:")
-    #IO.inspect(args |> Enum.map(&Macro.to_string/1))
-    #IO.puts("and guards")
-    #IO.inspect(guards)
-    #IO.puts("and body")
-    #IO.puts(Macro.to_string(body))
-    #IO.puts("")
   end
 
   def find_response_type(env, body) do
-    #IO.inspect({env, body})
-    #IO.inspect({env.module, body})
     try do
       Macro.prewalk(body, &walk(env, &1))
-      :not_found
+      nil
     catch
       {:response_type, response_type} ->
         response_type
@@ -50,19 +40,12 @@ defmodule Stage4.TypedServer.CompileHooks do
   end
 
   def walk(env, ast) do
-    #IO.inspect(ast)
     case ast do
       {{:., _, [path, :reply]}, _, _} = reply_call ->
-        #IO.inspect(reply_call, label: "maybe Stage4.TypedServer call")
-        #IO.inspect(Macro.expand(path, env), label: "maybe Stage4.TypedServer call")
-        #IO.inspect(env.aliases)
-        #IO.inspect(alias_)
         case Macro.expand(path, env) do
           Stage4.TypedServer ->
-            #IO.inspect("Stage4.TypedServer call")
             get_response_type_from_typed_call(env, Macro.decompose_call(reply_call))
           other ->
-            #IO.inspect(other, label: "other")
             :ok
         end
         reply_call
@@ -72,20 +55,14 @@ defmodule Stage4.TypedServer.CompileHooks do
   end
 
   def get_response_type_from_typed_call(env, {_, _, [_, _, type] = _args} = call) do
-    #IO.inspect(Macro.decompose_call(type), label: "response type")
-    case Macro.decompose_call(type) do
-      {path, name, args} ->
-        response_type = {Macro.expand(path, env), name, length(args)}
-        #IO.inspect(response_type, label: "path")
-        throw({:response_type, response_type})
-    end
+    throw({:response_type, type})
   end
 end
 
 defmodule Stage4.TypedServer do
   defmacro __using__(_) do
     quote do
-      Module.register_attribute(__MODULE__, :call_types, accumulate: true)
+      Module.register_attribute(__MODULE__, :response_types, accumulate: true)
       @before_compile Stage4.TypedServer.CompileHooks
       @on_definition Stage4.TypedServer.CompileHooks
     end
@@ -131,24 +108,21 @@ defmodule TypedGenServer.Stage4.Server do
   def echo(pid, message) do
     #case annotate_type(GenServer.call(pid, {:echo_req, message}), Contract.Echo.res()) do
     case call_echo_req(pid, message) do
-    #impl = TypedServer.impl(__MODULE__)
-    #case impl.echo_req(pid, message) do
       ## Try changing the pattern or the returned response
       {:echo_res, response} -> response
     end
   end
 
-  ## This could be generated based on present handle clauses - thanks, Robert!
-  #@spec call_echo_req(t(), String.t()) :: Contract.Echo.res()
+  ## This is generated with the correct return type,
+  ## thanks to using TypedServer.reply/3 instead of GenServer.reply/2.
+  ## We don't have to define it!
+  #@spec call_echo_req(t(), any) :: Contract.Echo.res()
   #defp call_echo_req(pid, message) do
   #  GenServer.call(pid, {:echo_req, message})
   #end
 
   @spec hello(t(), String.t()) :: :ok
   def hello(pid, name) do
-    #case GenServer.call(pid, {:hello, name}) |> annotate_type(Contract.Hello.res()) do
-    #  :ok -> :ok
-    #end
     GenServer.call(pid, {:hello, name})
   end
 
@@ -162,17 +136,16 @@ defmodule TypedGenServer.Stage4.Server do
     {:noreply, handle(m, from, state)}
   end
 
-  @request_handler :handle
-
   @spec handle(message(), any, any) :: state()
   ## Try breaking the pattern match, e.g. by changing 'echo_req'
   def handle({:echo_req, payload}, from, state) do
-    ## This could register {:echo_req, payload} <-> {:echo_res, payload} mapping
-    ## and response type at compile time to generate call_echo() automatically.
-    ## Thanks Robert!
+    ## TypedServer.reply/3 registers a {:echo_req, payload} <-> Contract.Echo.res() mapping
+    ## and generates call_echo_req() at compile time.
+    ## Thanks for the idea, @rvirding!
     TypedServer.reply( from, {:echo_res, payload}, Contract.Echo.res() )
     ## This will not typecheck - awesome!
-    #TypedServer.reply( from, {:echo_resa, payload}, Contract.Echo.res() )
+    #TypedServer.reply( from, {:invalid_tag, payload}, Contract.Echo.res() )
+    ## And this is the well known untyped equivalent.
     #GenServer.reply(from, {:echo_res, payload})
     state
   end
@@ -197,6 +170,6 @@ defmodule Test.TypedGenServer.Stage4.Server do
     pid = self()
     "payload" = Server.echo(srv, "payload")
     ## This won't typecheck, since Server.echo only accepts Server.t(), that is our Server pids
-    # "payload" = Server.echo(pid, "payload")
+    #"payload" = Server.echo(pid, "payload")
   end
 end
