@@ -16,6 +16,10 @@ defmodule Stage4.TypedServer.CompileHooks do
   end
 
   def __on_definition__(env, kind, name, args, guards, body) do
+    if name == :handle do
+      #IO.inspect({name, env}, limit: :infinity)
+      IO.inspect({env.module, Module.get_attribute(env.module, :spec)})
+    end
     request_handler = Module.get_attribute(env.module, :request_handler, :handle)
     case request_handler do
       ^name ->
@@ -107,7 +111,7 @@ defmodule TypedGenServer.Stage4.Server do
   # @spec echo(t(), String.t()) :: {:echo_req, String.t()}
   def echo(pid, message) do
     #case annotate_type(GenServer.call(pid, {:echo_req, message}), Contract.Echo.res()) do
-    case call_echo_req(pid, message) do
+    case call_echo_req(pid, 123) do
       ## Try changing the pattern or the returned response
       {:echo_res, response} -> response
     end
@@ -116,6 +120,7 @@ defmodule TypedGenServer.Stage4.Server do
   ## This is generated with the correct return type,
   ## thanks to using TypedServer.reply/3 instead of GenServer.reply/2.
   ## We don't have to define it!
+  ## TODO: use the correct type instead of any as the second param!
   #@spec call_echo_req(t(), any) :: Contract.Echo.res()
   #defp call_echo_req(pid, message) do
   #  GenServer.call(pid, {:echo_req, message})
