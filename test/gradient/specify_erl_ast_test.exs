@@ -1351,6 +1351,86 @@ defmodule Gradient.SpecifyErlAstTest do
             ]} = recv
   end
 
+  test "typespec" do
+    {tokens, ast} = load("/Elixir.Typespec.beam", "/typespec.ex")
+
+    [atoms_type2, atoms_type, named_type, missing_type_arg, missing_type | _] =
+      SpecifyErlAst.add_missing_loc_literals(ast, tokens)
+      |> filter_specs()
+      |> Enum.reverse()
+
+    assert {:attribute, 17, :spec,
+            {{:atoms_type2, 1},
+             [
+               {:type, 17, :fun,
+                [
+                  {:type, 17, :product,
+                   [{:type, 17, :union, [{:atom, 17, :ok}, {:atom, 17, :error}]}]},
+                  {:remote_type, 17,
+                   [
+                     {:atom, 17, Unknown},
+                     {:atom, 17, :atom},
+                     [{:type, 17, :union, [{:atom, 17, :ok}, {:atom, 17, :error}]}]
+                   ]}
+                ]}
+             ]}} = atoms_type2
+
+    assert {:attribute, 14, :spec,
+            {{:atoms_type, 1},
+             [
+               {:type, 14, :fun,
+                [
+                  {:type, 14, :product,
+                   [{:type, 14, :union, [{:atom, 14, :ok}, {:atom, 14, :error}]}]},
+                  {:type, 14, :union, [{:atom, 14, :ok}, {:atom, 14, :error}]}
+                ]}
+             ]}} = atoms_type
+
+    assert {:attribute, 11, :spec,
+            {{:named_type, 1},
+             [
+               {:type, 11, :fun,
+                [
+                  {:type, 11, :product,
+                   [
+                     {:ann_type, 11,
+                      [
+                        {:var, 11, :name},
+                        {:remote_type, 11, [{:atom, 11, Unknown}, {:atom, 11, :atom}, []]}
+                      ]}
+                   ]},
+                  {:type, 11, :atom, []}
+                ]}
+             ]}} = named_type
+
+    assert {:attribute, 8, :spec,
+            {{:missing_type_arg, 0},
+             [
+               {:type, 8, :fun,
+                [
+                  {:type, 8, :product, []},
+                  {:user_type, 8, :mylist,
+                   [{:remote_type, 8, [{:atom, 8, Unknown}, {:atom, 8, :atom}, []]}]}
+                ]}
+             ]}} = missing_type_arg
+
+    assert {:attribute, 5, :spec,
+            {{:missing_type, 0},
+             [
+               {:type, 5, :fun,
+                [
+                  {:type, 5, :product, []},
+                  {:remote_type, 5, [{:atom, 5, Unknown}, {:atom, 5, :atom}, []]}
+                ]}
+             ]}} = missing_type
+  end
+
+  # Helpers
+
+  def filter_specs(ast) do
+    Enum.filter(ast, &match?({:attribute, _, :spec, _}, &1))
+  end
+
   @spec load(String.t(), String.t()) :: {list(), list()}
   def load(beam_file, ex_file) do
     beam_file = String.to_charlist(@examples_path <> beam_file)

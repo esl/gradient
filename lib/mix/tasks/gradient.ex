@@ -7,7 +7,7 @@ defmodule Mix.Tasks.Gradient do
     Mix.Tasks.Compile.run([])
 
     files = get_beams_paths()
-    #IO.puts("Found files:\n #{Enum.join(Enum.concat(Map.values(files)), "\n ")}")
+    # IO.puts("Found files:\n #{Enum.join(Enum.concat(Map.values(files)), "\n ")}")
 
     Application.ensure_all_started(:gradualizer)
 

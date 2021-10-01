@@ -157,6 +157,14 @@ defmodule Gradient.SpecifyErlAst do
   @spec mapper(form(), [token()], options()) :: {form(), [token()]}
   defp mapper(form, tokens, opts)
 
+  defp mapper({:attribute, anno, :spec, {name_arity, specs}}, tokens, opts) do
+    #
+    new_specs = context_mapper_map(specs, [], opts, &spec_mapper/3)
+
+    {:attribute, anno, :spec, {name_arity, new_specs}}
+    |> pass_tokens(tokens)
+  end
+
   defp mapper({:function, _line, :__info__, _arity, _children} = form, tokens, _opts) do
     # skip analysis for __info__ functions
     pass_tokens(form, tokens)
@@ -461,6 +469,46 @@ defmodule Gradient.SpecifyErlAst do
   defp mapper(form, tokens, _opts) do
     Logger.warn("Not found mapper for #{inspect(form)}")
     pass_tokens(form, tokens)
+  end
+
+  @doc """
+  Adds missing line to the function specification.
+  """
+  @spec spec_mapper(form(), tokens(), options()) :: {form(), tokens()}
+  def spec_mapper({:type, anno, type_name, args}, tokens, opts) do
+    {:ok, _line, anno, opts, _} = get_line(anno, opts)
+    new_args = context_mapper_map(args, tokens, opts, &spec_mapper/3)
+
+    {:type, anno, type_name, new_args}
+    |> pass_tokens(tokens)
+  end
+
+  def spec_mapper({:remote_type, anno, [mod, type, args]}, tokens, opts) do
+    {:ok, _line, anno, opts, _} = get_line(anno, opts)
+    {new_mod, _} = spec_mapper(mod, tokens, opts)
+    {new_type, _} = spec_mapper(type, tokens, opts)
+    new_args = context_mapper_map(args, tokens, opts, &spec_mapper/3)
+
+    {:remote_type, anno, [new_mod, new_type, new_args]}
+    |> pass_tokens(tokens)
+  end
+
+  def spec_mapper({:user_type, anno, name, args}, tokens, opts) do
+    new_args = context_mapper_map(args, tokens, opts, &spec_mapper/3)
+
+    {:user_type, anno, name, new_args}
+    |> pass_tokens(tokens)
+  end
+
+  def spec_mapper({:ann_type, anno, attrs}, tokens, opts) do
+    new_attrs = context_mapper_map(attrs, tokens, opts, &spec_mapper/3)
+
+    {:ann_type, anno, new_attrs}
+    |> pass_tokens(tokens)
+  end
+
+  def spec_mapper(type, tokens, opts) do
+    mapper(type, tokens, opts)
   end
 
   @doc """
