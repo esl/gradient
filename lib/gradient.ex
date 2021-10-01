@@ -7,9 +7,9 @@ defmodule Gradient do
   - `code_path` - Path to a file with code (e.g. when beam was compiled without project).
   """
 
-  alias Gradient.ElixirFileUtils
-  alias Gradient.ElixirFmt
-  alias Gradient.SpecifyErlAst
+  alias GradualizerEx.ElixirFileUtils
+  alias GradualizerEx.ElixirFmt
+  alias GradualizerEx.AstSpecifier
 
   require Logger
 
@@ -23,7 +23,7 @@ defmodule Gradient do
       forms =
         forms
         |> put_code_path(opts)
-        |> SpecifyErlAst.specify()
+        |> AstSpecifier.specify()
 
       case :gradualizer.type_check_forms(forms, opts) do
         [] ->
