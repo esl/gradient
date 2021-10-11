@@ -34,6 +34,79 @@ defmodule Gradient.ElixirFmt do
     format_expr_type_error(expression, actual_type, expected_type, opts)
   end
 
+  def format_type_error({:call_undef, anno, module, func, arity}, opts) do
+    :io_lib.format(
+      "~sCall to undefined function ~p:~p/~p~s~n",
+      [
+        format_location(anno, :brief, opts),
+        module,
+        func,
+        arity,
+        format_location(anno, :verbose, opts)
+      ]
+    )
+  end
+
+  def format_type_error({:undef, :record, anno, {module, recName}}, opts) do
+    :io_lib.format(
+      "~sUndefined record ~p:~p~s~n",
+      [
+        format_location(anno, :brief, opts),
+        module,
+        recName,
+        format_location(anno, :verbose, opts)
+      ]
+    )
+  end
+
+  def format_type_error({:undef, :record, anno, recName}, opts) do
+    :io_lib.format(
+      "~sUndefined record ~p~s~n",
+      [format_location(anno, :brief, opts), recName, format_location(anno, :verbose, opts)]
+    )
+  end
+
+  def format_type_error({:undef, :record_field, fieldName}, opts) do
+    :io_lib.format(
+      "~sUndefined record field ~s~s~n",
+      [
+        format_location(fieldName, :brief, opts),
+        pp_expr(fieldName, opts),
+        format_location(fieldName, :verbose, opts)
+      ]
+    )
+  end
+
+  def format_type_error({:undef, :user_type, anno, {name, arity}}, opts) do
+    :io_lib.format(
+      "~sUndefined type ~p/~p~s~n",
+      [format_location(anno, :brief, opts), name, arity, format_location(anno, :verbose, opts)]
+    )
+  end
+
+  def format_type_error({:undef, type, anno, {module, name, arity}}, opts)
+      when type in [:user_type, :remote_type] do
+    type =
+      case type do
+        :user_type -> "type"
+        :remote_type -> "remote type"
+      end
+
+    module = "#{inspect(module)}"
+
+    :io_lib.format(
+      "~sUndefined ~s ~s:~p/~p~s~n",
+      [
+        format_location(anno, :brief, opts),
+        type,
+        module,
+        name,
+        arity,
+        format_location(anno, :verbose, opts)
+      ]
+    )
+  end
+
   def format_type_error(error, opts) do
     :gradualizer_fmt.format_type_error(error, opts) ++ '\n'
   end
