@@ -461,6 +461,16 @@ defmodule GradualizerEx.AstSpecifier do
   Adds missing location to the function specification.
   """
   @spec spec_mapper(form(), tokens(), options()) :: {form(), tokens()}
+  def spec_mapper({:type, anno, :tuple, :any}, tokens, _opts) do
+    {:type, anno, :tuple, :any}
+    |> pass_tokens(tokens)
+  end
+
+  def spec_mapper({:type, anno, :any}, tokens, _opts) do
+    {:type, anno, :any}
+    |> pass_tokens(tokens)
+  end
+
   def spec_mapper({:type, anno, type_name, args}, tokens, opts) do
     {:ok, _line, anno, opts, _} = get_line(anno, opts)
     new_args = context_mapper_map(args, tokens, opts, &spec_mapper/3)
