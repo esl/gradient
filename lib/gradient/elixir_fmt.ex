@@ -5,6 +5,7 @@ defmodule Gradient.ElixirFmt do
   @behaviour Gradient.Fmt
 
   alias :gradualizer_fmt, as: FmtLib
+  alias GradualizerEx.ElixirType
 
   def print_errors(errors, opts) do
     for {file, e} <- errors do
@@ -16,6 +17,7 @@ defmodule Gradient.ElixirFmt do
   def print_error(error, opts) do
     file = Keyword.get(opts, :filename)
     fmt_loc = Keyword.get(opts, :fmt_location, :verbose)
+    opts = Keyword.put(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
 
     case file do
       nil -> :ok
@@ -68,9 +70,9 @@ defmodule Gradient.ElixirFmt do
     IO.ANSI.blue() <> "#{inspect(expression)}" <> IO.ANSI.reset()
   end
 
-  def pp_type(expression, _opts) do
-    pp = expression |> :typelib.pp_type() |> to_string()
-    IO.ANSI.yellow() <> pp <> IO.ANSI.reset()
+  def pp_type(type, _opts) do
+    pp = ElixirType.pretty_print(type)
+    IO.ANSI.cyan() <> pp <> IO.ANSI.reset()
   end
 
   def try_highlight_in_context(expression, opts) do

@@ -35,5 +35,4 @@ defmodule SimpleApp do
     l = fn -> :ok end
     l.()
   end
-
 end
