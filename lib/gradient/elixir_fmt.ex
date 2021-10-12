@@ -17,7 +17,6 @@ defmodule Gradient.ElixirFmt do
   def print_error(error, opts) do
     file = Keyword.get(opts, :filename)
     fmt_loc = Keyword.get(opts, :fmt_location, :verbose)
-    opts = Keyword.put(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
 
     case file do
       nil -> :ok
@@ -25,7 +24,12 @@ defmodule Gradient.ElixirFmt do
       _ -> :io.format("~s: ", [file])
     end
 
-    :io.put_chars(format_type_error(error, opts))
+    :io.put_chars(format_error(error, opts))
+  end
+
+  def format_error(error, opts) do
+    opts = Keyword.put(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
+    format_type_error(error, opts)
   end
 
   @impl Gradient.Fmt
