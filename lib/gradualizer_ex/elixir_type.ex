@@ -69,6 +69,10 @@ defmodule GradualizerEx.ElixirType do
     "nil"
   end
 
+  def pretty_print({:atom, _, val}) when val in [true, false] do
+    Atom.to_string(val)
+  end
+
   def pretty_print({:atom, _, val}) do
     ":" <> Atom.to_string(val)
   end
