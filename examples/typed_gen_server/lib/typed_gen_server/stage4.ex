@@ -1,97 +1,14 @@
-defmodule Stage4.TypedServer.CompileHooks do
-  @moduledoc false
-
-  defmacro __before_compile__(env) do
-    response_types = Module.get_attribute(env.module, :response_types)
-    #IO.inspect(response_types, label: "response types")
-    for {request_tag, response_type} <- response_types do
-      name = Macro.escape(:'call_#{request_tag}')
-      quote do
-        @spec unquote(name)(t(), any) :: unquote(response_type)
-        defp unquote(name)(pid, arg) do
-          GenServer.call(pid, {unquote(request_tag), arg})
-        end
-      end
-    end
-  end
-
-  def __on_definition__(env, kind, name, args, guards, body) do
-    if name == :handle do
-      #IO.inspect({name, env}, limit: :infinity)
-      IO.inspect({env.module, Module.get_attribute(env.module, :spec)})
-    end
-    request_handler = Module.get_attribute(env.module, :request_handler, :handle)
-    case request_handler do
-      ^name ->
-        response_type = find_response_type(env, body)
-        if response_type != nil do
-          {request_tag, _} = Enum.at(args, 0)
-          Module.put_attribute(env.module, :response_types, {request_tag, response_type})
-        end
-      _ ->
-        :ok
-    end
-  end
-
-  def find_response_type(env, body) do
-    try do
-      Macro.prewalk(body, &walk(env, &1))
-      nil
-    catch
-      {:response_type, response_type} ->
-        response_type
-    end
-  end
-
-  def walk(env, ast) do
-    case ast do
-      {{:., _, [path, :reply]}, _, _} = reply_call ->
-        case Macro.expand(path, env) do
-          Stage4.TypedServer ->
-            get_response_type_from_typed_call(env, Macro.decompose_call(reply_call))
-          other ->
-            :ok
-        end
-        reply_call
-      not_a_call ->
-        not_a_call
-    end
-  end
-
-  def get_response_type_from_typed_call(env, {_, _, [_, _, type] = _args} = call) do
-    throw({:response_type, type})
-  end
-end
-
-defmodule Stage4.TypedServer do
-  defmacro __using__(_) do
-    quote do
-      Module.register_attribute(__MODULE__, :response_types, accumulate: true)
-      @before_compile Stage4.TypedServer.CompileHooks
-      @on_definition Stage4.TypedServer.CompileHooks
-    end
-  end
-
-  defmacro reply(client, reply, type) do
-    quote do
-      reply = unquote(reply)
-      annotate_type(reply, unquote(type))
-      GenServer.reply(unquote(client), reply)
-    end
-  end
-end
-
 defmodule TypedGenServer.Stage4.Server do
   use GenServer
-  use GradualizerEx.TypeAnnotation
-  use Stage4.TypedServer
-  alias Stage4.TypedServer
+  use Gradient.TypeAnnotation
+  use Gradient.TypedServer
+  alias Gradient.TypedServer
 
   ## Start IEx with:
   ##   iex -S mix run --no-start
   ##
   ## Then use the following to recheck the file on any change:
-  ##   recompile(); GradualizerEx.type_check_file(:code.which( TypedGenServer.Stage4.Server ), [:infer])
+  ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage4.Server ), [:infer])
 
   @opaque t :: pid()
 
@@ -167,7 +84,7 @@ defmodule Test.TypedGenServer.Stage4.Server do
   alias TypedGenServer.Stage4.Server
 
   ## Typecheck with:
-  ##   recompile(); GradualizerEx.type_check_file(:code.which( Test.TypedGenServer.Stage4.Server ), [:infer])
+  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage4.Server ), [:infer])
 
   @spec test :: any()
   def test do
