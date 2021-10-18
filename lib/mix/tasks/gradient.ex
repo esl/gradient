@@ -13,7 +13,7 @@ defmodule Mix.Tasks.Gradient do
 
     :gradualizer_db.import_beam_files(get_deps_beam_paths())
 
-    IO.puts("Gradualizing files...")
+    IO.puts("Typechecking files...")
 
     res =
       files
