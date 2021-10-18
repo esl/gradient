@@ -1,5 +1,10 @@
 # Gradient
 
+<a href="https://github.com/esl/gradient/actions/workflows/build-and-test.yml">
+  <img src="https://github.com/esl/gradient/actions/workflows/build-and-test.yml/badge.svg"
+       alt="GitHub Actions Build and Test Status" />
+</a>
+
 Gradient is a [gradual typechecker][siek:what-is-gt] for Elixir.
 
 Gradual typing is a bit like static typing,
