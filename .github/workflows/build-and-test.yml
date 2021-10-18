@@ -1,0 +1,29 @@
+name: Build and test
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request: []
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Erlang ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    strategy:
+      matrix:
+        otp: ['23.3.4.7', '24.1']
+        elixir: ['1.11.4', '1.12.3']
+    steps:
+      - uses: actions/checkout@v2
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+      - name: "Get and compile deps"
+        run: "mix deps.get && mix deps.compile"
+      - name: "Build"
+        run: "mix compile"
+      - name: "Test"
+        run: "mix test"
