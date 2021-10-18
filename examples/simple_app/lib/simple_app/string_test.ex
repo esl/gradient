@@ -19,4 +19,5 @@ defmodule SimpleApp.StringTest do
       true -> 2
     end
   end
+
 end
