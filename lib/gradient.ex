@@ -1,15 +1,15 @@
-defmodule GradualizerEx do
+defmodule Gradient do
   @moduledoc """
-  Documentation for `GradualizerEx`.
+  Documentation for `Gradient`.
 
   Options:
   - `app_path` - Path to the app that contains file with code (for umbrella apps).
   - `code_path` - Path to a file with code (e.g. when beam was compiled without project).
   """
 
-  alias GradualizerEx.ElixirFileUtils
-  alias GradualizerEx.ElixirFmt
-  alias GradualizerEx.SpecifyErlAst
+  alias Gradient.ElixirFileUtils
+  alias Gradient.ElixirFmt
+  alias Gradient.SpecifyErlAst
 
   require Logger
 

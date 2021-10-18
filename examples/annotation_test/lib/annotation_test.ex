@@ -13,7 +13,7 @@ defmodule AnnotationTest do
 
   """
 
-  use GradualizerEx.TypeAnnotation
+  use Gradient.TypeAnnotation
 
   @spec hello() :: boolean()
   def hello do

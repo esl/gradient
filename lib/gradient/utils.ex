@@ -1,4 +1,4 @@
-defmodule GradualizerEx.Utils do
+defmodule Gradient.Utils do
   @moduledoc """
   Utility functions that helps obtain info about location from data 
   """

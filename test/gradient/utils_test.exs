@@ -1,7 +1,7 @@
-defmodule GradualizerEx.UtilsTest do
+defmodule Gradient.UtilsTest do
   use ExUnit.Case
 
-  alias GradualizerEx.Utils
+  alias Gradient.Utils
 
   @examples_path "test/examples"
 

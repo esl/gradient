@@ -20,6 +20,6 @@ defmodule SimpleApp.MixProject do
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
-    [{:gradualizer_ex, path: "../../"}]
+    [{:gradient, path: "../../"}]
   end
 end

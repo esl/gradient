@@ -1,8 +1,8 @@
-defmodule GradualizerEx.ElixirFmtTest do
+defmodule Gradient.ElixirFmtTest do
   use ExUnit.Case
-  doctest GradualizerEx.ElixirFmt
+  doctest Gradient.ElixirFmt
 
-  alias GradualizerEx.ElixirFmt
+  alias Gradient.ElixirFmt
 
   @example_module_path "test/examples/simple_app.ex"
 

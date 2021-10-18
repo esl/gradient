@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Gradualizer do
+defmodule Mix.Tasks.Gradient do
   use Mix.Task
 
   @impl Mix.Task
@@ -19,10 +19,10 @@ defmodule Mix.Tasks.Gradualizer do
       files
       |> Enum.map(fn
         {nil, paths} ->
-          Enum.map(paths, &GradualizerEx.type_check_file/1)
+          Enum.map(paths, &Gradient.type_check_file/1)
 
         {app_path, paths} ->
-          Enum.map(paths, &GradualizerEx.type_check_file(&1, app_path: app_path))
+          Enum.map(paths, &Gradient.type_check_file(&1, app_path: app_path))
       end)
       |> Enum.concat()
 

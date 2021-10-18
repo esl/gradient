@@ -1,4 +1,4 @@
-defmodule GradualizerEx.SpecifyErlAst do
+defmodule Gradient.SpecifyErlAst do
   @moduledoc """
   Module adds missing line information to the Erlang abstract code produced 
   from Elixir AST.
@@ -42,7 +42,7 @@ defmodule GradualizerEx.SpecifyErlAst do
   - guards [X]
   """
 
-  import GradualizerEx.Utils
+  import Gradient.Utils
 
   require Logger
 

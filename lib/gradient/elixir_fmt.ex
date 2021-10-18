@@ -1,8 +1,8 @@
-defmodule GradualizerEx.ElixirFmt do
+defmodule Gradient.ElixirFmt do
   @moduledoc """
-  Module that handles formatting and printing error messages produced by Gradualizer in Elixir.
+  Module that handles formatting and printing error messages produced by Gradient in Elixir.
   """
-  @behaviour GradualizerEx.Fmt
+  @behaviour Gradient.Fmt
 
   alias :gradualizer_fmt, as: FmtLib
 
@@ -26,7 +26,7 @@ defmodule GradualizerEx.ElixirFmt do
     :io.put_chars(format_type_error(error, opts))
   end
 
-  @impl GradualizerEx.Fmt
+  @impl Gradient.Fmt
   def format_type_error({:type_error, expression, actual_type, expected_type}, opts)
       when is_tuple(expression) do
     format_expr_type_error(expression, actual_type, expected_type, opts)

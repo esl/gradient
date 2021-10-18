@@ -1,4 +1,4 @@
-defmodule GradualizerEx.ElixirFileUtils do
+defmodule Gradient.ElixirFileUtils do
   @moduledoc """
   Module used to load beam files generated from Elixir.
   """

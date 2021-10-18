@@ -1,10 +1,10 @@
-defmodule GradualizerEx.SpecifyErlAstTest do
+defmodule Gradient.SpecifyErlAstTest do
   use ExUnit.Case
-  doctest GradualizerEx.SpecifyErlAst
+  doctest Gradient.SpecifyErlAst
 
-  alias GradualizerEx.SpecifyErlAst
+  alias Gradient.SpecifyErlAst
 
-  import GradualizerEx.Utils
+  import Gradient.Utils
 
   @examples_path "test/examples"
 

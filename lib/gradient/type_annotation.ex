@@ -1,4 +1,4 @@
-defmodule GradualizerEx.TypeAnnotation do
+defmodule Gradient.TypeAnnotation do
 
   defmacro annotate_type(expr, type),
     do: annotate(:'::', expr, type)
@@ -29,8 +29,8 @@ defmodule GradualizerEx.TypeAnnotation do
   
   defmacro __using__(_) do
     quote [] do
-      import GradualizerEx.TypeAnnotation 
-      require GradualizerEx.TypeAnnotation
+      import Gradient.TypeAnnotation
+      require Gradient.TypeAnnotation
 
       @compile {:inline, '::': 2, ':::': 2}
       def unquote(:'::')(expr, _type), do: expr
