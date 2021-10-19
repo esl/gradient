@@ -1,9 +1,6 @@
 # Gradient
 
-<a href="https://github.com/esl/gradient/actions/workflows/build-and-test.yml">
-  <img src="https://github.com/esl/gradient/actions/workflows/build-and-test.yml/badge.svg"
-       alt="GitHub Actions Build and Test Status" />
-</a>
+[![Build Status](https://github.com/esl/gradient/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/esl/gradient/actions/workflows/build-and-test.yml)
 
 Gradient is a [gradual typechecker][siek:what-is-gt] for Elixir.
 
