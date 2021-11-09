@@ -1,5 +1,4 @@
 defmodule Gradient.TypedServer do
-
   ## TODO: docs, docs, docs!
 
   defmacro __using__(_) do

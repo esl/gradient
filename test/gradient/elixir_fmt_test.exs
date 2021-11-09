@@ -25,10 +25,10 @@ defmodule Gradient.ElixirFmtTest do
       {_tokens, ast} = load("/type/Elixir.WrongRet.beam", "/type/wrong_ret.ex")
       opts = []
       errors = type_check_file(ast, opts)
+
       for e <- errors do
         :io.put_chars(e)
       end
-
     end
   end
 
