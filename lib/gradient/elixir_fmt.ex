@@ -5,7 +5,7 @@ defmodule Gradient.ElixirFmt do
   @behaviour Gradient.Fmt
 
   alias :gradualizer_fmt, as: FmtLib
-  alias GradualizerEx.ElixirType
+  alias Gradient.ElixirType
 
   def print_errors(errors, opts) do
     for {file, e} <- errors do

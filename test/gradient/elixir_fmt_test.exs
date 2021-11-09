@@ -3,7 +3,7 @@ defmodule Gradient.ElixirFmtTest do
   doctest Gradient.ElixirFmt
 
   alias Gradient.ElixirFmt
-  alias Gradient.TestHelpers
+  import Gradient.TestHelpers
   alias Gradient.AstSpecifier
 
   @example_module_path "test/examples/simple_app.ex"

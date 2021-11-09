@@ -1,10 +1,10 @@
-defmodule GradualizerEx.TokensTest do
+defmodule Gradient.TokensTest do
   use ExUnit.Case
-  doctest GradualizerEx.Tokens
+  doctest Gradient.Tokens
 
-  alias GradualizerEx.Tokens
+  alias Gradient.Tokens
 
-  import GradualizerEx.TestHelpers
+  import Gradient.TestHelpers
 
   test "drop_tokens_while" do
     tokens = example_tokens()

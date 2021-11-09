@@ -1,5 +1,5 @@
-defmodule GradualizerEx.TestHelpers do
-  alias GradualizerEx.Types, as: T
+defmodule Gradient.TestHelpers do
+  alias Gradient.Types, as: T
 
   @examples_path "test/examples"
 

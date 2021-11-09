@@ -1,4 +1,4 @@
-defmodule GradualizerEx.Types do
+defmodule Gradient.Types do
   @type token :: tuple()
   @type tokens :: [tuple()]
   @type form ::

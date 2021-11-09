@@ -1,22 +1,10 @@
-<<<<<<< HEAD:test/gradient/specify_erl_ast_test.exs
-defmodule Gradient.SpecifyErlAstTest do
+defmodule Gradient.AstSpecifierTest do
   use ExUnit.Case
-  doctest Gradient.SpecifyErlAst
+  doctest Gradient.AstSpecifier
 
-  alias Gradient.SpecifyErlAst
+  alias Gradient.AstSpecifier
 
-  import Gradient.Utils
-
-  @examples_path "test/examples"
-=======
-defmodule GradualizerEx.AstSpecifierTest do
-  use ExUnit.Case
-  doctest GradualizerEx.AstSpecifier
-
-  alias GradualizerEx.AstSpecifier
-
-  import GradualizerEx.TestHelpers
->>>>>>> 9a63ccd (Code refactoring, Add docs):test/gradient/ast_specifier_test.exs
+  import Gradient.TestHelpers
 
   setup_all state do
     {:ok, state}

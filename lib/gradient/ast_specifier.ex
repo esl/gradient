@@ -1,8 +1,4 @@
-<<<<<<< HEAD:lib/gradient/specify_erl_ast.ex
-defmodule Gradient.SpecifyErlAst do
-=======
-defmodule GradualizerEx.AstSpecifier do
->>>>>>> 9a63ccd (Code refactoring, Add docs):lib/gradualizer_ex/ast_specifier.ex
+defmodule Gradient.AstSpecifier do
   @moduledoc """
   Module adds missing location information to the Erlang abstract code produced
   from Elixir AST. Moreover it can be used to catch some ast pattern and replace 
@@ -48,15 +44,11 @@ defmodule GradualizerEx.AstSpecifier do
   - guards [X]
   """
 
-<<<<<<< HEAD:lib/gradient/specify_erl_ast.ex
-  import Gradient.Utils
-=======
-  import GradualizerEx.Tokens
->>>>>>> 9a63ccd (Code refactoring, Add docs):lib/gradualizer_ex/ast_specifier.ex
+  import Gradient.Tokens
 
   require Logger
 
-  alias GradualizerEx.Types
+  alias Gradient.Types
 
   @type token :: Types.token()
   @type tokens :: Types.tokens()
@@ -75,13 +67,8 @@ defmodule GradualizerEx.AstSpecifier do
     with {:attribute, line, :file, {path, _}} <- hd(forms),
          path <- to_string(path),
          {:ok, code} <- File.read(path),
-<<<<<<< HEAD:lib/gradient/specify_erl_ast.ex
          {:ok, tokens} <- :elixir.string_to_tokens(String.to_charlist(code), line, line, path, []) do
-      add_missing_loc_literals(forms, tokens)
-=======
-         {:ok, tokens} <- :elixir.string_to_tokens(String.to_charlist(code), 1, 1, path, []) do
       run_mappers(forms, tokens)
->>>>>>> 9a63ccd (Code refactoring, Add docs):lib/gradualizer_ex/ast_specifier.ex
     else
       error ->
         IO.puts("Error occured when specifying forms : #{inspect(error)}")
@@ -461,6 +448,21 @@ defmodule GradualizerEx.AstSpecifier do
   Adds missing location to the function specification.
   """
   @spec spec_mapper(form(), tokens(), options()) :: {form(), tokens()}
+  def spec_mapper({:type, anno, :tuple, :any}, tokens, _opts) do
+    {:type, anno, :tuple, :any}
+    |> pass_tokens(tokens)
+  end
+
+  def spec_mapper({:type, anno, :map, :any}, tokens, _opts) do
+    {:type, anno, :map, :any}
+    |> pass_tokens(tokens)
+  end
+
+  def spec_mapper({:type, anno, :any}, tokens, _opts) do
+    {:type, anno, :any}
+    |> pass_tokens(tokens)
+  end
+
   def spec_mapper({:type, anno, type_name, args}, tokens, opts) do
     {:ok, _line, anno, opts, _} = get_line(anno, opts)
     new_args = context_mapper_map(args, tokens, opts, &spec_mapper/3)

@@ -7,9 +7,9 @@ defmodule Gradient do
   - `code_path` - Path to a file with code (e.g. when beam was compiled without project).
   """
 
-  alias GradualizerEx.ElixirFileUtils
-  alias GradualizerEx.ElixirFmt
-  alias GradualizerEx.AstSpecifier
+  alias Gradient.ElixirFileUtils
+  alias Gradient.ElixirFmt
+  alias Gradient.AstSpecifier
 
   require Logger
 

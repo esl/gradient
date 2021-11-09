@@ -1,8 +1,8 @@
-defmodule GradualizerEx.Tokens do
+defmodule Gradient.Tokens do
   @moduledoc """
   Group of functions helping with manage tokens.
   """
-  alias GradualizerEx.Types, as: T
+  alias Gradient.Types, as: T
 
   @doc """
   Drop tokens to the first conditional occurance. Returns type of the encountered

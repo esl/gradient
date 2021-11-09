@@ -1,4 +1,4 @@
-defmodule GradualizerEx.ElixirType do
+defmodule Gradient.ElixirType do
   @moduledoc """
   Module to format types.
 
