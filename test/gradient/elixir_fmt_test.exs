@@ -20,6 +20,7 @@ defmodule Gradient.ElixirFmtTest do
     assert res == expected
   end
 
+  @tag :skip
   describe "types format" do
     test "wrong return type" do
       {_tokens, ast} = load("/type/Elixir.WrongRet.beam", "/type/wrong_ret.ex")
@@ -30,16 +31,6 @@ defmodule Gradient.ElixirFmtTest do
         :io.put_chars(e)
       end
     end
-  end
-
-  def type_check_file(ast, opts) do
-    forms = AstSpecifier.specify(ast)
-    opts = Keyword.put(opts, :return_errors, true)
-    opts = Keyword.put(opts, :forms, forms)
-
-    forms
-    |> :gradualizer.type_check_forms(opts)
-    |> Enum.map(fn {_, err} -> ElixirFmt.format_error(err, opts) end)
   end
 
   @tag :skip
@@ -55,5 +46,15 @@ defmodule Gradient.ElixirFmtTest do
 
   def basic_erlang_forms() do
     [{:attribute, 1, :file, {@example_module_path, 1}}]
+  end
+
+  def type_check_file(ast, opts) do
+    forms = AstSpecifier.specify(ast)
+    opts = Keyword.put(opts, :return_errors, true)
+    opts = Keyword.put(opts, :forms, forms)
+
+    forms
+    |> :gradualizer.type_check_forms(opts)
+    |> Enum.map(fn {_, err} -> ElixirFmt.format_error(err, opts) end)
   end
 end
