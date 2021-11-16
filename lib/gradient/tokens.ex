@@ -32,7 +32,7 @@ defmodule Gradient.Tokens do
   end
 
   @doc """
-  Drop tokens to the first list occurance. Returns type of the encountered
+  Drop tokens to the first list occurrence. Returns type of the encountered
   list and the following tokens.
   """
   @spec get_list(T.tokens(), T.options()) ::
