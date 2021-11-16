@@ -4,17 +4,20 @@ defmodule Gradient.Tokens do
   """
   alias Gradient.Types, as: T
 
-  @doc """
-  Drop tokens to the first conditional occurrence. Returns type of the encountered
-  conditional and the following tokens.
-  """
-  @spec get_conditional(T.tokens(), integer(), T.options()) ::
+  @typedoc "Type of conditional with following tokens"
+  @type conditional_t() ::
           {:case, T.tokens()}
           | {:cond, T.tokens()}
           | {:unless, T.tokens()}
           | {:if, T.tokens()}
           | {:with, T.tokens()}
           | :undefined
+
+  @doc """
+  Drop tokens to the first conditional occurrence. Returns type of the encountered
+  conditional and the following tokens.
+  """
+  @spec get_conditional(T.tokens(), integer(), T.options()) :: conditional_t()
   def get_conditional(tokens, line, opts) do
     conditionals = [:if, :unless, :cond, :case, :with]
     {:ok, limit_line} = Keyword.fetch(opts, :end_line)
@@ -38,7 +41,7 @@ defmodule Gradient.Tokens do
   @spec get_list(T.tokens(), T.options()) ::
           {:list, T.tokens()} | {:keyword, T.tokens()} | {:charlist, T.tokens()} | :undefined
   def get_list(tokens, opts) do
-    tokens = flat_tokens(tokens)
+    tokens = flatten_tokens(tokens)
     {:ok, limit_line} = Keyword.fetch(opts, :end_line)
 
     res =
@@ -148,26 +151,26 @@ defmodule Gradient.Tokens do
   end
 
   @doc """
-  Flat the tokens, mostly binaries or string interpolation.
+  Flatten the tokens, mostly binaries or string interpolation.
   """
-  @spec flat_tokens(T.tokens()) :: T.tokens()
-  def flat_tokens(tokens) do
-    Enum.map(tokens, &flat_token/1)
+  @spec flatten_tokens(T.tokens()) :: T.tokens()
+  def flatten_tokens(tokens) do
+    Enum.map(tokens, &flatten_token/1)
     |> Enum.concat()
   end
 
   # Private
 
-  defp flat_token(token) do
+  defp flatten_token(token) do
     case token do
       {:bin_string, _, [s]} = t when is_binary(s) ->
         [t]
 
       {:bin_string, _, ts} ->
-        flat_tokens(ts)
+        flatten_tokens(ts)
 
       {{_, _, nil}, {_, _, nil}, ts} ->
-        flat_tokens(ts)
+        flatten_tokens(ts)
 
       str when is_binary(str) ->
         [{:str, {0, 0, nil}, str}]

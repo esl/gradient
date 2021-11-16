@@ -404,7 +404,7 @@ defmodule Gradient.AstSpecifier do
 
       _ ->
         {bin_tokens, other_tokens} = cut_tokens_to_bin(tokens, line)
-        bin_tokens = flat_tokens(bin_tokens)
+        bin_tokens = flatten_tokens(bin_tokens)
         {elements, _} = context_mapper_fold(elements, bin_tokens, opts, &bin_element_mapper/3)
 
         {:bin, anno, elements}
