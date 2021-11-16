@@ -7,7 +7,7 @@ defmodule Gradient.ElixirType do
   """
 
   @doc """
-  Take type and prepare pretty string represntation.
+  Take type and prepare a pretty string representation.
   """
   @spec pretty_print(tuple()) :: String.t()
   def pretty_print({:remote_type, _, [{:atom, _, mod}, {:atom, _, type}, args]}) do

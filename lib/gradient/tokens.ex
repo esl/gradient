@@ -1,12 +1,12 @@
 defmodule Gradient.Tokens do
   @moduledoc """
-  Group of functions helping with manage tokens.
+  Functions useful for token management.
   """
   alias Gradient.Types, as: T
 
   @doc """
-  Drop tokens to the first conditional occurance. Returns type of the encountered
-  conditional and following tokens.
+  Drop tokens to the first conditional occurrence. Returns type of the encountered
+  conditional and the following tokens.
   """
   @spec get_conditional(T.tokens(), integer(), T.options()) ::
           {:case, T.tokens()}
@@ -33,7 +33,7 @@ defmodule Gradient.Tokens do
 
   @doc """
   Drop tokens to the first list occurance. Returns type of the encountered
-  list and following tokens.
+  list and the following tokens.
   """
   @spec get_list(T.tokens(), T.options()) ::
           {:list, T.tokens()} | {:keyword, T.tokens()} | {:charlist, T.tokens()} | :undefined
@@ -58,8 +58,8 @@ defmodule Gradient.Tokens do
   end
 
   @doc """
-  Drop tokens to the first tuple occurance. Returns type of the encountered 
-  list and following tokens.
+  Drop tokens to the first tuple occurrence. Returns type of the encountered 
+  list and the following tokens.
   """
   @spec get_tuple(T.tokens(), T.options()) ::
           {:tuple, T.tokens()} | :undefined
@@ -105,7 +105,7 @@ defmodule Gradient.Tokens do
   end
 
   @doc """
-  Drop tokens while the token's line is lower than given location.
+  Drop tokens while the token's line is lower than the given location.
   """
   @spec drop_tokens_to_line(T.tokens(), integer()) :: T.tokens()
   def drop_tokens_to_line(tokens, line) do
@@ -128,8 +128,8 @@ defmodule Gradient.Tokens do
 
   @doc """
   Drop the tokens to binary occurrence and then collect all belonging tokens. 
-  Return tuple where first element is a list of tokens making binary, and second 
-  element is a list of tokens after binary.
+  Return tuple where the first element is a list of tokens making up the binary, and the second 
+  element is a list of tokens after the binary.
   """
   @spec cut_tokens_to_bin(T.tokens(), integer()) :: {T.tokens(), T.tokens()}
   def cut_tokens_to_bin(tokens, line) do
