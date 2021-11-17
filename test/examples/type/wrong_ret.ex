@@ -8,8 +8,8 @@ defmodule WrongRet do
   @spec ret_wrong_atom3() :: atom()
   def ret_wrong_atom3, do: %{a: 1}
 
-  @spec ret_wrong_atom4() :: atom()
-  def ret_wrong_atom4, do: false
+  # @spec ret_wrong_atom4() :: atom()
+  # def ret_wrong_atom4, do: false
 
   @spec ret_wrong_integer() :: integer()
   def ret_wrong_integer, do: 1.0
@@ -46,4 +46,7 @@ defmodule WrongRet do
 
   @spec ret_wrong_map() :: map()
   def ret_wrong_map, do: {:a, 1, 2}
+
+  @spec ret_wrong_fun() :: (... -> atom())
+  def ret_wrong_fun, do: fn -> 12 end
 end
