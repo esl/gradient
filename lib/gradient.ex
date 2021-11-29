@@ -9,7 +9,7 @@ defmodule Gradient do
 
   alias Gradient.ElixirFileUtils
   alias Gradient.ElixirFmt
-  alias Gradient.SpecifyErlAst
+  alias Gradient.AstSpecifier
 
   require Logger
 
@@ -23,7 +23,7 @@ defmodule Gradient do
       forms =
         forms
         |> put_code_path(opts)
-        |> SpecifyErlAst.specify()
+        |> AstSpecifier.specify()
 
       case :gradualizer.type_check_forms(forms, opts) do
         [] ->

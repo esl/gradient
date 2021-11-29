@@ -5,6 +5,7 @@ defmodule Gradient.ElixirFmt do
   @behaviour Gradient.Fmt
 
   alias :gradualizer_fmt, as: FmtLib
+  alias Gradient.ElixirType
 
   def print_errors(errors, opts) do
     for {file, e} <- errors do
@@ -23,13 +24,91 @@ defmodule Gradient.ElixirFmt do
       _ -> :io.format("~s: ", [file])
     end
 
-    :io.put_chars(format_type_error(error, opts))
+    :io.put_chars(format_error(error, opts))
+  end
+
+  def format_error(error, opts) do
+    opts = Keyword.put(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
+    format_type_error(error, opts)
   end
 
   @impl Gradient.Fmt
   def format_type_error({:type_error, expression, actual_type, expected_type}, opts)
       when is_tuple(expression) do
     format_expr_type_error(expression, actual_type, expected_type, opts)
+  end
+
+  def format_type_error({:call_undef, anno, module, func, arity}, opts) do
+    :io_lib.format(
+      "~sCall to undefined function ~p:~p/~p~s~n",
+      [
+        format_location(anno, :brief, opts),
+        module,
+        func,
+        arity,
+        format_location(anno, :verbose, opts)
+      ]
+    )
+  end
+
+  def format_type_error({:undef, :record, anno, {module, recName}}, opts) do
+    :io_lib.format(
+      "~sUndefined record ~p:~p~s~n",
+      [
+        format_location(anno, :brief, opts),
+        module,
+        recName,
+        format_location(anno, :verbose, opts)
+      ]
+    )
+  end
+
+  def format_type_error({:undef, :record, anno, recName}, opts) do
+    :io_lib.format(
+      "~sUndefined record ~p~s~n",
+      [format_location(anno, :brief, opts), recName, format_location(anno, :verbose, opts)]
+    )
+  end
+
+  def format_type_error({:undef, :record_field, fieldName}, opts) do
+    :io_lib.format(
+      "~sUndefined record field ~s~s~n",
+      [
+        format_location(fieldName, :brief, opts),
+        pp_expr(fieldName, opts),
+        format_location(fieldName, :verbose, opts)
+      ]
+    )
+  end
+
+  def format_type_error({:undef, :user_type, anno, {name, arity}}, opts) do
+    :io_lib.format(
+      "~sUndefined type ~p/~p~s~n",
+      [format_location(anno, :brief, opts), name, arity, format_location(anno, :verbose, opts)]
+    )
+  end
+
+  def format_type_error({:undef, type, anno, {module, name, arity}}, opts)
+      when type in [:user_type, :remote_type] do
+    type =
+      case type do
+        :user_type -> "type"
+        :remote_type -> "remote type"
+      end
+
+    module = "#{inspect(module)}"
+
+    :io_lib.format(
+      "~sUndefined ~s ~s:~p/~p~s~n",
+      [
+        format_location(anno, :brief, opts),
+        type,
+        module,
+        name,
+        arity,
+        format_location(anno, :verbose, opts)
+      ]
+    )
   end
 
   def format_type_error(error, opts) do
@@ -68,9 +147,9 @@ defmodule Gradient.ElixirFmt do
     IO.ANSI.blue() <> "#{inspect(expression)}" <> IO.ANSI.reset()
   end
 
-  def pp_type(expression, _opts) do
-    pp = expression |> :typelib.pp_type() |> to_string()
-    IO.ANSI.yellow() <> pp <> IO.ANSI.reset()
+  def pp_type(type, _opts) do
+    pp = ElixirType.pretty_print(type)
+    IO.ANSI.cyan() <> pp <> IO.ANSI.reset()
   end
 
   def try_highlight_in_context(expression, opts) do

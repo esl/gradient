@@ -1,71 +1,19 @@
-defmodule Gradient.SpecifyErlAstTest do
+defmodule Gradient.AstSpecifierTest do
   use ExUnit.Case
-  doctest Gradient.SpecifyErlAst
+  doctest Gradient.AstSpecifier
 
-  alias Gradient.SpecifyErlAst
+  alias Gradient.AstSpecifier
 
-  import Gradient.Utils
-
-  @examples_path "test/examples"
+  import Gradient.TestHelpers
 
   setup_all state do
     {:ok, state}
   end
 
-  describe "get_conditional/1" do
-    test "case" do
-      {tokens, _ast} = load("/conditional/Elixir.Conditional.Case.beam", "/conditional/case.ex")
-      tokens = drop_tokens_to_line(tokens, 2)
-      opts = [end_line: -1]
-      assert {:case, _} = SpecifyErlAst.get_conditional(tokens, 4, opts)
-
-      tokens = drop_tokens_to_line(tokens, 9)
-      assert {:case, _} = SpecifyErlAst.get_conditional(tokens, 10, opts)
-    end
-
-    test "if" do
-      {tokens, _ast} = load("/conditional/Elixir.Conditional.If.beam", "/conditional/if.ex")
-      tokens = drop_tokens_to_line(tokens, 2)
-      opts = [end_line: -1]
-      assert {:if, _} = SpecifyErlAst.get_conditional(tokens, 4, opts)
-
-      tokens = drop_tokens_to_line(tokens, 12)
-      assert {:if, _} = SpecifyErlAst.get_conditional(tokens, 13, opts)
-    end
-
-    test "unless" do
-      {tokens, _ast} =
-        load("/conditional/Elixir.Conditional.Unless.beam", "/conditional/unless.ex")
-
-      tokens = drop_tokens_to_line(tokens, 2)
-      opts = [end_line: -1]
-      assert {:unless, _} = SpecifyErlAst.get_conditional(tokens, 3, opts)
-    end
-
-    test "cond" do
-      {tokens, _ast} = load("/conditional/Elixir.Conditional.Cond.beam", "/conditional/cond.ex")
-
-      tokens = drop_tokens_to_line(tokens, 2)
-      opts = [end_line: -1]
-      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens, 4, opts)
-
-      tokens = drop_tokens_to_line(tokens, 10)
-      assert {:cond, _} = SpecifyErlAst.get_conditional(tokens, 13, opts)
-    end
-
-    test "with" do
-      {tokens, _ast} = load("/conditional/Elixir.Conditional.With.beam", "/conditional/with.ex")
-
-      tokens = drop_tokens_to_line(tokens, 6)
-      opts = [end_line: -1]
-      assert {:with, _} = SpecifyErlAst.get_conditional(tokens, 7, opts)
-    end
-  end
-
-  describe "add_missing_loc_literals/2" do
+  describe "run_mappers/2" do
     test "messy test on simple_app" do
       {tokens, ast} = example_data()
-      new_ast = SpecifyErlAst.add_missing_loc_literals(ast, tokens)
+      new_ast = AstSpecifier.run_mappers(ast, tokens)
 
       assert is_list(new_ast)
     end
@@ -73,7 +21,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "integer" do
       {tokens, ast} = load("/basic/Elixir.Basic.Int.beam", "/basic/int.ex")
 
-      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       assert {:function, 2, :int, 0, [{:clause, 2, [], [], [{:integer, 2, 1}]}]} = inline
 
@@ -83,7 +31,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "float" do
       {tokens, ast} = load("/basic/Elixir.Basic.Float.beam", "/basic/float.ex")
 
-      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
       assert {:function, 2, :float, 0, [{:clause, 2, [], [], [{:float, 2, 0.12}]}]} = inline
 
       assert {:function, 4, :float_block, 0, [{:clause, 4, [], [], [{:float, 5, 0.12}]}]} = block
@@ -92,7 +40,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "atom" do
       {tokens, ast} = load("/basic/Elixir.Basic.Atom.beam", "/basic/atom.ex")
 
-      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       assert {:function, 2, :atom, 0, [{:clause, 2, [], [], [{:atom, 2, :ok}]}]} = inline
 
@@ -102,7 +50,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "char" do
       {tokens, ast} = load("/basic/Elixir.Basic.Char.beam", "/basic/char.ex")
 
-      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       assert {:function, 2, :char, 0, [{:clause, 2, [], [], [{:integer, 2, 99}]}]} = inline
 
@@ -112,7 +60,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "charlist" do
       {tokens, ast} = load("/basic/Elixir.Basic.Charlist.beam", "/basic/charlist.ex")
 
-      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       # TODO propagate location to each charlist element
       assert {:function, 2, :charlist, 0,
@@ -137,7 +85,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "string" do
       {tokens, ast} = load("/basic/Elixir.Basic.String.beam", "/basic/string.ex")
 
-      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       assert {:function, 2, :string, 0,
               [
@@ -156,7 +104,7 @@ defmodule Gradient.SpecifyErlAstTest do
       {tokens, ast} = load("/Elixir.Tuple.beam", "/tuple.ex")
 
       [tuple_in_str2, tuple_in_str, tuple_in_list, _list_in_tuple, tuple | _] =
-        SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+        AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       # FIXME
       assert {:function, 18, :tuple_in_str2, 0,
@@ -264,7 +212,7 @@ defmodule Gradient.SpecifyErlAstTest do
       {tokens, ast} = load("/basic/Elixir.Basic.Binary.beam", "/basic/binary.ex")
 
       [complex2, complex, bin_block, bin | _] =
-        SpecifyErlAst.add_missing_loc_literals(ast, tokens)
+        AstSpecifier.run_mappers(ast, tokens)
         |> Enum.reverse()
 
       assert {:function, 13, :complex2, 0,
@@ -333,7 +281,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "case conditional" do
       {tokens, ast} = load("/conditional/Elixir.Conditional.Case.beam", "/conditional/case.ex")
 
-      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       assert {:function, 2, :case_, 0,
               [
@@ -363,8 +311,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "if conditional" do
       {tokens, ast} = load("/conditional/Elixir.Conditional.If.beam", "/conditional/if.ex")
 
-      [block, inline, if_ | _] =
-        SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block, inline, if_ | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       assert {:function, 12, :if_block, 0,
               [
@@ -413,7 +360,7 @@ defmodule Gradient.SpecifyErlAstTest do
       {tokens, ast} =
         load("/conditional/Elixir.Conditional.Unless.beam", "/conditional/unless.ex")
 
-      [block | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       assert {
                :function,
@@ -438,7 +385,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "cond conditional" do
       {tokens, ast} = load("/conditional/Elixir.Conditional.Cond.beam", "/conditional/cond.ex")
 
-      [block, inline | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       assert {:function, 2, :cond_, 1,
               [
@@ -509,7 +456,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "with conditional" do
       {tokens, ast} = load("/conditional/Elixir.Conditional.With.beam", "/conditional/with.ex")
 
-      [block | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      [block | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
       assert {:function, 6, :test_with, 0,
               [
@@ -543,7 +490,7 @@ defmodule Gradient.SpecifyErlAstTest do
       beam_file = "/Elixir.Basic.beam"
       {tokens, ast} = load(beam_file, ex_file)
 
-      specified_ast = SpecifyErlAst.add_missing_loc_literals(ast, tokens)
+      specified_ast = AstSpecifier.run_mappers(ast, tokens)
       IO.inspect(specified_ast)
       assert is_list(specified_ast)
     end
@@ -554,10 +501,10 @@ defmodule Gradient.SpecifyErlAstTest do
     opts = [end_line: -1]
 
     assert {{:integer, 21, 12}, tokens} =
-             SpecifyErlAst.specify_line({:integer, 21, 12}, tokens, opts)
+             AstSpecifier.specify_line({:integer, 21, 12}, tokens, opts)
 
     assert {{:integer, 22, 12}, _tokens} =
-             SpecifyErlAst.specify_line({:integer, 20, 12}, tokens, opts)
+             AstSpecifier.specify_line({:integer, 20, 12}, tokens, opts)
   end
 
   test "cons_to_charlist/1" do
@@ -565,17 +512,7 @@ defmodule Gradient.SpecifyErlAstTest do
       {:cons, 0, {:integer, 0, 49},
        {:cons, 0, {:integer, 0, 48}, {:cons, 0, {:integer, 0, 48}, {nil, 0}}}}
 
-    assert '100' == SpecifyErlAst.cons_to_charlist(cons)
-  end
-
-  test "get_list_from_tokens" do
-    tokens = example_string_tokens()
-    ts = drop_tokens_to_line(tokens, 4)
-    opts = [end_line: -1]
-    assert {:charlist, _} = SpecifyErlAst.get_list_from_tokens(ts, opts)
-
-    ts = drop_tokens_to_line(ts, 6)
-    assert {:list, _} = SpecifyErlAst.get_list_from_tokens(ts, opts)
+    assert '100' == AstSpecifier.cons_to_charlist(cons)
   end
 
   describe "test that prints result" do
@@ -583,7 +520,7 @@ defmodule Gradient.SpecifyErlAstTest do
     test "specify/1" do
       {_tokens, forms} = example_data()
 
-      SpecifyErlAst.specify(forms)
+      AstSpecifier.specify(forms)
       |> IO.inspect()
     end
 
@@ -597,7 +534,7 @@ defmodule Gradient.SpecifyErlAstTest do
   test "function call" do
     {tokens, ast} = load("/Elixir.Call.beam", "/call.ex")
 
-    [call, _ | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [call, _ | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 5, :call, 0,
             [
@@ -617,7 +554,7 @@ defmodule Gradient.SpecifyErlAstTest do
   test "pipe" do
     {tokens, ast} = load("/Elixir.Pipe.beam", "/pipe_op.ex")
 
-    [block | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [block | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 2, :pipe, 0,
             [
@@ -649,8 +586,7 @@ defmodule Gradient.SpecifyErlAstTest do
   test "guards" do
     {tokens, ast} = load("/conditional/Elixir.Conditional.Guard.beam", "/conditional/guards.ex")
 
-    [guarded_case, guarded_fun | _] =
-      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [guarded_case, guarded_fun | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 3, :guarded_fun, 1,
             [
@@ -691,7 +627,7 @@ defmodule Gradient.SpecifyErlAstTest do
     {tokens, ast} = load("/Elixir.RangeEx.beam", "/range.ex")
 
     [to_list, match_range, rev_range_step, range_step, range | _] =
-      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 18, :to_list, 0,
             [
@@ -771,7 +707,7 @@ defmodule Gradient.SpecifyErlAstTest do
   test "list comprehension" do
     {tokens, ast} = load("/Elixir.ListComprehension.beam", "/list_comprehension.ex")
 
-    [block | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [block | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 2, :lc, 0,
             [
@@ -819,8 +755,7 @@ defmodule Gradient.SpecifyErlAstTest do
   test "list" do
     {tokens, ast} = load("/Elixir.ListEx.beam", "/list.ex")
 
-    [ht2, ht, list, _wrap | _] =
-      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [ht2, ht, list, _wrap | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 5, :list, 0,
             [
@@ -861,7 +796,7 @@ defmodule Gradient.SpecifyErlAstTest do
     {tokens, ast} = load("/Elixir.Try.beam", "/try.ex")
 
     [body_after, try_after, try_else, try_rescue | _] =
-      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 2, :try_rescue, 0,
             [
@@ -1042,7 +977,7 @@ defmodule Gradient.SpecifyErlAstTest do
     {tokens, ast} = load("/Elixir.MapEx.beam", "/map.ex")
 
     [pattern_matching_str, pattern_matching, test_map_str, test_map, empty_map | _] =
-      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 2, :empty_map, 0, [{:clause, 2, [], [], [{:map, 3, []}]}]} = empty_map
 
@@ -1106,7 +1041,7 @@ defmodule Gradient.SpecifyErlAstTest do
     {tokens, ast} = load("/struct/Elixir.StructEx.beam", "/struct/struct.ex")
 
     [get2, get, update, empty, struct | _] =
-      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 8, :update, 0,
             [
@@ -1223,7 +1158,7 @@ defmodule Gradient.SpecifyErlAstTest do
     {tokens, ast} = load("/record/Elixir.RecordEx.beam", "/record/record.ex")
 
     [update, init, empty, macro3, macro2, macro1 | _] =
-      SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+      AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 7, :empty, 0,
             [
@@ -1304,7 +1239,7 @@ defmodule Gradient.SpecifyErlAstTest do
   test "receive" do
     {tokens, ast} = load("/Elixir.Receive.beam", "/receive.ex")
 
-    [recv, recv2 | _] = SpecifyErlAst.add_missing_loc_literals(ast, tokens) |> Enum.reverse()
+    [recv, recv2 | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
     assert {:function, 2, :recv2, 0,
             [
@@ -1351,61 +1286,83 @@ defmodule Gradient.SpecifyErlAstTest do
             ]} = recv
   end
 
-  @spec load(String.t(), String.t()) :: {list(), list()}
-  def load(beam_file, ex_file) do
-    beam_file = String.to_charlist(@examples_path <> beam_file)
-    ex_file = @examples_path <> ex_file
+  test "typespec" do
+    {tokens, ast} = load("/Elixir.Typespec.beam", "/typespec.ex")
 
-    code =
-      File.read!(ex_file)
-      |> String.to_charlist()
+    [atoms_type2, atoms_type, named_type, missing_type_arg, missing_type | _] =
+      AstSpecifier.run_mappers(ast, tokens)
+      |> filter_specs()
+      |> Enum.reverse()
 
-    {:ok, tokens} =
-      code
-      |> :elixir.string_to_tokens(1, 1, ex_file, [])
+    assert {:attribute, 17, :spec,
+            {{:atoms_type2, 1},
+             [
+               {:type, 17, :fun,
+                [
+                  {:type, 17, :product,
+                   [{:type, 17, :union, [{:atom, 17, :ok}, {:atom, 17, :error}]}]},
+                  {:remote_type, 17,
+                   [
+                     {:atom, 17, Unknown},
+                     {:atom, 17, :atom},
+                     [{:type, 17, :union, [{:atom, 17, :ok}, {:atom, 17, :error}]}]
+                   ]}
+                ]}
+             ]}} = atoms_type2
 
-    {:ok, {_, [abstract_code: {:raw_abstract_v1, ast}]}} =
-      :beam_lib.chunks(beam_file, [:abstract_code])
+    assert {:attribute, 14, :spec,
+            {{:atoms_type, 1},
+             [
+               {:type, 14, :fun,
+                [
+                  {:type, 14, :product,
+                   [{:type, 14, :union, [{:atom, 14, :ok}, {:atom, 14, :error}]}]},
+                  {:type, 14, :union, [{:atom, 14, :ok}, {:atom, 14, :error}]}
+                ]}
+             ]}} = atoms_type
 
-    ast = replace_file_path(ast, ex_file)
-    {tokens, ast}
+    assert {:attribute, 11, :spec,
+            {{:named_type, 1},
+             [
+               {:type, 11, :fun,
+                [
+                  {:type, 11, :product,
+                   [
+                     {:ann_type, 11,
+                      [
+                        {:var, 11, :name},
+                        {:remote_type, 11, [{:atom, 11, Unknown}, {:atom, 11, :atom}, []]}
+                      ]}
+                   ]},
+                  {:type, 11, :atom, []}
+                ]}
+             ]}} = named_type
+
+    assert {:attribute, 8, :spec,
+            {{:missing_type_arg, 0},
+             [
+               {:type, 8, :fun,
+                [
+                  {:type, 8, :product, []},
+                  {:user_type, 8, :mylist,
+                   [{:remote_type, 8, [{:atom, 8, Unknown}, {:atom, 8, :atom}, []]}]}
+                ]}
+             ]}} = missing_type_arg
+
+    assert {:attribute, 5, :spec,
+            {{:missing_type, 0},
+             [
+               {:type, 5, :fun,
+                [
+                  {:type, 5, :product, []},
+                  {:remote_type, 5, [{:atom, 5, Unknown}, {:atom, 5, :atom}, []]}
+                ]}
+             ]}} = missing_type
   end
 
-  def example_data() do
-    beam_path = (@examples_path <> "/Elixir.SimpleApp.beam") |> String.to_charlist()
-    file_path = @examples_path <> "/simple_app.ex"
+  # Helpers
 
-    code =
-      File.read!(file_path)
-      |> String.to_charlist()
-
-    {:ok, tokens} =
-      code
-      |> :elixir.string_to_tokens(1, 1, file_path, [])
-
-    {:ok, {SimpleApp, [abstract_code: {:raw_abstract_v1, ast}]}} =
-      :beam_lib.chunks(beam_path, [:abstract_code])
-
-    ast = replace_file_path(ast, file_path)
-    {tokens, ast}
-  end
-
-  def example_string_tokens() do
-    file_path = @examples_path <> "/string_example.ex"
-
-    code =
-      File.read!(file_path)
-      |> String.to_charlist()
-
-    {:ok, tokens} =
-      code
-      |> :elixir.string_to_tokens(1, 1, file_path, [])
-
-    tokens
-  end
-
-  def replace_file_path([_ | forms], path) do
-    path = String.to_charlist(path)
-    [{:attribute, 1, :file, {path, 1}} | forms]
+  def filter_specs(ast) do
+    Enum.filter(ast, &match?({:attribute, _, :spec, _}, &1))
   end
 end

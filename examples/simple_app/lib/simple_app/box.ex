@@ -1,5 +1,4 @@
 defmodule SimpleApp.Box do
-
   @spec get_l() :: {:ok, integer()} | :error
   def get_l, do: {:ok, 5}
 
