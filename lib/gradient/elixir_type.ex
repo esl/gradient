@@ -28,7 +28,7 @@ defmodule Gradient.ElixirType do
   end
 
   def pretty_print({:ann_type, _, [var_name, var_type]}) do
-    pretty_print(var_name) <> pretty_print(var_type)
+    pretty_print(var_name) <> " :: " <> pretty_print(var_type)
   end
 
   def pretty_print({:type, _, :map, :any}) do

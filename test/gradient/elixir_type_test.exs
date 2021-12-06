@@ -3,46 +3,14 @@ defmodule Gradient.ElixirTypeTest do
   doctest Gradient.ElixirType
 
   alias Gradient.ElixirType
+  alias Gradient.TypeData
 
-  test "pp integer()" do
-    type = {:integer, 0, 12}
-    expected = "12"
-    actual = ElixirType.pretty_print(type)
-    assert expected == actual
-  end
-
-  test "pp atom()" do
-    type = {:atom, 0, :ok}
-    expected = ":ok"
-    actual = ElixirType.pretty_print(type)
-    assert expected == actual
-  end
-
-  test "pp nil()" do
-    type = {:atom, 0, nil}
-    expected = "nil"
-    actual = ElixirType.pretty_print(type)
-    assert expected == actual
-  end
-
-  test "pp false boolean()" do
-    type = {:atom, 0, false}
-    expected = "false"
-    actual = ElixirType.pretty_print(type)
-    assert expected == actual
-  end
-
-  test "pp true boolean()" do
-    type = {:atom, 0, true}
-    expected = "true"
-    actual = ElixirType.pretty_print(type)
-    assert expected == actual
-  end
-
-  test "pp binary()" do
-    type = {:type, 0, :binary, []}
-    expected = "binary()"
-    actual = ElixirType.pretty_print(type)
-    assert expected == actual
+  describe "pretty print" do
+    for {name, type, expected} <- TypeData.all_pp_test_data() do
+      test "#{name}" do
+        type = unquote(Macro.escape(type))
+        assert unquote(expected) == ElixirType.pretty_print(type)
+      end
+    end
   end
 end
