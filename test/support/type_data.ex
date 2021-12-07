@@ -3,7 +3,7 @@ defmodule Gradient.TypeData do
   def all_pp_test_data() do
     [
       value_test_data(),
-      buildin_types_test_data(),
+      builtin_types_test_data(),
       op_types_test_data(),
       fun_types_test_data(),
       map_types_test_data(),
@@ -23,7 +23,7 @@ defmodule Gradient.TypeData do
     ]
   end
 
-  def buildin_types_test_data() do
+  def builtin_types_test_data() do
     [
       {"integer type", {:type, 0, :integer, []}, "integer()"},
       {"float type", {:type, 0, :float, []}, "float()"},

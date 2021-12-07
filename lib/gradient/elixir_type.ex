@@ -6,14 +6,14 @@ defmodule Gradient.ElixirType do
   - record type
   - constrained function type
   are not used by Elixir so the pp support has not been added.
-
-  TODO add tests simply basing simply on passed type terms
   """
+
+  @type abstract_type() :: Gradient.Types.abstract_type()
 
   @doc """
   Take type and prepare a pretty string representation.
   """
-  @spec pretty_print(tuple()) :: String.t()
+  @spec pretty_print(abstract_type()) :: String.t()
   def pretty_print({:remote_type, _, [{:atom, _, mod}, {:atom, _, name}, args]}) do
     args_str = Enum.map(args, &pretty_print(&1)) |> Enum.join(", ")
     name_str = Atom.to_string(name)
