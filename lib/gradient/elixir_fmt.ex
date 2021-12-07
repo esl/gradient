@@ -6,6 +6,7 @@ defmodule Gradient.ElixirFmt do
 
   alias :gradualizer_fmt, as: FmtLib
   alias Gradient.ElixirType
+  alias Gradient.ElixirExpr
 
   def print_errors(errors, opts) do
     for {file, e} <- errors do
@@ -29,6 +30,7 @@ defmodule Gradient.ElixirFmt do
 
   def format_error(error, opts) do
     opts = Keyword.put(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
+    opts = Keyword.put(opts, :fmt_expr_fun, &ElixirExpr.pretty_print/1)
     format_type_error(error, opts)
   end
 
