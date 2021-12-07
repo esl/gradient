@@ -5,15 +5,16 @@ defmodule Gradient.Debug do
 
   ## TODO: specify elixir_form
   @type elixir_form() :: any()
-  @type erlang_form() :: Gradient.SpecifyErlAst.form()
+  @type erlang_form() :: Gradient.Types.form()
 
   @doc ~S"""
   Return the Elixir AST of an Elixir module.
   """
   @spec elixir_ast(module()) :: {:ok, [elixir_form()]}
   def elixir_ast(mod) do
-    {:ok, {_, [{:debug_info, {:debug_info_v1, :elixir_erl, abstract_code}}]}} = 
+    {:ok, {_, [{:debug_info, {:debug_info_v1, :elixir_erl, abstract_code}}]}} =
       :beam_lib.chunks(get_beam_path_as_charlist(mod), [:debug_info])
+
     {:ok, _forms} = :elixir_erl.debug_info(:elixir_v1, :module_name, abstract_code, [])
   end
 
@@ -22,7 +23,8 @@ defmodule Gradient.Debug do
   """
   @spec erlang_ast(module()) :: {:ok, [erlang_form()]}
   def erlang_ast(mod) do
-    {:ok, _forms} = get_beam_path_as_charlist(mod) |> Gradient.ElixirFileUtils.get_forms_from_beam()
+    {:ok, _forms} =
+      get_beam_path_as_charlist(mod) |> Gradient.ElixirFileUtils.get_forms_from_beam()
   end
 
   @doc ~S"""
