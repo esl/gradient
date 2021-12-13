@@ -9,16 +9,15 @@ defmodule Gradient.ElixirExpr do
   - structs
 
   TODO Erlang
-  - bitstring comprehension
-  - bitstring constructor
+  - [x] bitstring comprehension
+  - [x] bitstring constructor
   - case expression
   - fun expression clauses
   - if expression
   - list comprehension
   - receive expression
   - try expression
-  - record / don't use by Elixir, probably can be skipped
-
+  - record / not use by Elixir, probably can be skipped
   """
 
   @spec pretty_print_body([:erl_parse.abstract_expr()]) :: [String.t()]
@@ -44,7 +43,7 @@ defmodule Gradient.ElixirExpr do
   end
 
   def pretty_print({:string, _, charlist}) do
-    List.to_string(charlist)
+    "\"" <> List.to_string(charlist) <> "\""
   end
 
   def pretty_print({:remote, _, module, fun}) do
@@ -127,12 +126,68 @@ defmodule Gradient.ElixirExpr do
     Atom.to_string(t)
   end
 
+  def pretty_print({:bin, _, [{:bin_element, _, {:string, _, value}, :default, :default}]}) do
+    "\"" <> value <> "\""
+  end
+
+  def pretty_print({:bin, _, elements}) do
+    elements
+    |> Enum.map(fn e -> pretty_print_bin_element(e) end)
+    |> Enum.join(", ")
+  end
+
+  def pretty_print({:bc, _, expr0, quantifiers}) do
+    expr0 = pretty_print(expr0)
+    "for #{quantifiers}, do: #{expr0}"
+  end
+
+  # Quantifiers
+  def pretty_print({type, _, pattern, expr}) when type in [:genenrate, :b_generate] do
+    pretty_print(pattern) <> " <- " <> pretty_print(expr)
+  end
+
   def pretty_print(expr) do
     :erl_pp.expr(expr)
     |> :erlang.iolist_to_binary()
   end
 
   # Private
+
+  defp pretty_print_bin_element({:bin_element, _, value, size, tsl}) do
+    value = pretty_print(value)
+
+    bin_set_tsl(tsl)
+    |> bin_set_size(size)
+    |> bin_set_value(value)
+  end
+
+  defp bin_set_value("", value) do
+    value
+  end
+
+  defp bin_set_value(sufix, value) do
+    value <> "::" <> sufix
+  end
+
+  defp bin_set_size("", size) do
+    Integer.to_string(size)
+  end
+
+  defp bin_set_size(tsl, :default) do
+    tsl
+  end
+
+  defp bin_set_size(tsl, size) do
+    tsl <> "-size(" <> Integer.to_string(size) <> ")"
+  end
+
+  defp bin_set_tsl(:default) do
+    ""
+  end
+
+  defp bin_set_tsl(tsl) do
+    Atom.to_string(tsl)
+  end
 
   @spec format_map_element(tuple()) :: String.t()
   def format_map_element({field, _, key, value})
