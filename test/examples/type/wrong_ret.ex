@@ -26,6 +26,26 @@ defmodule WrongRet do
   @spec ret_out_of_range_int() :: 1..10
   def ret_out_of_range_int, do: 12
 
+  @spec ret_wrong_float() :: float()
+  def ret_wrong_float() do
+    1
+  end
+
+  @spec ret_wrong_float2() :: float()
+  def ret_wrong_float2() do
+    nil
+  end
+
+  @spec ret_wrong_char() :: char()
+  def ret_wrong_char() do
+    'Ala ma kota'
+  end
+
+  @spec ret_wrong_char2() :: ?o
+  def ret_wrong_char2() do
+    nil
+  end
+
   @spec ret_wrong_boolean() :: boolean()
   def ret_wrong_boolean, do: :ok
 

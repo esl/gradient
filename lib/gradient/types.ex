@@ -1,6 +1,7 @@
 defmodule Gradient.Types do
   @type token :: tuple()
   @type tokens :: [tuple()]
+  @type abstract_type :: :erl_parse.abstract_type()
   @type form ::
           :erl_parse.abstract_clause()
           | :erl_parse.abstract_expr()

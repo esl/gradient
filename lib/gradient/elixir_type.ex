@@ -2,19 +2,23 @@ defmodule Gradient.ElixirType do
   @moduledoc """
   Module to format types.
 
-  TODO records
-  FIXME add tests
+  Seems that:
+  - record type
+  - constrained function type
+  are not used by Elixir so the pp support has not been added.
   """
+
+  @type abstract_type() :: Gradient.Types.abstract_type()
 
   @doc """
   Take type and prepare a pretty string representation.
   """
-  @spec pretty_print(tuple()) :: String.t()
-  def pretty_print({:remote_type, _, [{:atom, _, mod}, {:atom, _, type}, args]}) do
+  @spec pretty_print(abstract_type()) :: String.t()
+  def pretty_print({:remote_type, _, [{:atom, _, mod}, {:atom, _, name}, args]}) do
     args_str = Enum.map(args, &pretty_print(&1)) |> Enum.join(", ")
-    type_str = Atom.to_string(type)
+    name_str = Atom.to_string(name)
     mod_str = parse_module(mod)
-    mod_str <> type_str <> "(#{args_str})"
+    mod_str <> name_str <> "(#{args_str})"
   end
 
   def pretty_print({:user_type, _, type, args}) do
@@ -24,7 +28,7 @@ defmodule Gradient.ElixirType do
   end
 
   def pretty_print({:ann_type, _, [var_name, var_type]}) do
-    pretty_print(var_name) <> pretty_print(var_type)
+    pretty_print(var_name) <> " :: " <> pretty_print(var_type)
   end
 
   def pretty_print({:type, _, :map, :any}) do
@@ -37,12 +41,16 @@ defmodule Gradient.ElixirType do
   end
 
   def pretty_print({:op, _, op, type}) do
-    Atom.to_string(op) <> pretty_print(type)
+    Atom.to_string(op) <> " " <> pretty_print(type)
   end
 
   def pretty_print({:op, _, op, left_type, right_type}) do
     operator = " " <> Atom.to_string(op) <> " "
     pretty_print(left_type) <> operator <> pretty_print(right_type)
+  end
+
+  def pretty_print({:type, _, :fun, []}) do
+    "fun()"
   end
 
   def pretty_print({:type, _, :fun, [{:type, _, :product, arg_types}, res_type]}) do
@@ -56,6 +64,10 @@ defmodule Gradient.ElixirType do
     "(... -> " <> res <> ")"
   end
 
+  def pretty_print({:type, _, :range, [low, high]}) do
+    pretty_print(low) <> ".." <> pretty_print(high)
+  end
+
   def pretty_print({:type, _, :tuple, :any}) do
     "tuple()"
   end
@@ -65,11 +77,7 @@ defmodule Gradient.ElixirType do
     "{" <> elements_str <> "}"
   end
 
-  def pretty_print({:atom, _, nil}) do
-    "nil"
-  end
-
-  def pretty_print({:atom, _, val}) when val in [true, false] do
+  def pretty_print({:atom, _, val}) when val in [nil, true, false] do
     Atom.to_string(val)
   end
 
@@ -86,6 +94,7 @@ defmodule Gradient.ElixirType do
   end
 
   def pretty_print({:type, _, nil, []}) do
+    # The empty list type [] cannot be distinguished from the predefined type nil()
     "[]"
   end
 
@@ -100,6 +109,10 @@ defmodule Gradient.ElixirType do
   def pretty_print({:type, _, type, args}) do
     args_str = Enum.map(args, &pretty_print(&1)) |> Enum.join(", ")
     Atom.to_string(type) <> "(#{args_str})"
+  end
+
+  def pretty_print({:var, _, t}) do
+    Atom.to_string(t)
   end
 
   def pretty_print(type) do
