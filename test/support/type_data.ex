@@ -48,9 +48,9 @@ defmodule Gradient.TypeData do
   def fun_types_test_data() do
     [
       {"any fun type", {:type, 0, :fun, []}, "fun()"},
-      {"fun accepts any args that returns specified type",
+      {"fun with any args returning a specific type",
        {:type, 0, :fun, [{:type, 0, :any}, {:atom, 0, :ok}]}, "(... -> :ok)"},
-      {"fun accepts specified args and return specified type",
+      {"fun with specific arg types returning a specific type",
        {:type, 0, :fun, [{:type, 0, :product, [{:type, 0, :atom, []}]}, {:type, 0, :atom, []}]},
        "(atom() -> atom())"}
     ]
