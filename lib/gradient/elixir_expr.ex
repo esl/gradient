@@ -6,17 +6,25 @@ defmodule Gradient.ElixirExpr do
   - nil ([]) line is not specified by AstSpecifier
 
   TODO Elixir
-  - structs
+  - [ ] structs
+  - [ ] raise
 
   TODO Erlang
   - [x] bitstring comprehension
   - [x] bitstring constructor
-  - case expression
-  - fun expression clauses
-  - if expression
-  - list comprehension
-  - receive expression
-  - try expression
+  - [x] list comprehension
+    Elixir don't use :lc expression. Even simple lc is stored in AST as below:
+      - Elixir source:
+          for n <- [1, 2, 3], do: n
+      - Stored in abstract code as:
+          :lists.reverse(Enum.reduce([1, 2, 3], [], fn n, acc -> [n | acc] end))
+
+  - [x] case expression / TODO clauses
+  - [x] fun expression / TODO clauses
+  - [x] receive expression / TODO clauses
+  - [ ] TODO try expression
+
+  - if expression / not use by Elixir (Elixir uses case in abstract code)
   - record / not use by Elixir, probably can be skipped
   """
 
@@ -80,6 +88,12 @@ defmodule Gradient.ElixirExpr do
     "#{module}.&#{name}/#{arity}"
   end
 
+  def pretty_print({:fun, _, {:clauses, clauses}}) do
+    # print all as a one line
+    clauses = Enum.map(clauses, &pretty_print_clause/1) |> Enum.join("; ")
+    "fn " <> clauses <> " end"
+  end
+
   def pretty_print({:call, _, name, args}) do
     args =
       Enum.map(args, &pretty_print/1)
@@ -136,7 +150,7 @@ defmodule Gradient.ElixirExpr do
     |> Enum.join(", ")
   end
 
-  def pretty_print({:bc, _, expr0, quantifiers}) do
+  def pretty_print({t, _, expr0, quantifiers}) when t in [:bc, :lc] do
     expr0 = pretty_print(expr0)
     "for #{quantifiers}, do: #{expr0}"
   end
@@ -146,12 +160,41 @@ defmodule Gradient.ElixirExpr do
     pretty_print(pattern) <> " <- " <> pretty_print(expr)
   end
 
+  def pretty_print({:case, _, condition, clauses}) do
+    # print all as a one line
+    clauses = Enum.map(clauses, &pretty_print_clause/1) |> Enum.join("; ")
+    "case " <> pretty_print(condition) <> " do " <> clauses <> " end"
+  end
+
+  def pretty_print({:receive, _, clauses}) do
+    "receive" <> pretty_clauses(clauses) <> "end"
+  end
+
+  def pretty_print({:receive, _, clauses, after_value, _after_body}) do
+    pclauses = pretty_clauses(clauses)
+    pvalue = pretty_print(after_value)
+    "receive " <> pclauses <> "after " <> pvalue <> " -> ... end"
+  end
+
+  def pretty_print({:try, _, _body, _else_block, _catchers, _after_block}) do
+    "try do ... end"
+  end
+
   def pretty_print(expr) do
     :erl_pp.expr(expr)
     |> :erlang.iolist_to_binary()
   end
 
   # Private
+
+  def pretty_clauses(clauses) do
+    Enum.map(clauses, &pretty_print_clause/1) |> Enum.join("; ")
+  end
+
+  def pretty_print_clause({:clause, _, _args, _guards, _body}) do
+    #
+    "..."
+  end
 
   defp pretty_print_bin_element({:bin_element, _, value, size, tsl}) do
     value = pretty_print(value)
