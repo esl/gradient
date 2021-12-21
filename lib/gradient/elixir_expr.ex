@@ -71,8 +71,18 @@ defmodule Gradient.ElixirExpr do
     pretty_print(expr)
   end
 
-  def pretty_print({:cons, _, [h_expr, t_expr]}) do
-    "[#{pretty_print(h_expr)} | #{pretty_print(t_expr)}]"
+  def pretty_print({:cons, _, _, _} = cons) do
+    case cons_to_int_list(cons) do
+      {:ok, l} ->
+        inspect(l)
+
+      :error ->
+        items =
+          pp_cons(cons)
+          |> Enum.join(", ")
+
+        "[" <> items <> "]"
+    end
   end
 
   def pretty_print({:fun, _, {:function, name, arity}}) do
@@ -239,4 +249,22 @@ defmodule Gradient.ElixirExpr do
     value = pretty_print(value)
     key <> " => " <> value
   end
+
+  @spec cons_to_int_list(tuple()) :: {:ok, [integer()]} | :error
+  def cons_to_int_list(cons) do
+    try do
+      {:ok, try_int_list_(cons)}
+    catch
+      nil ->
+        :error
+    end
+  end
+
+  defp try_int_list_({nil, _}), do: []
+  defp try_int_list_({:cons, _, {:integer, _, val}, t}), do: [val | try_int_list_(t)]
+  defp try_int_list_(_), do: throw(nil)
+
+  defp pp_cons({nil, _}), do: []
+  defp pp_cons({:var, _, _} = v), do: [pretty_print(v)]
+  defp pp_cons({:cons, _, h, t}), do: [pretty_print(h) | pp_cons(t)]
 end
