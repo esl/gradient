@@ -731,13 +731,15 @@ defmodule Gradient.AstSpecifierTest do
                            {:clause, 12, [{:var, 12, :_n@1}, {:var, 12, :_@1}], [],
                             [
                               {:case, [generated: true, location: 12],
-                               {:op, 12, :==, {:op, 12, :rem, {:var, 12, :_n@1}, {:integer, 12, 3}},
+                               {:op, 12, :==,
+                                {:op, 12, :rem, {:var, 12, :_n@1}, {:integer, 12, 3}},
                                 {:integer, 12, 0}},
                                [
                                  {:clause, [generated: true, location: 12],
                                   [{:atom, [generated: true, location: 12], true}], [],
                                   [
-                                    {:cons, 12, {:op, 12, :*, {:var, 12, :_n@1}, {:var, 12, :_n@1}},
+                                    {:cons, 12,
+                                     {:op, 12, :*, {:var, 12, :_n@1}, {:var, 12, :_n@1}},
                                      {:var, 12, :_@1}}
                                   ]},
                                  {:clause, [generated: true, location: 12],

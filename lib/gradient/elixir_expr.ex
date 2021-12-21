@@ -141,17 +141,18 @@ defmodule Gradient.ElixirExpr do
     pretty_print(left_type) <> operator <> pretty_print(right_type)
   end
 
-  def pretty_print({:type, _, :tuple, elements}) do
+  def pretty_print({:tuple, _, elements}) do
     elements_str = Enum.map(elements, &pretty_print(&1)) |> Enum.join(", ")
     "{" <> elements_str <> "}"
   end
 
   def pretty_print({:var, _, t}) do
+    # FIXME remove number from variable
     Atom.to_string(t)
   end
 
   def pretty_print({:bin, _, [{:bin_element, _, {:string, _, value}, :default, :default}]}) do
-    "\"" <> value <> "\""
+    "\"" <> to_string(value) <> "\""
   end
 
   def pretty_print({:bin, _, elements}) do
@@ -190,10 +191,10 @@ defmodule Gradient.ElixirExpr do
     "try do ... end"
   end
 
-  def pretty_print(expr) do
-    :erl_pp.expr(expr)
-    |> :erlang.iolist_to_binary()
-  end
+  # def pretty_print(expr) do
+  # :erl_pp.expr(expr)
+  # |> :erlang.iolist_to_binary()
+  # end
 
   # Private
 

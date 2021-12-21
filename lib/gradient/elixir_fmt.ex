@@ -29,8 +29,8 @@ defmodule Gradient.ElixirFmt do
   end
 
   def format_error(error, opts) do
-    opts = Keyword.put(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
-    opts = Keyword.put(opts, :fmt_expr_fun, &ElixirExpr.pretty_print/1)
+    opts = Keyword.put_new(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
+    opts = Keyword.put_new(opts, :fmt_expr_fun, &ElixirExpr.pretty_print/1)
     format_type_error(error, opts)
   end
 
@@ -145,13 +145,24 @@ defmodule Gradient.ElixirFmt do
     end
   end
 
-  def pp_expr(expression, _opts) do
-    IO.ANSI.blue() <> "#{inspect(expression)}" <> IO.ANSI.reset()
+  def pp_expr(expression, opts) do
+    fmt = Keyword.get(opts, :fmt_expr_fun, &ElixirExpr.pretty_print/1)
+
+    if Keyword.get(opts, :colors, true) do
+      IO.ANSI.blue() <> fmt.(expression) <> IO.ANSI.reset()
+    else
+      fmt.(expression)
+    end
   end
 
-  def pp_type(type, _opts) do
-    pp = ElixirType.pretty_print(type)
-    IO.ANSI.cyan() <> pp <> IO.ANSI.reset()
+  def pp_type(type, opts) do
+    fmt = Keyword.get(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
+
+    if Keyword.get(opts, :colors, true) do
+      IO.ANSI.cyan() <> fmt.(type) <> IO.ANSI.reset()
+    else
+      fmt.(type)
+    end
   end
 
   def try_highlight_in_context(expression, opts) do

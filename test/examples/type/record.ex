@@ -9,4 +9,7 @@ defmodule RecordEx do
 
   @spec ret_wrong_record2() :: user()
   def ret_wrong_record2(), do: user(name: 12)
+
+  @spec ret_wrong_atom() :: atom()
+  def ret_wrong_atom(), do: user(name: "Kate")
 end

@@ -61,6 +61,9 @@ defmodule WrongRet do
   @spec ret_wrong_keyword() :: keyword()
   def ret_wrong_keyword, do: [1, 2, 3]
 
+  @spec ret_wrong_list() :: list()
+  def ret_wrong_list, do: ?c
+
   @spec ret_wrong_tuple() :: tuple()
   def ret_wrong_tuple, do: %{a: 1, b: 2}
 

@@ -28,84 +28,84 @@ defmodule Gradient.ElixirFmtTest do
 
   describe "types format" do
     test "return integer() instead of atom()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_atom)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_atom)
 
       assert String.contains?(expected, "atom()")
       assert String.contains?(actual, "1")
     end
 
     test "return tuple() instead of atom()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_atom2)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_atom2)
 
       assert String.contains?(expected, "atom()")
       assert String.contains?(actual, "{:ok, []}")
     end
 
     test "return map() instead of atom()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_atom3)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_atom3)
 
       assert String.contains?(expected, "atom()")
       assert String.contains?(actual, "%{required(:a) => 1}")
     end
 
     test "return float() instead of integer()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_integer)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_integer)
 
       assert String.contains?(expected, "integer()")
       assert String.contains?(actual, "float()")
     end
 
     test "return atom() instead of integer()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_integer2)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_integer2)
 
       assert String.contains?(expected, "integer()")
       assert String.contains?(actual, ":ok")
     end
 
     test "return boolean() instead of integer()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_integer3)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_integer3)
 
       assert String.contains?(expected, "integer()")
       assert String.contains?(actual, "true")
     end
 
     test "return list() instead of integer()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_integer4)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_integer4)
 
       assert String.contains?(expected, "integer()")
       assert String.contains?(actual, "nonempty_list()")
     end
 
     test "return integer() out of the range()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_out_of_range_int)
+      [expected, actual] = type_format_error_to_binary(errors.ret_out_of_range_int)
 
       assert String.contains?(expected, "1..10")
       assert String.contains?(actual, "12")
     end
 
     test "return integer() instead of float()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_float)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_float)
 
       assert String.contains?(expected, "float()")
       assert String.contains?(actual, "1")
     end
 
     test "return nil() instead of float()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_float2)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_float2)
 
       assert String.contains?(expected, "float()")
       assert String.contains?(actual, "nil")
     end
 
     test "return charlist() instead of char()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_char)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_char)
 
       assert String.contains?(expected, "char()")
       assert String.contains?(actual, "nonempty_list()")
     end
 
     test "return nil() instead of char()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_char2)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_char2)
 
       # unfortunately char is represented as {:integer, 0, _}
       assert String.contains?(expected, "111")
@@ -113,66 +113,119 @@ defmodule Gradient.ElixirFmtTest do
     end
 
     test "return atom() instead of boolean()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_boolean)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_boolean)
 
       assert String.contains?(expected, "boolean()")
       assert String.contains?(actual, ":ok")
     end
 
     test "return binary() instead of boolean()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_boolean2)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_boolean2)
 
       assert String.contains?(expected, "boolean()")
       assert String.contains?(actual, "binary()")
     end
 
     test "return integer() instead of boolean()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_boolean3)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_boolean3)
 
       assert String.contains?(expected, "boolean()")
       assert String.contains?(actual, "1")
     end
 
     test "return keyword() instead of boolean()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_boolean4)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_boolean4)
 
       assert String.contains?(expected, "boolean()")
       assert String.contains?(actual, "nonempty_list()")
     end
 
     test "return list() instead of keyword()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_keyword)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_keyword)
 
       assert String.contains?(expected, "{atom(), any()}")
       assert String.contains?(actual, "1")
     end
 
     test "return tuple() instead of map()", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_map)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_map)
 
       assert String.contains?(expected, "map()")
       assert String.contains?(actual, "{:a, 1, 2}")
     end
 
     test "return lambda with wrong returned type", %{wrong_ret_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_fun)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_fun)
 
       assert String.contains?(expected, "atom()")
       assert String.contains?(actual, "12")
     end
 
     test "return atom() instead of record()", %{record_type_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_record)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_record)
 
       assert String.contains?(expected, "user()")
       assert String.contains?(actual, ":ok")
     end
 
     test "return wrong record value type", %{record_type_errors: errors} do
-      [expected, actual] = format_error_to_binary(errors.ret_wrong_record2)
+      [expected, actual] = type_format_error_to_binary(errors.ret_wrong_record2)
 
       assert String.contains?(expected, "String.t()")
       assert String.contains?(actual, "12")
+    end
+  end
+
+  describe "expression format" do
+    test "atom", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_integer2)
+      assert String.contains?(expr, ":ok")
+    end
+
+    test "integer", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_atom)
+      assert String.contains?(expr, "1")
+    end
+
+    test "float", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_integer)
+      assert String.contains?(expr, "1.0")
+    end
+
+    test "list", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_integer4)
+      assert String.contains?(expr, "[1, 2, 3]")
+    end
+
+    test "map", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_tuple)
+      assert String.contains?(expr, "%{:a => 1, :b => 2}")
+    end
+
+    test "tuple", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_map)
+      assert String.contains?(expr, "{:a, 1, 2}")
+    end
+
+    test "string", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_boolean2)
+      assert String.contains?(expr, "\"1234\"")
+    end
+
+    test "char", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_list)
+      # I don't know if it is possible to detect that we want char here.
+      assert String.contains?(expr, "99")
+    end
+
+    test "charlist", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_char)
+      assert String.contains?(expr, "'Ala ma kota'")
+    end
+
+    test "record", %{record_type_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_atom)
+      assert String.contains?(expr, "{:user, \"Kate\", 25}")
     end
   end
 
@@ -206,7 +259,21 @@ defmodule Gradient.ElixirFmtTest do
     {errors, forms}
   end
 
-  defp format_error_to_binary(error, opts \\ []) do
+  defp expr_format_error_to_binary(error, opts \\ []) do
+    opts = Keyword.put_new(opts, :fmt_type_fun, &mock_fmt/1)
+    opts = Keyword.put_new(opts, :colors, false)
+
+    error
+    |> ElixirFmt.format_error(opts)
+    |> :erlang.iolist_to_binary()
+    |> String.split("on line")
+    |> List.first()
+  end
+
+  defp type_format_error_to_binary(error, opts \\ []) do
+    opts = Keyword.put_new(opts, :fmt_expr_fun, &mock_fmt/1)
+    opts = Keyword.put_new(opts, :colors, false)
+
     error
     |> ElixirFmt.format_error(opts)
     |> :erlang.iolist_to_binary()
@@ -255,4 +322,6 @@ defmodule Gradient.ElixirFmtTest do
     end)
     |> Enum.map(&elem(&1, 2))
   end
+
+  def mock_fmt(_), do: ""
 end
