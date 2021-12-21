@@ -42,10 +42,10 @@ defmodule Gradient.ElixirFmt do
 
   def format_type_error({:call_undef, anno, module, func, arity}, opts) do
     :io_lib.format(
-      "~sCall to undefined function ~p:~p/~p~s~n",
+      "~sCall to undefined function ~s~p/~p~s~n",
       [
         format_location(anno, :brief, opts),
-        module,
+        parse_module(module),
         func,
         arity,
         format_location(anno, :verbose, opts)
@@ -214,6 +214,16 @@ defmodule Gradient.ElixirFmt do
 
   def get_ex_file_path([{:attribute, 1, :file, {path, 1}} | _]), do: {:ok, path}
   def get_ex_file_path(_), do: {:error, :not_found}
+
+  @spec parse_module(atom()) :: String.t()
+  def parse_module(:elixir), do: ""
+
+  def parse_module(mod) do
+    case Atom.to_string(mod) do
+      "Elixir." <> mod_str -> mod_str <> "."
+      mod -> mod <> "."
+    end
+  end
 
   # defp warning_error_not_handled(error) do
   # msg = "\nElixir formatter not exist for #{inspect(error, pretty: true)} using default \n"

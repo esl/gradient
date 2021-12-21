@@ -227,6 +227,16 @@ defmodule Gradient.ElixirFmtTest do
       expr = expr_format_error_to_binary(errors.ret_wrong_atom)
       assert String.contains?(expr, "{:user, \"Kate\", 25}")
     end
+
+    test "call", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_call)
+      assert String.contains?(expr, "ret_wrong_boolean()")
+    end
+
+    test "fun reference", %{wrong_ret_errors: errors} do
+      expr = expr_format_error_to_binary(errors.ret_wrong_integer5)
+      assert String.contains?(expr, "&ret_wrong_atom/0")
+    end
   end
 
   @tag :skip

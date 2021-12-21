@@ -72,4 +72,10 @@ defmodule WrongRet do
 
   @spec ret_wrong_fun() :: (... -> atom())
   def ret_wrong_fun, do: fn -> 12 end
+
+  @spec ret_wrong_call() :: integer()
+  def ret_wrong_call, do: ret_wrong_boolean()
+
+  @spec ret_wrong_integer5() :: integer()
+  def ret_wrong_integer5, do: &ret_wrong_atom/0
 end

@@ -28,6 +28,8 @@ defmodule Gradient.ElixirExpr do
   - record / not use by Elixir, probably can be skipped
   """
 
+  alias Gradient.ElixirFmt
+
   @spec pretty_print_body([:erl_parse.abstract_expr()]) :: [String.t()]
   def pretty_print_body(exprs) do
     Enum.map(exprs, &pretty_print/1)
@@ -52,12 +54,6 @@ defmodule Gradient.ElixirExpr do
 
   def pretty_print({:string, _, charlist}) do
     "\"" <> List.to_string(charlist) <> "\""
-  end
-
-  def pretty_print({:remote, _, module, fun}) do
-    module = pretty_print(module)
-    fun = pretty_print(fun)
-    module <> "." <> fun
   end
 
   def pretty_print({:block, _, body}) do
@@ -86,16 +82,14 @@ defmodule Gradient.ElixirExpr do
   end
 
   def pretty_print({:fun, _, {:function, name, arity}}) do
-    name = pretty_print(name)
-    arity = pretty_print(arity)
     "&#{name}/#{arity}"
   end
 
   def pretty_print({:fun, _, {:function, module, name, arity}}) do
-    module = pretty_print(module)
+    module = ElixirFmt.parse_module(module)
     name = pretty_print(name)
     arity = pretty_print(arity)
-    "#{module}.&#{name}/#{arity}"
+    "&#{module}#{name}/#{arity}"
   end
 
   def pretty_print({:fun, _, {:clauses, clauses}}) do
@@ -109,8 +103,7 @@ defmodule Gradient.ElixirExpr do
       Enum.map(args, &pretty_print/1)
       |> Enum.join(" ,")
 
-    name = pretty_print(name)
-    name <> "(" <> args <> ")"
+    pp_name(name) <> "(" <> args <> ")"
   end
 
   def pretty_print({:map, _, pairs}) do
@@ -268,4 +261,9 @@ defmodule Gradient.ElixirExpr do
   defp pp_cons({nil, _}), do: []
   defp pp_cons({:var, _, _} = v), do: [pretty_print(v)]
   defp pp_cons({:cons, _, h, t}), do: [pretty_print(h) | pp_cons(t)]
+
+  defp pp_name({:remote, _, {:atom, _, m}, {:atom, _, n}}),
+    do: ElixirFmt.parse_module(m) <> to_string(n)
+
+  defp pp_name({:atom, _, n}), do: to_string(n)
 end
