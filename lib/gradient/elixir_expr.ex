@@ -13,7 +13,7 @@ defmodule Gradient.ElixirExpr do
   - [x] bitstring comprehension
   - [x] bitstring constructor
   - [x] list comprehension
-    Elixir don't use :lc expression. Even simple lc is stored in AST as below:
+    Elixir doesn't use the :lc expression. Even a simple list comprehension is stored in the AST as below:
       - Elixir source:
           for n <- [1, 2, 3], do: n
       - Stored in abstract code as:
@@ -24,8 +24,8 @@ defmodule Gradient.ElixirExpr do
   - [x] receive expression / TODO clauses
   - [ ] TODO try expression
 
-  - if expression / not use by Elixir (Elixir uses case in abstract code)
-  - record / not use by Elixir, probably can be skipped
+  - if expression / not used by Elixir (Elixir uses case in abstract code)
+  - record / not used by Elixir, probably can be skipped
   """
 
   alias Gradient.ElixirFmt
