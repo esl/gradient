@@ -26,6 +26,8 @@ defmodule Gradient.ElixirExpr do
 
   - if expression / not used by Elixir (Elixir uses case in abstract code)
   - record / not used by Elixir, probably can be skipped
+  - block / not produced by Elixir, I think
+  - catch / not produced by Elixir, I think
   """
 
   alias Gradient.ElixirFmt
@@ -54,17 +56,6 @@ defmodule Gradient.ElixirExpr do
 
   def pretty_print({:string, _, charlist}) do
     "\"" <> List.to_string(charlist) <> "\""
-  end
-
-  def pretty_print({:block, _, body}) do
-    # TODO maybe add indent?
-    body
-    |> pretty_print_body()
-    |> Enum.join("\n")
-  end
-
-  def pretty_print({:catch, _, expr}) do
-    pretty_print(expr)
   end
 
   def pretty_print({:cons, _, _, _} = cons) do
