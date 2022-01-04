@@ -8,6 +8,8 @@ defmodule Gradient.ElixirExpr do
   TODO Elixir
   - [ ] structs
   - [ ] raise
+  - [ ] call Erlang correctly e.g. `:erlang.error` (now is `erlang.error`) (reuse code from Elixir Type)
+  - [ ] format Elixir atoms and boolean correctly (reuse code from ElixirType)
 
   TODO Erlang
   - [x] bitstring comprehension
@@ -19,10 +21,11 @@ defmodule Gradient.ElixirExpr do
       - Stored in abstract code as:
           :lists.reverse(Enum.reduce([1, 2, 3], [], fn n, acc -> [n | acc] end))
 
-  - [x] case expression / TODO clauses
-  - [x] fun expression / TODO clauses
-  - [x] receive expression / TODO clauses
-  - [ ] TODO try expression
+  - [x] case expression
+  - [x] fun expression
+  - [x] receive expression
+  - [x] try expression
+  - [ ] support guards
 
   - if expression / not used by Elixir (Elixir uses case in abstract code)
   - record / not used by Elixir, probably can be skipped
@@ -32,12 +35,19 @@ defmodule Gradient.ElixirExpr do
 
   alias Gradient.ElixirFmt
 
-  @spec pretty_print_body([:erl_parse.abstract_expr()]) :: [String.t()]
-  def pretty_print_body(exprs) do
-    Enum.map(exprs, &pretty_print/1)
+  @type expr :: :erl_parse.abstract_expr()
+  @type clause :: :erl_parse.abstract_clause()
+
+  @doc """
+  Format abstract expressions to Elixir code
+  """
+  @spec pretty_print(expr() | [expr()]) :: String.t()
+  def pretty_print(exprs) when is_list(exprs) do
+    exprs
+    |> Enum.map(&pretty_print/1)
+    |> Enum.join("; ")
   end
 
-  @spec pretty_print(:erl_parse.abstract_expr()) :: String.t()
   def pretty_print({:atom, _, l}) do
     ":" <> Atom.to_string(l)
   end
@@ -85,7 +95,7 @@ defmodule Gradient.ElixirExpr do
 
   def pretty_print({:fun, _, {:clauses, clauses}}) do
     # print all as a one line
-    clauses = Enum.map(clauses, &pretty_print_clause/1) |> Enum.join("; ")
+    clauses = pp_clauses(clauses)
     "fn " <> clauses <> " end"
   end
 
@@ -151,28 +161,33 @@ defmodule Gradient.ElixirExpr do
   end
 
   # Quantifiers
-  def pretty_print({type, _, pattern, expr}) when type in [:genenrate, :b_generate] do
+  def pretty_print({type, _, pattern, expr}) when type in [:generate, :b_generate] do
     pretty_print(pattern) <> " <- " <> pretty_print(expr)
   end
 
   def pretty_print({:case, _, condition, clauses}) do
     # print all as a one line
-    clauses = Enum.map(clauses, &pretty_print_clause/1) |> Enum.join("; ")
+    clauses = pp_clauses(clauses)
     "case " <> pretty_print(condition) <> " do " <> clauses <> " end"
   end
 
   def pretty_print({:receive, _, clauses}) do
-    "receive" <> pretty_clauses(clauses) <> "end"
+    "receive" <> pp_clauses(clauses) <> "end"
   end
 
   def pretty_print({:receive, _, clauses, after_value, _after_body}) do
-    pclauses = pretty_clauses(clauses)
+    pclauses = pp_clauses(clauses)
     pvalue = pretty_print(after_value)
     "receive " <> pclauses <> "after " <> pvalue <> " -> ... end"
   end
 
-  def pretty_print({:try, _, _body, _else_block, _catchers, _after_block}) do
-    "try do ... end"
+  def pretty_print({:try, _, body, else_block, catchers, after_block}) do
+    "try do "
+    |> append_try_body(body)
+    |> maybe_try_else(else_block)
+    |> maybe_try_catch(catchers)
+    |> maybe_try_after(after_block)
+    |> Kernel.<>(" end")
   end
 
   # def pretty_print(expr) do
@@ -180,15 +195,98 @@ defmodule Gradient.ElixirExpr do
   # |> :erlang.iolist_to_binary()
   # end
 
-  # Private
+  @doc """
+  Format abstract clauses to Elixir code
+  """
+  @spec pp_clauses([clause()], :case | :catch) :: String.t()
+  def pp_clauses(clauses, type \\ :case)
 
-  def pretty_clauses(clauses) do
-    Enum.map(clauses, &pretty_print_clause/1) |> Enum.join("; ")
+  def pp_clauses(clauses, :case) do
+    Enum.map(clauses, &pp_case_clause/1) |> Enum.join("; ")
   end
 
-  def pretty_print_clause({:clause, _, _args, _guards, _body}) do
-    #
-    "..."
+  def pp_clauses(clauses, :catch) do
+    Enum.map(clauses, &pp_catch_clause/1) |> Enum.join("; ")
+  end
+
+  def pp_guards([]) do
+    ""
+  end
+
+  def pp_guards(_) do
+    # FIXME implement guards pretty printing
+    " when ..."
+  end
+
+  # Private
+
+  defp pp_catch_clause({:clause, _, [{:tuple, _, [type, var, _stacktrace]}], guards, body}) do
+    # rescue/catch clause
+    # FIXME support guards, support stacktrace?
+
+    case get_error_type(guards) do
+      {:ok, error_type} ->
+        # rescue
+        {var2, body2} = get_error_var(var, body)
+
+        pretty_print(type) <>
+          ", %" <>
+          pretty_print(error_type) <>
+          "{} = " <> pretty_print(var2) <> " -> " <> pretty_print(body2)
+
+      :not_found ->
+        # throw
+        pretty_print(type) <> ", " <> pretty_print(var) <> " -> " <> pretty_print(body)
+    end
+  end
+
+  defp pp_case_clause({:clause, _, patterns, guards, body}) do
+    # FIXME support guards
+    patterns =
+      patterns
+      |> Enum.map(&pretty_print/1)
+      |> Enum.join(", ")
+
+    patterns <> pp_guards(guards) <> " -> " <> pretty_print(body)
+  end
+
+  defp append_try_body(res, body) do
+    res <> pretty_print(body)
+  end
+
+  defp maybe_try_else(res, []) do
+    res
+  end
+
+  defp maybe_try_else(res, else_block) do
+    res <> "; else " <> pp_clauses(else_block)
+  end
+
+  defp maybe_try_catch(res, []), do: res
+  defp maybe_try_catch(res, clauses), do: res <> "; catch " <> pp_clauses(clauses, :catch)
+
+  defp maybe_try_after(res, []) do
+    res
+  end
+
+  defp maybe_try_after(res, else_block) do
+    res <> "; after " <> pp_clauses(else_block)
+  end
+
+  def get_error_type([[{:op, _, :andalso, {:op, _, :==, _, error_type}, _}]]) do
+    {:ok, error_type}
+  end
+
+  def get_error_type(_) do
+    :not_found
+  end
+
+  def get_error_var({:var, _, v}, [{:match, _, user_var, {:var, _, v}} | body_tail]) do
+    {user_var, body_tail}
+  end
+
+  def get_error_var(var, body) do
+    {var, body}
   end
 
   defp pretty_print_bin_element({:bin_element, _, value, size, tsl}) do
