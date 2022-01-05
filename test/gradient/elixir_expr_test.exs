@@ -5,6 +5,9 @@ defmodule Gradient.ElixirExprTest do
   alias Gradient.ElixirExpr
   alias Gradient.ExprData
 
+  require Gradient.Debug
+  import Gradient.Debug, only: [elixir_to_ast: 1]
+
   describe "simple pretty print" do
     for {name, type, expected} <- ExprData.all_basic_pp_test_data() do
       test "#{name}" do
@@ -15,6 +18,33 @@ defmodule Gradient.ElixirExprTest do
   end
 
   describe "complex pretty print" do
+    test "case" do
+      actual =
+        elixir_to_ast do
+          case {:ok, 13} do
+            {:ok, v} -> v
+            _err -> :error
+          end
+        end
+        |> ElixirExpr.pretty_print()
+
+      assert "case {:ok, 13} do {:ok, v} -> v; _err -> :error end" == actual
+    end
+
+    test "if" do
+      actual =
+        elixir_to_ast do
+          if :math.floor(1.9) == 1.0 do
+            :ok
+          else
+            :error
+          end
+        end
+        |> ElixirExpr.pretty_print()
+
+      assert "case :math.floor(1.9) == 1.0 do false -> :error; true -> :ok end" == actual
+    end
+
     test "try with rescue and catch" do
       try_expr =
         {:try, 3,

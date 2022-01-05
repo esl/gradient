@@ -7,6 +7,7 @@ defmodule Gradient.ElixirExpr do
 
   TODO Elixir
   - [ ] structs
+  - [ ] print true/false case as if?
   - [x] raise
   - [x] call Erlang correctly e.g. `:erlang.error` (now is `erlang.error`) (reuse code from Elixir Type)
   - [x] format Elixir atoms and boolean correctly (reuse code from ElixirType)
