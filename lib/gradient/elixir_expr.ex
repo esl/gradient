@@ -26,11 +26,11 @@ defmodule Gradient.ElixirExpr do
   - [x] fun expression
   - [x] receive expression
   - [x] try expression
+  - [x] block
   - [ ] support guards
 
   - if expression / not used by Elixir (Elixir uses case in abstract code)
   - record / not used by Elixir, probably can be skipped
-  - block / not produced by Elixir, I think
   - catch / not produced by Elixir, I think
   """
 
@@ -207,6 +207,10 @@ defmodule Gradient.ElixirExpr do
     |> maybe_try_catch(catchers)
     |> maybe_try_after(after_block)
     |> Kernel.<>(" end")
+  end
+
+  def pretty_print({:block, _, body}) do
+    pretty_print(body)
   end
 
   # def pretty_print(expr) do

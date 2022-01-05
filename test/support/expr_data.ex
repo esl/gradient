@@ -8,7 +8,8 @@ defmodule Gradient.ExprData do
       list_test_data(),
       call_test_data(),
       variable_test_data(),
-      exception_test_data()
+      exception_test_data(),
+      block_test_data()
     ]
     |> List.flatten()
   end
@@ -67,6 +68,18 @@ defmodule Gradient.ExprData do
       {"raise/2", elixir_to_ast(raise RuntimeError, "test error"), "raise \"test error\""},
       {"custom raise", elixir_to_ast(raise ArithmeticError, "only odd numbers"),
        "raise ArithmeticError, \"only odd numbers\""}
+    ]
+  end
+
+  def block_test_data() do
+    simple_block =
+      elixir_to_ast do
+        a = 1
+        a + 1
+      end
+
+    [
+      {"block", simple_block, "a = 1; a + 1"}
     ]
   end
 end
