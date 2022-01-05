@@ -8,6 +8,27 @@ defmodule Gradient.Debug do
   @type erlang_form() :: Gradient.Types.form()
 
   @doc ~S"""
+  Translate Elixir code to abstract code.
+  """
+  defmacro elixir_to_ast(do: code) do
+    quoted_to_ast(code)
+  end
+
+  defmacro elixir_to_ast(code) do
+    quoted_to_ast(code)
+  end
+
+  @doc ~S"""
+  Translate Elixir quoted to abstract code.
+  """
+  @spec quoted_to_ast(elixir_form()) :: erlang_form()
+  def quoted_to_ast(qt) do
+    env = :elixir_env.new()
+    {ast, _, _} = :elixir.quoted_to_erl(qt, env)
+    Macro.escape(ast)
+  end
+
+  @doc ~S"""
   Return the Elixir AST of an Elixir module.
   """
   @spec elixir_ast(module()) :: {:ok, [elixir_form()]}
