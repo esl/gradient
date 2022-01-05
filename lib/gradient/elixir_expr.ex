@@ -149,7 +149,11 @@ defmodule Gradient.ElixirExpr do
 
   def pretty_print({:var, _, t}) do
     # FIXME remove number from variable
-    Atom.to_string(t)
+    case Atom.to_string(t) |> String.split("@") |> List.first() do
+      "_" -> "_"
+      "_" <> name -> name
+      name -> name
+    end
   end
 
   def pretty_print({:bin, _, [{:bin_element, _, {:string, _, value}, :default, :default}]}) do

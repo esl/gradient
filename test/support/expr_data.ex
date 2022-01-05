@@ -1,6 +1,6 @@
 defmodule Gradient.ExprData do
   def all_basic_pp_test_data() do
-    [value_test_data(), list_test_data(), call_test_data()]
+    [value_test_data(), list_test_data(), call_test_data(), variable_test_data()]
     |> List.flatten()
   end
 
@@ -39,6 +39,15 @@ defmodule Gradient.ExprData do
        "MyModule.my_func()"},
       {"erl remote call", {:call, 0, {:remote, 0, {:atom, 0, :erlang}, {:atom, 0, :my_func}}, []},
        ":erlang.my_func()"}
+    ]
+  end
+
+  def variable_test_data() do
+    [
+      {"variable", {:var, 0, :abbc}, "abbc"},
+      {"underscore variable", {:var, 0, :_}, "_"},
+      {"ast underscore variable", {:var, 0, :_@1}, "_"},
+      {"ast variable", {:var, 0, :_val@1}, "val"}
     ]
   end
 end
