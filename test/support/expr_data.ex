@@ -1,6 +1,15 @@
 defmodule Gradient.ExprData do
+  require Gradient.Debug
+  import Gradient.Debug, only: [elixir_to_ast: 1]
+
   def all_basic_pp_test_data() do
-    [value_test_data(), list_test_data(), call_test_data(), variable_test_data()]
+    [
+      value_test_data(),
+      list_test_data(),
+      call_test_data(),
+      variable_test_data(),
+      exception_test_data()
+    ]
     |> List.flatten()
   end
 
@@ -48,6 +57,16 @@ defmodule Gradient.ExprData do
       {"underscore variable", {:var, 0, :_}, "_"},
       {"ast underscore variable", {:var, 0, :_@1}, "_"},
       {"ast variable", {:var, 0, :_val@1}, "val"}
+    ]
+  end
+
+  def exception_test_data() do
+    [
+      {"throw", elixir_to_ast(throw({:ok, 12})), "throw {:ok, 12}"},
+      {"raise/1", elixir_to_ast(raise "test error"), "raise \"test error\""},
+      {"raise/2", elixir_to_ast(raise RuntimeError, "test error"), "raise \"test error\""},
+      {"custom raise", elixir_to_ast(raise ArithmeticError, "only odd numbers"),
+       "raise ArithmeticError, \"only odd numbers\""}
     ]
   end
 end

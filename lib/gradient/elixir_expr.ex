@@ -7,9 +7,9 @@ defmodule Gradient.ElixirExpr do
 
   TODO Elixir
   - [ ] structs
-  - [ ] raise
-  - [ ] call Erlang correctly e.g. `:erlang.error` (now is `erlang.error`) (reuse code from Elixir Type)
-  - [ ] format Elixir atoms and boolean correctly (reuse code from ElixirType)
+  - [x] raise
+  - [x] call Erlang correctly e.g. `:erlang.error` (now is `erlang.error`) (reuse code from Elixir Type)
+  - [x] format Elixir atoms and boolean correctly (reuse code from ElixirType)
 
   TODO Erlang
   - [x] bitstring comprehension
@@ -106,6 +106,14 @@ defmodule Gradient.ElixirExpr do
     "fn " <> clauses <> " end"
   end
 
+  def pretty_print({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :throw}}, [arg]}) do
+    "throw " <> pretty_print(arg)
+  end
+
+  def pretty_print({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :error}}, [arg]}) do
+    "raise " <> pp_raise_args(arg)
+  end
+
   def pretty_print({:call, _, name, args}) do
     args =
       Enum.map(args, &pretty_print/1)
@@ -148,7 +156,6 @@ defmodule Gradient.ElixirExpr do
   end
 
   def pretty_print({:var, _, t}) do
-    # FIXME remove number from variable
     case Atom.to_string(t) |> String.split("@") |> List.first() do
       "_" -> "_"
       "_" <> name -> name
@@ -352,6 +359,16 @@ defmodule Gradient.ElixirExpr do
       nil ->
         :error
     end
+  end
+
+  defp pp_raise_args(
+         {:call, _, {:remote, _, {:atom, _, RuntimeError}, {:atom, _, :exception}}, [arg]}
+       ) do
+    pretty_print(arg)
+  end
+
+  defp pp_raise_args({:call, _, {:remote, _, error_type, {:atom, _, :exception}}, [arg]}) do
+    pretty_print(error_type) <> ", " <> pretty_print(arg)
   end
 
   defp try_int_list_({nil, _}), do: []

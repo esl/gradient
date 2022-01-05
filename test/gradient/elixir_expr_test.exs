@@ -81,8 +81,8 @@ defmodule Gradient.ElixirExprTest do
 
       result = ElixirExpr.pretty_print(try_expr)
 
-      assert "try do case true do false -> :erlang.error(RuntimeError.exception(\"oops\")); " <>
-               "true -> :erlang.throw(\"good\") end; catch :error, %RuntimeError{} = e -> " <>
+      assert "try do case true do false -> raise \"oops\"; " <>
+               "true -> throw \"good\" end; catch :error, %RuntimeError{} = e -> " <>
                "11; e; :throw, val -> 12; val end" == result
     end
   end
