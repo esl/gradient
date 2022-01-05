@@ -221,7 +221,7 @@ defmodule Gradient.ElixirFmt do
   def parse_module(mod) do
     case Atom.to_string(mod) do
       "Elixir." <> mod_str -> mod_str <> "."
-      mod -> mod <> "."
+      mod -> ":" <> mod <> "."
     end
   end
 

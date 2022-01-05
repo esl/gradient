@@ -48,8 +48,15 @@ defmodule Gradient.ElixirExpr do
     |> Enum.join("; ")
   end
 
-  def pretty_print({:atom, _, l}) do
-    ":" <> Atom.to_string(l)
+  def pretty_print({:atom, _, val}) when val in [nil, true, false] do
+    Atom.to_string(val)
+  end
+
+  def pretty_print({:atom, _, val}) do
+    case Atom.to_string(val) do
+      "Elixir." <> mod -> mod
+      str -> ":" <> str
+    end
   end
 
   def pretty_print({:char, _, l}) do
@@ -65,7 +72,7 @@ defmodule Gradient.ElixirExpr do
   end
 
   def pretty_print({:string, _, charlist}) do
-    "\"" <> List.to_string(charlist) <> "\""
+    "\'" <> List.to_string(charlist) <> "\'"
   end
 
   def pretty_print({:cons, _, _, _} = cons) do
