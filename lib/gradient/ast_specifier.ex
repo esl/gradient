@@ -556,7 +556,7 @@ defmodule Gradient.AstSpecifier do
   end
 
   @doc """
-  Iterate over the list in abstract code format and runs mapper on each element 
+  Iterate over the list in abstract code and runs mapper on each element.
   """
   @spec cons_mapper(form(), [token()], options()) :: {form(), tokens()}
   def cons_mapper({:cons, anno, value, tail}, tokens, opts) do

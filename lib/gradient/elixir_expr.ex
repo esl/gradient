@@ -8,6 +8,7 @@ defmodule Gradient.ElixirExpr do
   TODO Elixir
   - [ ] structs
   - [ ] print true/false case as if?
+  - [ ] print nested true/false cases as cond?
   - [x] raise
   - [x] call Erlang correctly e.g. `:erlang.error` (now is `erlang.error`) (reuse code from Elixir Type)
   - [x] format Elixir atoms and boolean correctly (reuse code from ElixirType)
@@ -169,9 +170,12 @@ defmodule Gradient.ElixirExpr do
   end
 
   def pretty_print({:bin, _, elements}) do
-    elements
-    |> Enum.map(fn e -> pretty_print_bin_element(e) end)
-    |> Enum.join(", ")
+    bin =
+      elements
+      |> Enum.map(fn e -> pretty_print_bin_element(e) end)
+      |> Enum.join(", ")
+
+    "<<" <> bin <> ">>"
   end
 
   def pretty_print({t, _, expr0, quantifiers}) when t in [:bc, :lc] do
@@ -313,40 +317,28 @@ defmodule Gradient.ElixirExpr do
   end
 
   defp pretty_print_bin_element({:bin_element, _, value, size, tsl}) do
-    value = pretty_print(value)
+    value = bin_pp_value(value)
 
     bin_set_tsl(tsl)
     |> bin_set_size(size)
     |> bin_set_value(value)
   end
 
-  defp bin_set_value("", value) do
-    value
-  end
+  defp bin_pp_value({:string, _, val}), do: "\"" <> List.to_string(val) <> "\""
+  defp bin_pp_value(val), do: pretty_print(val)
 
-  defp bin_set_value(sufix, value) do
-    value <> "::" <> sufix
-  end
+  defp bin_set_value("", value), do: value
+  defp bin_set_value(sufix, value), do: value <> "::" <> sufix
 
-  defp bin_set_size("", size) do
-    Integer.to_string(size)
-  end
+  defp bin_set_size("", :default), do: ""
+  defp bin_set_size("", {:integer, _, size}), do: Integer.to_string(size)
+  defp bin_set_size(tsl, :default), do: tsl
+  defp bin_set_size(tsl, {:integer, _, size}), do: "#{tsl}-size(#{Integer.to_string(size)})"
 
-  defp bin_set_size(tsl, :default) do
-    tsl
-  end
-
-  defp bin_set_size(tsl, size) do
-    tsl <> "-size(" <> Integer.to_string(size) <> ")"
-  end
-
-  defp bin_set_tsl(:default) do
-    ""
-  end
-
-  defp bin_set_tsl(tsl) do
-    Atom.to_string(tsl)
-  end
+  defp bin_set_tsl(:default), do: ""
+  defp bin_set_tsl([:integer]), do: ""
+  defp bin_set_tsl([tsl]), do: Atom.to_string(tsl)
+  defp bin_set_tsl(tsl), do: Atom.to_string(tsl)
 
   @spec format_map_element(tuple()) :: String.t()
   def format_map_element({field, _, key, value})
