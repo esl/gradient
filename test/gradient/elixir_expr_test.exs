@@ -42,7 +42,41 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pretty_print()
 
-      assert "case :math.floor(1.9) == 1.0 do false -> :error; true -> :ok end" == actual
+      assert "if :math.floor(1.9) == 1.0 do :ok else :error end" == actual
+    end
+
+    test "unless" do
+      actual =
+        elixir_to_ast do
+          unless :math.floor(1.9) == 1.0 do
+            :ok
+          else
+            :error
+          end
+        end
+        |> ElixirExpr.pretty_print()
+
+      assert "if :math.floor(1.9) == 1.0 do :error else :ok end" == actual
+    end
+
+    test "cond" do
+      actual =
+        elixir_to_ast do
+          cond do
+            true == false ->
+              :ok
+
+            :math.floor(1.9) == 1.0 ->
+              :ok
+
+            true ->
+              :error
+          end
+        end
+        |> ElixirExpr.pretty_print()
+
+      assert "cond do true == false -> :ok; :math.floor(1.9) == 1.0 -> :ok; true -> :error end" ==
+               actual
     end
 
     test "try with rescue and catch" do
@@ -111,9 +145,8 @@ defmodule Gradient.ElixirExprTest do
 
       result = ElixirExpr.pretty_print(try_expr)
 
-      assert "try do case true do false -> raise \"oops\"; " <>
-               "true -> throw \"good\" end; catch :error, %RuntimeError{} = e -> " <>
-               "11; e; :throw, val -> 12; val end" == result
+      assert "try do if true do throw \"good\" else raise \"oops\" end;" <>
+               " catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> 12; val end" == result
     end
   end
 end

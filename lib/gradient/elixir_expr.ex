@@ -7,8 +7,9 @@ defmodule Gradient.ElixirExpr do
 
   TODO Elixir
   - [x] structs
-  - [ ] print true/false case as if?
-  - [ ] print nested true/false cases as cond?
+  - [x] print true/false case as if?
+  - [x] print nested true/false cases as cond?
+  - [ ] print with
   - [x] raise
   - [x] call Erlang correctly e.g. `:erlang.error` (now is `erlang.error`) (reuse code from Elixir Type)
   - [x] format Elixir atoms and boolean correctly (reuse code from ElixirType)
@@ -196,10 +197,19 @@ defmodule Gradient.ElixirExpr do
     pretty_print(pattern) <> " <- " <> pretty_print(expr)
   end
 
-  def pretty_print({:case, _, condition, clauses}) do
-    # print all as a one line
-    clauses = pp_clauses(clauses)
-    "case " <> pretty_print(condition) <> " do " <> clauses <> " end"
+  def pretty_print({:case, _, condition, clauses} = case_expr) do
+    case get_conditional_type(clauses) do
+      :if ->
+        clauses = pp_clauses(clauses, :if)
+        "if " <> pretty_print(condition) <> " do " <> clauses <> " end"
+
+      :cond ->
+        "cond do " <> pp_cond_expr(case_expr) <> " end"
+
+      :case ->
+        clauses = pp_clauses(clauses, :case)
+        "case " <> pretty_print(condition) <> " do " <> clauses <> " end"
+    end
   end
 
   def pretty_print({:receive, _, clauses}) do
@@ -233,11 +243,18 @@ defmodule Gradient.ElixirExpr do
   @doc """
   Format abstract clauses to Elixir code
   """
-  @spec pp_clauses([clause()], :case | :catch) :: String.t()
+  @spec pp_clauses([clause()], :case | :if | :catch) :: String.t()
   def pp_clauses(clauses, type \\ :case)
 
   def pp_clauses(clauses, :case) do
     Enum.map(clauses, &pp_case_clause/1) |> Enum.join("; ")
+  end
+
+  def pp_clauses(clauses, :if) do
+    clauses
+    |> Enum.sort_by(fn c -> elem(hd(elem(c, 2)), 2) end, &>=/2)
+    |> Enum.map(&pp_if_clause/1)
+    |> Enum.join(" else ")
   end
 
   def pp_clauses(clauses, :catch) do
@@ -283,6 +300,43 @@ defmodule Gradient.ElixirExpr do
       |> Enum.join(", ")
 
     patterns <> pp_guards(guards) <> " -> " <> pretty_print(body)
+  end
+
+  defp pp_if_clause({:clause, _, _, [], body}) do
+    pretty_print(body)
+  end
+
+  def pp_cond_expr({:case, _, condition, clauses}) do
+    clauses = Enum.map(clauses, &cond_clause_pp/1) |> Enum.filter(&(&1 != "")) |> Enum.join("; ")
+    pretty_print(condition) <> " -> " <> clauses
+  end
+
+  def pp_cond_expr(_), do: ""
+
+  def cond_clause_pp({:clause, _, [{:atom, _, true}], _, body}), do: pretty_print(body)
+
+  def cond_clause_pp({:clause, _, [{:atom, _, false}], _, [case_expr]}),
+    do: pp_cond_expr(case_expr)
+
+  def cond_clause_pp(_), do: ""
+
+  def get_conditional_type(clauses) do
+    if length(clauses) == 2 and
+         Enum.all?(clauses, fn
+           {:clause, _, [{:atom, _, bool}], [], _} -> is_boolean(bool)
+           _ -> false
+         end) do
+      if is_cond?(clauses), do: :cond, else: :if
+    else
+      :case
+    end
+  end
+
+  def is_cond?(clauses) do
+    case Enum.find(clauses, fn {:clause, _, [{:atom, _, bool}], [], _} -> bool == false end) do
+      {:clause, _, _, _, [expr]} -> elem(expr, 0) == :case
+      _ -> false
+    end
   end
 
   defp append_try_body(res, body) do
@@ -403,6 +457,10 @@ defmodule Gradient.ElixirExpr do
 
   defp pp_raise_args({:call, _, {:remote, _, error_type, {:atom, _, :exception}}, [arg]}) do
     pretty_print(error_type) <> ", " <> pretty_print(arg)
+  end
+
+  defp pp_raise_args(arg) do
+    pretty_print(arg)
   end
 
   defp try_int_list_({nil, _}), do: []
