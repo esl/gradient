@@ -199,7 +199,7 @@ defmodule Gradient.ElixirFmtTest do
 
     test "map", %{wrong_ret_errors: errors} do
       expr = expr_format_error_to_binary(errors.ret_wrong_tuple)
-      assert String.contains?(expr, "%{:a => 1, :b => 2}")
+      assert String.contains?(expr, "%{a: 1, b: 2}")
     end
 
     test "tuple", %{wrong_ret_errors: errors} do

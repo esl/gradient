@@ -6,7 +6,7 @@ defmodule Gradient.ElixirExpr do
   - nil ([]) line is not specified by AstSpecifier
 
   TODO Elixir
-  - [ ] structs
+  - [x] structs
   - [ ] print true/false case as if?
   - [ ] print nested true/false cases as cond?
   - [x] raise
@@ -125,12 +125,20 @@ defmodule Gradient.ElixirExpr do
   end
 
   def pretty_print({:map, _, pairs}) do
-    pairs = Enum.map(pairs, &format_map_element/1) |> Enum.join(", ")
-    "%{" <> pairs <> "}"
+    case try_get_struct(pairs) do
+      {nil, pairs} ->
+        pairs = format_map_elements(pairs)
+        "%{" <> pairs <> "}"
+
+      {struct_name, pairs} ->
+        pairs = format_map_elements(pairs)
+        name = pretty_print(struct_name)
+        "%" <> name <> "{" <> pairs <> "}"
+    end
   end
 
   def pretty_print({:map, _, map, pairs}) do
-    pairs = Enum.map(pairs, &format_map_element/1) |> Enum.join(", ")
+    pairs = format_map_elements(pairs)
     map = pretty_print(map)
     "%{" <> map <> " | " <> pairs <> "}"
   end
@@ -340,13 +348,42 @@ defmodule Gradient.ElixirExpr do
   defp bin_set_tsl([tsl]), do: Atom.to_string(tsl)
   defp bin_set_tsl(tsl), do: Atom.to_string(tsl)
 
-  @spec format_map_element(tuple()) :: String.t()
-  def format_map_element({field, _, key, value})
-      when field in [:map_field_assoc, :map_field_exact] do
-    key = pretty_print(key)
-    value = pretty_print(value)
-    key <> " => " <> value
+  def format_map_elements(elems) do
+    atom_keys = all_keys_atoms?(elems)
+    Enum.map(elems, fn p -> format_map_element(p, atom_keys) end) |> Enum.join(", ")
   end
+
+  @spec format_map_element(tuple(), boolean()) :: String.t()
+  def format_map_element({_field, _, key, value}, shortand_syntax) do
+    value = pretty_print(value)
+
+    if shortand_syntax do
+      {:atom, _, key} = key
+      Atom.to_string(key) <> ": " <> value
+    else
+      pretty_print(key) <> " => " <> value
+    end
+  end
+
+  def all_keys_atoms?(pairs) do
+    Enum.all?(pairs, fn {_, _, key, _} -> :atom == elem(key, 0) end)
+  end
+
+  @spec try_get_struct([tuple()]) :: {struct_name :: nil | expr(), pairs_left :: [tuple()]}
+  def try_get_struct(pairs) do
+    {n, ps} =
+      Enum.reduce(pairs, {nil, []}, fn p, {n, ps} ->
+        case get_struct_name(p) do
+          nil -> {n, [p | ps]}
+          name -> {name, ps}
+        end
+      end)
+
+    {n, Enum.reverse(ps)}
+  end
+
+  def get_struct_name({_, _, {:atom, _, :__struct__}, val}), do: val
+  def get_struct_name(_), do: nil
 
   @spec cons_to_int_list(tuple()) :: {:ok, [integer()]} | :error
   def cons_to_int_list(cons) do

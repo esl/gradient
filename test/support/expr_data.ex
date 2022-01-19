@@ -10,7 +10,8 @@ defmodule Gradient.ExprData do
       variable_test_data(),
       exception_test_data(),
       block_test_data(),
-      binary_test_data()
+      binary_test_data(),
+      map_test_data()
     ]
     |> List.flatten()
   end
@@ -84,6 +85,14 @@ defmodule Gradient.ExprData do
     ]
   end
 
+  def map_test_data do
+    [
+      {"map pm", elixir_to_ast(%{a: a} = %{a: 12}), "%{a: a} = %{a: 12}"},
+      {"struct expr", elixir_to_ast(%{__struct__: TestStruct, name: "John"}),
+       "%TestStruct{name: \"John\"}"}
+    ]
+  end
+
   def binary_test_data do
     [
       bin_pm_bin_var(),
@@ -100,7 +109,7 @@ defmodule Gradient.ExprData do
         <<a::8, _rest::binary>> = <<1, 2, 3, 4>>
       end
 
-    {"bin pattern matching with bin var", ast, "<<a::8, _rest::binary>> = <<1, 2, 3, 4>"}
+    {"bin pattern matching with bin var", ast, "<<a::8, _rest::binary>> = <<1, 2, 3, 4>>"}
   end
 
   defp bin_joining_syntax do
