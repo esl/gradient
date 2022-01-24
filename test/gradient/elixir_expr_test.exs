@@ -17,7 +17,71 @@ defmodule Gradient.ElixirExprTest do
     end
   end
 
+  test "pretty print expr formatted" do
+    actual =
+      elixir_to_ast do
+        case {:ok, 13} do
+          {:ok, v} -> v
+          _err -> :error
+        end
+      end
+      |> ElixirExpr.pp_expr_format()
+      |> Enum.join("")
+
+    assert "case {:ok, 13} do\n  {:ok, v} -> v\n  _err -> :error\nend" == actual
+  end
+
   describe "complex pretty print" do
+    test "try guard" do
+      actual =
+        elixir_to_ast do
+          try do
+            throw("good")
+            :ok
+          rescue
+            e in RuntimeError ->
+              11
+              e
+          else
+            v when v == :ok ->
+              :ok
+
+            v ->
+              :nok
+          catch
+            val when is_integer(val) ->
+              val
+
+            _ ->
+              0
+          end
+        end
+        |> ElixirExpr.pretty_print()
+
+      assert "try do throw \"good\"; :ok; else v when v == :ok -> :ok; v -> :nok; catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> val; :throw, _ -> 0 end" ==
+               actual
+    end
+
+    test "case guard" do
+      actual =
+        elixir_to_ast do
+          case {:ok, 10} do
+            {:ok, v} when (v > 0 and v > 1) or v < -1 ->
+              :ok
+
+            t when is_tuple(t) ->
+              :nok
+
+            _ ->
+              :err
+          end
+        end
+        |> ElixirExpr.pretty_print()
+
+      assert "case {:ok, 10} do {:ok, v} when v > 0 and v > 1 or v < - 1 -> :ok; t when :erlang.is_tuple(t) -> :nok; _ -> :err end" ==
+               actual
+    end
+
     test "case" do
       actual =
         elixir_to_ast do

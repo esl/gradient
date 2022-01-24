@@ -29,7 +29,7 @@ defmodule Gradient.ElixirExpr do
   - [x] receive expression
   - [x] try expression
   - [x] block
-  - [ ] support guards
+  - [x] support guards
 
   - if expression / not used by Elixir (Elixir uses case in abstract code)
   - record / not used by Elixir, probably can be skipped
@@ -163,11 +163,11 @@ defmodule Gradient.ElixirExpr do
   end
 
   def pretty_print({:op, _, op, type}) do
-    Atom.to_string(op) <> " " <> pretty_print(type)
+    operator_to_string(op) <> " " <> pretty_print(type)
   end
 
   def pretty_print({:op, _, op, left_type, right_type}) do
-    operator = " " <> Atom.to_string(op) <> " "
+    operator = " " <> operator_to_string(op) <> " "
     pretty_print(left_type) <> operator <> pretty_print(right_type)
   end
 
@@ -275,12 +275,15 @@ defmodule Gradient.ElixirExpr do
     ""
   end
 
-  def pp_guards(_) do
-    # FIXME implement guards pretty printing
-    " when ..."
+  def pp_guards([[guard]]) do
+    " when " <> pretty_print(guard)
   end
 
   # Private
+
+  def operator_to_string(:andalso), do: operator_to_string(:and)
+  def operator_to_string(:orelse), do: operator_to_string(:or)
+  def operator_to_string(op), do: Atom.to_string(op)
 
   defp pp_catch_clause({:clause, _, [{:tuple, _, [type, var, _stacktrace]}], guards, body}) do
     # rescue/catch clause
