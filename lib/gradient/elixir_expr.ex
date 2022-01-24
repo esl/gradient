@@ -1,39 +1,6 @@
 defmodule Gradient.ElixirExpr do
   @moduledoc """
-  Module formats the Erlang abstract expressions to the Elixir code.
-
-  FIXME
-  - nil ([]) line is not specified by AstSpecifier
-
-  TODO Elixir
-  - [x] structs
-  - [x] print true/false case as if?
-  - [x] print nested true/false cases as cond?
-  - [ ] print with
-  - [x] raise
-  - [x] call Erlang correctly e.g. `:erlang.error` (now is `erlang.error`) (reuse code from Elixir Type)
-  - [x] format Elixir atoms and boolean correctly (reuse code from ElixirType)
-
-  TODO Erlang
-  - [x] bitstring comprehension
-  - [x] bitstring constructor
-  - [x] list comprehension
-    Elixir doesn't use the :lc expression. Even a simple list comprehension is stored in the AST as below:
-      - Elixir source:
-          for n <- [1, 2, 3], do: n
-      - Stored in abstract code as:
-          :lists.reverse(Enum.reduce([1, 2, 3], [], fn n, acc -> [n | acc] end))
-
-  - [x] case expression
-  - [x] fun expression
-  - [x] receive expression
-  - [x] try expression
-  - [x] block
-  - [x] support guards
-
-  - if expression / not used by Elixir (Elixir uses case in abstract code)
-  - record / not used by Elixir, probably can be skipped
-  - catch / not produced by Elixir, I think
+  Convert the Erlang abstract expressions to the Elixir code.
   """
 
   alias Gradient.ElixirFmt
@@ -47,48 +14,48 @@ defmodule Gradient.ElixirExpr do
   @spec pp_expr_format([expr()], keyword()) :: iodata()
   def pp_expr_format(exprs, fmt_opts \\ []) do
     exprs
-    |> pretty_print()
+    |> pp_expr()
     |> Code.format_string!(fmt_opts)
   end
 
   @doc """
   Convert abstract expressions to Elixir code.
   """
-  @spec pretty_print(expr() | [expr()]) :: String.t()
-  def pretty_print(exprs) when is_list(exprs) do
+  @spec pp_expr(expr() | [expr()]) :: String.t()
+  def pp_expr(exprs) when is_list(exprs) do
     exprs
-    |> Enum.map(&pretty_print/1)
+    |> Enum.map(&pp_expr/1)
     |> Enum.join("; ")
   end
 
-  def pretty_print({:atom, _, val}) when val in [nil, true, false] do
+  def pp_expr({:atom, _, val}) when val in [nil, true, false] do
     Atom.to_string(val)
   end
 
-  def pretty_print({:atom, _, val}) do
+  def pp_expr({:atom, _, val}) do
     case Atom.to_string(val) do
       "Elixir." <> mod -> mod
       str -> ":" <> str
     end
   end
 
-  def pretty_print({:char, _, l}) do
+  def pp_expr({:char, _, l}) do
     "?" <> List.to_string([l])
   end
 
-  def pretty_print({:float, _, l}) do
+  def pp_expr({:float, _, l}) do
     Float.to_string(l)
   end
 
-  def pretty_print({:integer, _, l}) do
+  def pp_expr({:integer, _, l}) do
     Integer.to_string(l)
   end
 
-  def pretty_print({:string, _, charlist}) do
+  def pp_expr({:string, _, charlist}) do
     "\'" <> List.to_string(charlist) <> "\'"
   end
 
-  def pretty_print({:cons, _, _, _} = cons) do
+  def pp_expr({:cons, _, _, _} = cons) do
     case cons_to_int_list(cons) do
       {:ok, l} ->
         inspect(l)
@@ -102,40 +69,40 @@ defmodule Gradient.ElixirExpr do
     end
   end
 
-  def pretty_print({:fun, _, {:function, name, arity}}) do
+  def pp_expr({:fun, _, {:function, name, arity}}) do
     "&#{name}/#{arity}"
   end
 
-  def pretty_print({:fun, _, {:function, module, name, arity}}) do
+  def pp_expr({:fun, _, {:function, module, name, arity}}) do
     module = ElixirFmt.parse_module(module)
-    name = pretty_print(name)
-    arity = pretty_print(arity)
+    name = pp_expr(name)
+    arity = pp_expr(arity)
     "&#{module}#{name}/#{arity}"
   end
 
-  def pretty_print({:fun, _, {:clauses, clauses}}) do
+  def pp_expr({:fun, _, {:clauses, clauses}}) do
     # print all as a one line
     clauses = pp_clauses(clauses)
     "fn " <> clauses <> " end"
   end
 
-  def pretty_print({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :throw}}, [arg]}) do
-    "throw " <> pretty_print(arg)
+  def pp_expr({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :throw}}, [arg]}) do
+    "throw " <> pp_expr(arg)
   end
 
-  def pretty_print({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :error}}, [arg]}) do
+  def pp_expr({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :error}}, [arg]}) do
     "raise " <> pp_raise_args(arg)
   end
 
-  def pretty_print({:call, _, name, args}) do
+  def pp_expr({:call, _, name, args}) do
     args =
-      Enum.map(args, &pretty_print/1)
+      Enum.map(args, &pp_expr/1)
       |> Enum.join(" ,")
 
     pp_name(name) <> "(" <> args <> ")"
   end
 
-  def pretty_print({:map, _, pairs}) do
+  def pp_expr({:map, _, pairs}) do
     case try_get_struct(pairs) do
       {nil, pairs} ->
         pairs = format_map_elements(pairs)
@@ -143,40 +110,40 @@ defmodule Gradient.ElixirExpr do
 
       {struct_name, pairs} ->
         pairs = format_map_elements(pairs)
-        name = pretty_print(struct_name)
+        name = pp_expr(struct_name)
         "%" <> name <> "{" <> pairs <> "}"
     end
   end
 
-  def pretty_print({:map, _, map, pairs}) do
+  def pp_expr({:map, _, map, pairs}) do
     pairs = format_map_elements(pairs)
-    map = pretty_print(map)
+    map = pp_expr(map)
     "%{" <> map <> " | " <> pairs <> "}"
   end
 
-  def pretty_print({:match, _, var, expr}) do
-    pretty_print(var) <> " = " <> pretty_print(expr)
+  def pp_expr({:match, _, var, expr}) do
+    pp_expr(var) <> " = " <> pp_expr(expr)
   end
 
-  def pretty_print({nil, _}) do
+  def pp_expr({nil, _}) do
     "[]"
   end
 
-  def pretty_print({:op, _, op, type}) do
-    operator_to_string(op) <> " " <> pretty_print(type)
+  def pp_expr({:op, _, op, type}) do
+    operator_to_string(op) <> " " <> pp_expr(type)
   end
 
-  def pretty_print({:op, _, op, left_type, right_type}) do
+  def pp_expr({:op, _, op, left_type, right_type}) do
     operator = " " <> operator_to_string(op) <> " "
-    pretty_print(left_type) <> operator <> pretty_print(right_type)
+    pp_expr(left_type) <> operator <> pp_expr(right_type)
   end
 
-  def pretty_print({:tuple, _, elements}) do
-    elements_str = Enum.map(elements, &pretty_print(&1)) |> Enum.join(", ")
+  def pp_expr({:tuple, _, elements}) do
+    elements_str = Enum.map(elements, &pp_expr(&1)) |> Enum.join(", ")
     "{" <> elements_str <> "}"
   end
 
-  def pretty_print({:var, _, t}) do
+  def pp_expr({:var, _, t}) do
     case Atom.to_string(t) |> String.split("@") |> List.first() do
       "_" -> "_"
       "_" <> name -> name
@@ -184,55 +151,55 @@ defmodule Gradient.ElixirExpr do
     end
   end
 
-  def pretty_print({:bin, _, [{:bin_element, _, {:string, _, value}, :default, :default}]}) do
+  def pp_expr({:bin, _, [{:bin_element, _, {:string, _, value}, :default, :default}]}) do
     "\"" <> to_string(value) <> "\""
   end
 
-  def pretty_print({:bin, _, elements}) do
+  def pp_expr({:bin, _, elements}) do
     bin =
       elements
-      |> Enum.map(fn e -> pretty_print_bin_element(e) end)
+      |> Enum.map(fn e -> pp_bin_element(e) end)
       |> Enum.join(", ")
 
     "<<" <> bin <> ">>"
   end
 
-  def pretty_print({t, _, expr0, quantifiers}) when t in [:bc, :lc] do
-    expr0 = pretty_print(expr0)
+  def pp_expr({t, _, expr0, quantifiers}) when t in [:bc, :lc] do
+    expr0 = pp_expr(expr0)
     "for #{quantifiers}, do: #{expr0}"
   end
 
   # Quantifiers
-  def pretty_print({type, _, pattern, expr}) when type in [:generate, :b_generate] do
-    pretty_print(pattern) <> " <- " <> pretty_print(expr)
+  def pp_expr({type, _, pattern, expr}) when type in [:generate, :b_generate] do
+    pp_expr(pattern) <> " <- " <> pp_expr(expr)
   end
 
-  def pretty_print({:case, _, condition, clauses} = case_expr) do
+  def pp_expr({:case, _, condition, clauses} = case_expr) do
     case get_conditional_type(clauses) do
       :if ->
         clauses = pp_clauses(clauses, :if)
-        "if " <> pretty_print(condition) <> " do " <> clauses <> " end"
+        "if " <> pp_expr(condition) <> " do " <> clauses <> " end"
 
       :cond ->
         "cond do " <> pp_cond_expr(case_expr) <> " end"
 
       :case ->
         clauses = pp_clauses(clauses, :case)
-        "case " <> pretty_print(condition) <> " do " <> clauses <> " end"
+        "case " <> pp_expr(condition) <> " do " <> clauses <> " end"
     end
   end
 
-  def pretty_print({:receive, _, clauses}) do
+  def pp_expr({:receive, _, clauses}) do
     "receive" <> pp_clauses(clauses) <> "end"
   end
 
-  def pretty_print({:receive, _, clauses, after_value, _after_body}) do
+  def pp_expr({:receive, _, clauses, after_value, _after_body}) do
     pclauses = pp_clauses(clauses)
-    pvalue = pretty_print(after_value)
+    pvalue = pp_expr(after_value)
     "receive " <> pclauses <> "after " <> pvalue <> " -> ... end"
   end
 
-  def pretty_print({:try, _, body, else_block, catchers, after_block}) do
+  def pp_expr({:try, _, body, else_block, catchers, after_block}) do
     "try do "
     |> append_try_body(body)
     |> maybe_try_else(else_block)
@@ -241,11 +208,11 @@ defmodule Gradient.ElixirExpr do
     |> Kernel.<>(" end")
   end
 
-  def pretty_print({:block, _, body}) do
-    pretty_print(body)
+  def pp_expr({:block, _, body}) do
+    pp_expr(body)
   end
 
-  # def pretty_print(expr) do
+  # def pp_expr(expr) do
   # :erl_pp.expr(expr)
   # |> :erlang.iolist_to_binary()
   # end
@@ -276,7 +243,7 @@ defmodule Gradient.ElixirExpr do
   end
 
   def pp_guards([[guard]]) do
-    " when " <> pretty_print(guard)
+    " when " <> pp_expr(guard)
   end
 
   # Private
@@ -294,14 +261,14 @@ defmodule Gradient.ElixirExpr do
         # rescue
         {var2, body2} = get_error_var(var, body)
 
-        pretty_print(type) <>
+        pp_expr(type) <>
           ", %" <>
-          pretty_print(error_type) <>
-          "{} = " <> pretty_print(var2) <> " -> " <> pretty_print(body2)
+          pp_expr(error_type) <>
+          "{} = " <> pp_expr(var2) <> " -> " <> pp_expr(body2)
 
       :not_found ->
         # throw
-        pretty_print(type) <> ", " <> pretty_print(var) <> " -> " <> pretty_print(body)
+        pp_expr(type) <> ", " <> pp_expr(var) <> " -> " <> pp_expr(body)
     end
   end
 
@@ -309,24 +276,24 @@ defmodule Gradient.ElixirExpr do
     # FIXME support guards
     patterns =
       patterns
-      |> Enum.map(&pretty_print/1)
+      |> Enum.map(&pp_expr/1)
       |> Enum.join(", ")
 
-    patterns <> pp_guards(guards) <> " -> " <> pretty_print(body)
+    patterns <> pp_guards(guards) <> " -> " <> pp_expr(body)
   end
 
   defp pp_if_clause({:clause, _, _, [], body}) do
-    pretty_print(body)
+    pp_expr(body)
   end
 
   def pp_cond_expr({:case, _, condition, clauses}) do
     clauses = Enum.map(clauses, &cond_clause_pp/1) |> Enum.filter(&(&1 != "")) |> Enum.join("; ")
-    pretty_print(condition) <> " -> " <> clauses
+    pp_expr(condition) <> " -> " <> clauses
   end
 
   def pp_cond_expr(_), do: ""
 
-  def cond_clause_pp({:clause, _, [{:atom, _, true}], _, body}), do: pretty_print(body)
+  def cond_clause_pp({:clause, _, [{:atom, _, true}], _, body}), do: pp_expr(body)
 
   def cond_clause_pp({:clause, _, [{:atom, _, false}], _, [case_expr]}),
     do: pp_cond_expr(case_expr)
@@ -353,7 +320,7 @@ defmodule Gradient.ElixirExpr do
   end
 
   defp append_try_body(res, body) do
-    res <> pretty_print(body)
+    res <> pp_expr(body)
   end
 
   defp maybe_try_else(res, []) do
@@ -391,7 +358,7 @@ defmodule Gradient.ElixirExpr do
     {var, body}
   end
 
-  defp pretty_print_bin_element({:bin_element, _, value, size, tsl}) do
+  defp pp_bin_element({:bin_element, _, value, size, tsl}) do
     value = bin_pp_value(value)
 
     bin_set_tsl(tsl)
@@ -400,7 +367,7 @@ defmodule Gradient.ElixirExpr do
   end
 
   defp bin_pp_value({:string, _, val}), do: "\"" <> List.to_string(val) <> "\""
-  defp bin_pp_value(val), do: pretty_print(val)
+  defp bin_pp_value(val), do: pp_expr(val)
 
   defp bin_set_value("", value), do: value
   defp bin_set_value(sufix, value), do: value <> "::" <> sufix
@@ -422,13 +389,13 @@ defmodule Gradient.ElixirExpr do
 
   @spec format_map_element(tuple(), boolean()) :: String.t()
   def format_map_element({_field, _, key, value}, shortand_syntax) do
-    value = pretty_print(value)
+    value = pp_expr(value)
 
     if shortand_syntax do
       {:atom, _, key} = key
       Atom.to_string(key) <> ": " <> value
     else
-      pretty_print(key) <> " => " <> value
+      pp_expr(key) <> " => " <> value
     end
   end
 
@@ -465,15 +432,15 @@ defmodule Gradient.ElixirExpr do
   defp pp_raise_args(
          {:call, _, {:remote, _, {:atom, _, RuntimeError}, {:atom, _, :exception}}, [arg]}
        ) do
-    pretty_print(arg)
+    pp_expr(arg)
   end
 
   defp pp_raise_args({:call, _, {:remote, _, error_type, {:atom, _, :exception}}, [arg]}) do
-    pretty_print(error_type) <> ", " <> pretty_print(arg)
+    pp_expr(error_type) <> ", " <> pp_expr(arg)
   end
 
   defp pp_raise_args(arg) do
-    pretty_print(arg)
+    pp_expr(arg)
   end
 
   defp try_int_list_({nil, _}), do: []
@@ -481,8 +448,8 @@ defmodule Gradient.ElixirExpr do
   defp try_int_list_(_), do: throw(nil)
 
   defp pp_cons({nil, _}), do: []
-  defp pp_cons({:var, _, _} = v), do: [pretty_print(v)]
-  defp pp_cons({:cons, _, h, t}), do: [pretty_print(h) | pp_cons(t)]
+  defp pp_cons({:var, _, _} = v), do: [pp_expr(v)]
+  defp pp_cons({:cons, _, h, t}), do: [pp_expr(h) | pp_cons(t)]
 
   defp pp_name({:remote, _, {:atom, _, m}, {:atom, _, n}}),
     do: ElixirFmt.parse_module(m) <> to_string(n)

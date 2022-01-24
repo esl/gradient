@@ -30,7 +30,7 @@ defmodule Gradient.ElixirFmt do
 
   def format_error(error, opts) do
     opts = Keyword.put_new(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
-    opts = Keyword.put_new(opts, :fmt_expr_fun, &ElixirExpr.pretty_print/1)
+    opts = Keyword.put_new(opts, :fmt_expr_fun, &ElixirExpr.pp_expr/1)
     format_type_error(error, opts)
   end
 
@@ -146,7 +146,7 @@ defmodule Gradient.ElixirFmt do
   end
 
   def pp_expr(expression, opts) do
-    fmt = Keyword.get(opts, :fmt_expr_fun, &ElixirExpr.pretty_print/1)
+    fmt = Keyword.get(opts, :fmt_expr_fun, &ElixirExpr.pp_expr/1)
 
     if Keyword.get(opts, :colors, true) do
       IO.ANSI.blue() <> fmt.(expression) <> IO.ANSI.reset()

@@ -12,7 +12,7 @@ defmodule Gradient.ElixirExprTest do
     for {name, type, expected} <- ExprData.all_basic_pp_test_data() do
       test "#{name}" do
         type = unquote(Macro.escape(type))
-        assert unquote(expected) == ElixirExpr.pretty_print(type)
+        assert unquote(expected) == ElixirExpr.pp_expr(type)
       end
     end
   end
@@ -56,7 +56,7 @@ defmodule Gradient.ElixirExprTest do
               0
           end
         end
-        |> ElixirExpr.pretty_print()
+        |> ElixirExpr.pp_expr()
 
       assert "try do throw \"good\"; :ok; else v when v == :ok -> :ok; v -> :nok; catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> val; :throw, _ -> 0 end" ==
                actual
@@ -76,7 +76,7 @@ defmodule Gradient.ElixirExprTest do
               :err
           end
         end
-        |> ElixirExpr.pretty_print()
+        |> ElixirExpr.pp_expr()
 
       assert "case {:ok, 10} do {:ok, v} when v > 0 and v > 1 or v < - 1 -> :ok; t when :erlang.is_tuple(t) -> :nok; _ -> :err end" ==
                actual
@@ -90,7 +90,7 @@ defmodule Gradient.ElixirExprTest do
             _err -> :error
           end
         end
-        |> ElixirExpr.pretty_print()
+        |> ElixirExpr.pp_expr()
 
       assert "case {:ok, 13} do {:ok, v} -> v; _err -> :error end" == actual
     end
@@ -104,7 +104,7 @@ defmodule Gradient.ElixirExprTest do
             :error
           end
         end
-        |> ElixirExpr.pretty_print()
+        |> ElixirExpr.pp_expr()
 
       assert "if :math.floor(1.9) == 1.0 do :ok else :error end" == actual
     end
@@ -118,7 +118,7 @@ defmodule Gradient.ElixirExprTest do
             :error
           end
         end
-        |> ElixirExpr.pretty_print()
+        |> ElixirExpr.pp_expr()
 
       assert "if :math.floor(1.9) == 1.0 do :error else :ok end" == actual
     end
@@ -137,7 +137,7 @@ defmodule Gradient.ElixirExprTest do
               :error
           end
         end
-        |> ElixirExpr.pretty_print()
+        |> ElixirExpr.pp_expr()
 
       assert "cond do true == false -> :ok; :math.floor(1.9) == 1.0 -> :ok; true -> :error end" ==
                actual
@@ -207,7 +207,7 @@ defmodule Gradient.ElixirExprTest do
             ], [], [{:integer, 15, 12}, {:var, 16, :_val@1}]}
          ], []}
 
-      result = ElixirExpr.pretty_print(try_expr)
+      result = ElixirExpr.pp_expr(try_expr)
 
       assert "try do if true do throw \"good\" else raise \"oops\" end;" <>
                " catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> 12; val end" == result
