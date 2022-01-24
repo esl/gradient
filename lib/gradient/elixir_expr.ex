@@ -42,7 +42,17 @@ defmodule Gradient.ElixirExpr do
   @type clause :: :erl_parse.abstract_clause()
 
   @doc """
-  Format abstract expressions to Elixir code
+  Convert abstract expressions to Elixir code and format output with formatter.
+  """
+  @spec pp_expr_format([expr()], keyword()) :: iodata()
+  def pp_expr_format(exprs, fmt_opts \\ []) do
+    exprs
+    |> pretty_print()
+    |> Code.format_string!(fmt_opts)
+  end
+
+  @doc """
+  Convert abstract expressions to Elixir code.
   """
   @spec pretty_print(expr() | [expr()]) :: String.t()
   def pretty_print(exprs) when is_list(exprs) do
@@ -241,7 +251,7 @@ defmodule Gradient.ElixirExpr do
   # end
 
   @doc """
-  Format abstract clauses to Elixir code
+  Convert abstract clauses to Elixir code
   """
   @spec pp_clauses([clause()], :case | :if | :catch) :: String.t()
   def pp_clauses(clauses, type \\ :case)
