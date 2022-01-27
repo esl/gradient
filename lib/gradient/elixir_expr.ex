@@ -103,7 +103,7 @@ defmodule Gradient.ElixirExpr do
   end
 
   def pp_expr({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :error}}, [arg]}) do
-    "raise " <> pp_raise_args(arg)
+    "raise " <> pp_raise_arg(arg)
   end
 
   def pp_expr({:call, _, name, args}) do
@@ -155,9 +155,9 @@ defmodule Gradient.ElixirExpr do
     "{" <> elements_str <> "}"
   end
 
-  def pp_expr({:var, _, t}) do
+  def pp_expr({:var, anno, t}) do
     case Atom.to_string(t) |> String.split("@") |> List.first() do
-      "_" -> "_"
+      "_" -> if :erl_anno.generated(anno), do: "_gen", else: "_"
       "_" <> name -> name
       name -> name
     end
@@ -456,18 +456,22 @@ defmodule Gradient.ElixirExpr do
     end
   end
 
-  defp pp_raise_args({:call, _, {:remote, _, error_type, {:atom, _, :exception}}, [{nil, _}]}) do
+  defp pp_raise_arg({:call, _, {:remote, _, error_type, {:atom, _, :exception}}, [{nil, _}]}) do
     pp_expr(error_type)
   end
 
-  defp pp_raise_args(
+  defp pp_raise_arg(
          {:call, _, {:remote, _, {:atom, _, RuntimeError}, {:atom, _, :exception}}, [arg]}
        ) do
     pp_expr(arg)
   end
 
-  defp pp_raise_args({:call, _, {:remote, _, error_type, {:atom, _, :exception}}, [arg]}) do
+  defp pp_raise_arg({:call, _, {:remote, _, error_type, {:atom, _, :exception}}, [arg]}) do
     pp_expr(error_type) <> ", " <> pp_expr(arg)
+  end
+
+  defp pp_raise_arg(arg) do
+    pp_expr(arg)
   end
 
   defp try_int_list_({nil, _}), do: []

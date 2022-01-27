@@ -96,6 +96,37 @@ defmodule Gradient.ElixirExprTest do
       assert "receive do {:hello, msg} -> msg after 1000 -> \"nothing happened\" end" == actual
     end
 
+    test "call pipe" do
+      actual =
+        elixir_to_ast do
+          [1, 2, 3]
+          |> Enum.map(fn x -> x + 1 end)
+          |> Enum.map(&(&1 + 1))
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "Enum.map(Enum.map([1, 2, 3], fn x -> x + 1 end), fn _ -> _ + 1 end)" == actual
+    end
+
+    test "with" do
+      actual =
+        elixir_to_ast do
+          map = %{a: 12, b: 0}
+
+          with {:ok, a} <- Map.fetch(map, :a),
+               {:ok, b} <- Map.fetch(map, :b) do
+            a + b
+          else
+            :error ->
+              0
+          end
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "map = %{a: 12, b: 0}; case :maps.find(:a, map) do {:ok, a} -> case :maps.find(:b, map) do {:ok, b} -> a + b; _gen -> case _gen do :error -> 0; _gen -> raise {:with_clause, _gen} end end; _gen -> case _gen do :error -> 0; _gen -> raise {:with_clause, _gen} end end" ==
+               actual
+    end
+
     test "try reraise" do
       actual =
         elixir_to_ast do
