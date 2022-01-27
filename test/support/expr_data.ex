@@ -11,7 +11,8 @@ defmodule Gradient.ExprData do
       exception_test_data(),
       block_test_data(),
       binary_test_data(),
-      map_test_data()
+      map_test_data(),
+      function_ref_test_data()
     ]
     |> List.flatten()
   end
@@ -40,7 +41,11 @@ defmodule Gradient.ExprData do
         {:cons, 0, {:integer, 0, 1}, {:cons, 0, {:integer, 0, 2}, {nil, 0}}}}, "[0, 1, 2]"},
       {"mixed list",
        {:cons, 0, {:integer, 0, 0},
-        {:cons, 0, {:atom, 0, :ok}, {:cons, 0, {:integer, 0, 2}, {nil, 0}}}}, "[0, :ok, 2]"}
+        {:cons, 0, {:atom, 0, :ok}, {:cons, 0, {:integer, 0, 2}, {nil, 0}}}}, "[0, :ok, 2]"},
+      {"var in list", {:cons, 0, {:integer, 0, 0}, {:cons, 0, {:var, 0, :a}, {nil, 0}}},
+       "[0, a]"},
+      {"list tail pm", elixir_to_ast([a | t] = [12, 13, 14]), "[a | t] = [12, 13, 14]"},
+      {"empty list", elixir_to_ast([] = []), "[] = []"}
     ]
   end
 
@@ -67,6 +72,7 @@ defmodule Gradient.ExprData do
     [
       {"throw", elixir_to_ast(throw({:ok, 12})), "throw {:ok, 12}"},
       {"raise/1", elixir_to_ast(raise "test error"), "raise \"test error\""},
+      {"raise/1 without msg", elixir_to_ast(raise RuntimeError), "raise RuntimeError"},
       {"raise/2", elixir_to_ast(raise RuntimeError, "test error"), "raise \"test error\""},
       {"custom raise", elixir_to_ast(raise ArithmeticError, "only odd numbers"),
        "raise ArithmeticError, \"only odd numbers\""}
@@ -87,9 +93,18 @@ defmodule Gradient.ExprData do
 
   def map_test_data do
     [
+      {"string map", elixir_to_ast(%{"a" => 12}), "%{\"a\" => 12}"},
       {"map pm", elixir_to_ast(%{a: a} = %{a: 12}), "%{a: a} = %{a: 12}"},
+      {"update map", elixir_to_ast(%{%{} | a: 1}), "%{%{} | a: 1}"},
       {"struct expr", elixir_to_ast(%{__struct__: TestStruct, name: "John"}),
        "%TestStruct{name: \"John\"}"}
+    ]
+  end
+
+  def function_ref_test_data() do
+    [
+      {"&fun/arity", {:fun, 0, {:function, :my_fun, 0}}, "&my_fun/0"},
+      {"&Mod.fun/arity", elixir_to_ast(&MyMod.my_fun/1), "&MyMod.my_fun/1"}
     ]
   end
 
@@ -99,7 +114,8 @@ defmodule Gradient.ExprData do
       bin_joining_syntax(),
       bin_with_bin_var(),
       bin_with_pp_int_size(),
-      bin_with_pp_and_bitstring_size()
+      bin_with_pp_and_bitstring_size(),
+      {"bin float", elixir_to_ast(<<4.3::float>>), "<<4.3::float>>"}
     ]
   end
 

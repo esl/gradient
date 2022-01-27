@@ -61,9 +61,7 @@ defmodule Gradient.ElixirExpr do
         inspect(l)
 
       :error ->
-        items =
-          pp_cons(cons)
-          |> Enum.join(", ")
+        items = pp_cons(cons)
 
         "[" <> items <> "]"
     end
@@ -73,9 +71,9 @@ defmodule Gradient.ElixirExpr do
     "&#{name}/#{arity}"
   end
 
-  def pp_expr({:fun, _, {:function, module, name, arity}}) do
+  def pp_expr({:fun, _, {:function, {:atom, _, module}, {:atom, _, name}, arity}}) do
     module = ElixirFmt.parse_module(module)
-    name = pp_expr(name)
+    name = Atom.to_string(name)
     arity = pp_expr(arity)
     "&#{module}#{name}/#{arity}"
   end
@@ -90,6 +88,20 @@ defmodule Gradient.ElixirExpr do
     "throw " <> pp_expr(arg)
   end
 
+  def pp_expr(
+        {:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :error}},
+         [
+           {:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :raise}},
+            [
+              {:atom, _, :error},
+              {:call, _, {:remote, _, {:atom, _, Kernel.Utils}, {:atom, _, :raise}}, [var]},
+              var_stacktrace
+            ]}
+         ]}
+      ) do
+    "reraise " <> pp_expr(var) <> ", " <> pp_expr(var_stacktrace)
+  end
+
   def pp_expr({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :error}}, [arg]}) do
     "raise " <> pp_raise_args(arg)
   end
@@ -97,7 +109,7 @@ defmodule Gradient.ElixirExpr do
   def pp_expr({:call, _, name, args}) do
     args =
       Enum.map(args, &pp_expr/1)
-      |> Enum.join(" ,")
+      |> Enum.join(", ")
 
     pp_name(name) <> "(" <> args <> ")"
   end
@@ -166,12 +178,16 @@ defmodule Gradient.ElixirExpr do
 
   def pp_expr({t, _, expr0, quantifiers}) when t in [:bc, :lc] do
     expr0 = pp_expr(expr0)
-    "for #{quantifiers}, do: #{expr0}"
+    pquantifiers = pp_expr(quantifiers)
+    "for #{pquantifiers}, do: #{expr0}"
   end
 
   # Quantifiers
-  def pp_expr({type, _, pattern, expr}) when type in [:generate, :b_generate] do
-    pp_expr(pattern) <> " <- " <> pp_expr(expr)
+  def pp_expr({:b_generate, _, pattern, expr}) do
+    # drop >> to insert quantifier before
+    ppatern = String.slice(pp_expr(pattern), 0..-3)
+    # add a space before >> for a case whan expr is a bin
+    ppatern <> " <- " <> pp_expr(expr) <> " >>"
   end
 
   def pp_expr({:case, _, condition, clauses} = case_expr) do
@@ -190,13 +206,14 @@ defmodule Gradient.ElixirExpr do
   end
 
   def pp_expr({:receive, _, clauses}) do
-    "receive" <> pp_clauses(clauses) <> "end"
+    "receive do " <> pp_clauses(clauses) <> " end"
   end
 
-  def pp_expr({:receive, _, clauses, after_value, _after_body}) do
+  def pp_expr({:receive, _, clauses, after_value, after_body}) do
     pclauses = pp_clauses(clauses)
     pvalue = pp_expr(after_value)
-    "receive " <> pclauses <> "after " <> pvalue <> " -> ... end"
+    pafter_body = pp_expr(after_body)
+    "receive do " <> pclauses <> " after " <> pvalue <> " -> " <> pafter_body <> " end"
   end
 
   def pp_expr({:try, _, body, else_block, catchers, after_block}) do
@@ -254,26 +271,30 @@ defmodule Gradient.ElixirExpr do
 
   defp pp_catch_clause({:clause, _, [{:tuple, _, [type, var, _stacktrace]}], guards, body}) do
     # rescue/catch clause
-    # FIXME support guards, support stacktrace?
-
-    case get_error_type(guards) do
-      {:ok, error_type} ->
-        # rescue
+    case {elem(type, 2), get_error_struct(guards)} do
+      {:error, {:ok, error_struct}} ->
+        # rescue when error is struct
         {var2, body2} = get_error_var(var, body)
 
         pp_expr(type) <>
           ", %" <>
-          pp_expr(error_type) <>
+          pp_expr(error_struct) <>
           "{} = " <> pp_expr(var2) <> " -> " <> pp_expr(body2)
 
-      :not_found ->
+      {:error, :not_found} ->
+        # rescue
+        {var2, body2} = get_error_var(var, body)
+
+        pp_expr(type) <>
+          ", " <> pp_expr(var2) <> " -> " <> pp_expr(body2)
+
+      {:throw, :not_found} ->
         # throw
         pp_expr(type) <> ", " <> pp_expr(var) <> " -> " <> pp_expr(body)
     end
   end
 
   defp pp_case_clause({:clause, _, patterns, guards, body}) do
-    # FIXME support guards
     patterns =
       patterns
       |> Enum.map(&pp_expr/1)
@@ -339,18 +360,25 @@ defmodule Gradient.ElixirExpr do
   end
 
   defp maybe_try_after(res, else_block) do
-    res <> "; after " <> pp_clauses(else_block)
+    res <> "; after " <> pp_expr(else_block)
   end
 
-  def get_error_type([[{:op, _, :andalso, {:op, _, :==, _, error_type}, _}]]) do
-    {:ok, error_type}
+  def get_error_struct([[{:op, _, :andalso, {:op, _, :==, _, error_struct}, _}]]) do
+    {:ok, error_struct}
   end
 
-  def get_error_type(_) do
+  def get_error_struct(_) do
     :not_found
   end
 
   def get_error_var({:var, _, v}, [{:match, _, user_var, {:var, _, v}} | body_tail]) do
+    {user_var, body_tail}
+  end
+
+  def get_error_var({:var, _, v}, [
+        {:match, _, user_var, {:call, _, _, [_, {:var, _, v} | _]}} | body_tail
+      ]) do
+    # Extract variable from Exception.normalize (used in reraise)
     {user_var, body_tail}
   end
 
@@ -380,7 +408,6 @@ defmodule Gradient.ElixirExpr do
   defp bin_set_tsl(:default), do: ""
   defp bin_set_tsl([:integer]), do: ""
   defp bin_set_tsl([tsl]), do: Atom.to_string(tsl)
-  defp bin_set_tsl(tsl), do: Atom.to_string(tsl)
 
   def format_map_elements(elems) do
     atom_keys = all_keys_atoms?(elems)
@@ -429,6 +456,10 @@ defmodule Gradient.ElixirExpr do
     end
   end
 
+  defp pp_raise_args({:call, _, {:remote, _, error_type, {:atom, _, :exception}}, [{nil, _}]}) do
+    pp_expr(error_type)
+  end
+
   defp pp_raise_args(
          {:call, _, {:remote, _, {:atom, _, RuntimeError}, {:atom, _, :exception}}, [arg]}
        ) do
@@ -439,17 +470,13 @@ defmodule Gradient.ElixirExpr do
     pp_expr(error_type) <> ", " <> pp_expr(arg)
   end
 
-  defp pp_raise_args(arg) do
-    pp_expr(arg)
-  end
-
   defp try_int_list_({nil, _}), do: []
   defp try_int_list_({:cons, _, {:integer, _, val}, t}), do: [val | try_int_list_(t)]
   defp try_int_list_(_), do: throw(nil)
 
-  defp pp_cons({nil, _}), do: []
-  defp pp_cons({:var, _, _} = v), do: [pp_expr(v)]
-  defp pp_cons({:cons, _, h, t}), do: [pp_expr(h) | pp_cons(t)]
+  defp pp_cons({:cons, _, h, {nil, _}}), do: pp_expr(h)
+  defp pp_cons({:cons, _, h, {:var, _, _} = v}), do: pp_expr(h) <> " | " <> pp_expr(v)
+  defp pp_cons({:cons, _, h, t}), do: pp_expr(h) <> ", " <> pp_cons(t)
 
   defp pp_name({:remote, _, {:atom, _, m}, {:atom, _, n}}),
     do: ElixirFmt.parse_module(m) <> to_string(n)

@@ -32,6 +32,130 @@ defmodule Gradient.ElixirExprTest do
   end
 
   describe "complex pretty print" do
+    test "lambda" do
+      actual =
+        elixir_to_ast do
+          fn
+            {:ok, v} ->
+              v
+
+            {:error, _} ->
+              :error
+          end
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "fn {:ok, v} -> v; {:error, _} -> :error end" == actual
+    end
+
+    test "binary comprehension" do
+      actual =
+        elixir_to_ast do
+          pixels = <<213, 45, 132, 64, 76, 32, 76, 0, 0, 234, 32, 15>>
+          for <<r::8, g::8, b::8 <- pixels>>, do: {r, g, b}
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "pixels = <<213, 45, 132, 64, 76, 32, 76, 0, 0, 234, 32, 15>>; for <<r::8, g::8, b::8 <- pixels >>, do: {r, g, b}" ==
+               actual
+    end
+
+    test "binary comprehension 2" do
+      actual =
+        elixir_to_ast do
+          for <<one, (_rest::binary-size(3) <- <<1, 2, 3, 4>>)>>, do: one
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "for <<one, _rest::binary-size(3) <- <<1, 2, 3, 4>> >>, do: one" == actual
+    end
+
+    test "receive" do
+      actual =
+        elixir_to_ast do
+          receive do
+            {:hello, msg} -> msg
+          end
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "receive do {:hello, msg} -> msg end" == actual
+    end
+
+    test "receive after" do
+      actual =
+        elixir_to_ast do
+          receive do
+            {:hello, msg} -> msg
+          after
+            1_000 -> "nothing happened"
+          end
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "receive do {:hello, msg} -> msg after 1000 -> \"nothing happened\" end" == actual
+    end
+
+    test "try reraise" do
+      actual =
+        elixir_to_ast do
+          try do
+            raise "ok"
+          rescue
+            e ->
+              IO.puts(Exception.format(:error, e, __STACKTRACE__))
+              reraise e, __STACKTRACE__
+          end
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "try do raise \"ok\"; catch :error, e -> IO.puts(Exception.format(:error, e, __STACKTRACE__)); reraise e, __STACKTRACE__ end" ==
+               actual
+    end
+
+    test "try rescue without error var" do
+      actual =
+        elixir_to_ast do
+          try do
+            raise "oops"
+          rescue
+            RuntimeError -> "Error!"
+          end
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "try do raise \"oops\"; catch :error, %RuntimeError{} = _ -> \"Error!\" end" ==
+               actual
+    end
+
+    test "simple rescue try" do
+      actual =
+        elixir_to_ast do
+          try do
+            :ok
+          rescue
+            _ -> :ok
+          end
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "try do :ok; catch :error, _ -> :ok end" == actual
+    end
+
+    test "simple after try" do
+      actual =
+        elixir_to_ast do
+          try do
+            :ok
+          after
+            :ok
+          end
+        end
+        |> ElixirExpr.pp_expr()
+
+      assert "try do :ok; after :ok end" == actual
+    end
+
     test "try guard" do
       actual =
         elixir_to_ast do
@@ -54,11 +178,13 @@ defmodule Gradient.ElixirExprTest do
 
             _ ->
               0
+          after
+            IO.puts("Cleaning!")
           end
         end
         |> ElixirExpr.pp_expr()
 
-      assert "try do throw \"good\"; :ok; else v when v == :ok -> :ok; v -> :nok; catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> val; :throw, _ -> 0 end" ==
+      assert "try do throw \"good\"; :ok; else v when v == :ok -> :ok; v -> :nok; catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> val; :throw, _ -> 0; after IO.puts(\"Cleaning!\") end" ==
                actual
     end
 
