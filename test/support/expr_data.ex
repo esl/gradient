@@ -12,7 +12,8 @@ defmodule Gradient.ExprData do
       block_test_data(),
       binary_test_data(),
       map_test_data(),
-      function_ref_test_data()
+      function_ref_test_data(),
+      sigil_test_data()
     ]
     |> List.flatten()
   end
@@ -108,6 +109,28 @@ defmodule Gradient.ExprData do
     ]
   end
 
+  def sigil_test_data() do
+    [
+      {"regex", elixir_to_ast(~r/foo|bar/), regex_exp()},
+      {"string ~s", elixir_to_ast(~s(this is a string with "double" quotes, not 'single' ones)),
+       "\"this is a string with \"double\" quotes, not 'single' ones\""},
+      {"string ~S", elixir_to_ast(~S(String without escape codes \x26 without #{interpolation})),
+       "\"String without escape codes \\x26 without \#{interpolation}\""},
+      {"char lists", elixir_to_ast(~c(this is a char list containing 'single quotes')),
+       "'this is a char list containing \\'single quotes\\''"},
+      {"word list", elixir_to_ast(~w(foo bar bat)), "[\"foo\", \"bar\", \"bat\"]"},
+      {"word list atom", elixir_to_ast(~w(foo bar bat)a), "[:foo, :bar, :bat]"},
+      {"date", elixir_to_ast(~D[2019-10-31]),
+       "%Date{calendar: Calendar.ISO, year: 2019, month: 10, day: 31}"},
+      {"time", elixir_to_ast(~T[23:00:07.0]),
+       "%Time{calendar: Calendar.ISO, hour: 23, minute: 0, second: 7, microsecond: {0, 1}}"},
+      {"naive date time", elixir_to_ast(~N[2019-10-31 23:00:07]),
+       "%NaiveDateTime{calendar: Calendar.ISO, year: 2019, month: 10, day: 31, hour: 23, minute: 0, second: 7, microsecond: {0, 0}}"},
+      {"date time", elixir_to_ast(~U[2019-10-31 19:59:03Z]),
+       "%DateTime{calendar: Calendar.ISO, year: 2019, month: 10, day: 31, hour: 19, minute: 59, second: 3, microsecond: {0, 0}, time_zone: \"Etc/UTC\", zone_abbr: \"UTC\", utc_offset: 0, std_offset: 0}"}
+    ]
+  end
+
   def binary_test_data do
     [
       bin_pm_bin_var(),
@@ -169,5 +192,18 @@ defmodule Gradient.ExprData do
       "<<header::8, length::32, message::bitstring-size(144)>> = <<1, 2, 3, 4, 5, 101, 114, 97, 115, 101, 32, 116, 104, 101, 32, 101, 118, 105, 100, 101, 110, 99, 101>>"
 
     {"binary with patter matching and bitstring-size", ast, expected}
+  end
+
+  defp regex_exp() do
+    <<37, 82, 101, 103, 101, 120, 123, 111, 112, 116, 115, 58, 32, 60, 60, 62, 62, 44, 32, 114,
+      101, 95, 112, 97, 116, 116, 101, 114, 110, 58, 32, 123, 58, 114, 101, 95, 112, 97, 116, 116,
+      101, 114, 110, 44, 32, 48, 44, 32, 48, 44, 32, 48, 44, 32, 34, 69, 82, 67, 80, 86, 0, 0, 0,
+      0, 0, 0, 0, 1, 0, 0, 0, 195, 191, 195, 191, 195, 191, 195, 191, 195, 191, 195, 191, 195,
+      191, 195, 191, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 194, 131, 0, 9, 29, 102, 29, 111, 29, 111, 119,
+      0, 9, 29, 98, 29, 97, 29, 114, 120, 0, 18, 0, 34, 125, 44, 32, 114, 101, 95, 118, 101, 114,
+      115, 105, 111, 110, 58, 32, 123, 34, 56, 46, 52, 52, 32, 50, 48, 50, 48, 45, 48, 50, 45, 49,
+      50, 34, 44, 32, 58, 108, 105, 116, 116, 108, 101, 125, 44, 32, 115, 111, 117, 114, 99, 101,
+      58, 32, 34, 102, 111, 111, 124, 98, 97, 114, 34, 125>>
   end
 end
