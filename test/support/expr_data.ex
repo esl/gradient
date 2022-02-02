@@ -28,7 +28,7 @@ defmodule Gradient.ExprData do
       {"char", {:char, 0, ?c}, "?c"},
       {"float", {:float, 0, 12.0}, "12.0"},
       {"integer", {:integer, 0, 1}, "1"},
-      {"erlang string", {:string, 0, 'ala ma kota'}, "\'ala ma kota\'"}
+      {"erlang string", {:string, 0, 'ala ma kota'}, ~s('ala ma kota')}
     ]
   end
 
@@ -36,7 +36,7 @@ defmodule Gradient.ExprData do
     [
       {"charlist",
        {:cons, 0, {:integer, 0, 97},
-        {:cons, 0, {:integer, 0, 108}, {:cons, 0, {:integer, 0, 97}, {nil, 0}}}}, "\'ala\'"},
+        {:cons, 0, {:integer, 0, 108}, {:cons, 0, {:integer, 0, 97}, {nil, 0}}}}, ~s('ala')},
       {"int list",
        {:cons, 0, {:integer, 0, 0},
         {:cons, 0, {:integer, 0, 1}, {:cons, 0, {:integer, 0, 2}, {nil, 0}}}}, "[0, 1, 2]"},
@@ -72,11 +72,11 @@ defmodule Gradient.ExprData do
   def exception_test_data() do
     [
       {"throw", elixir_to_ast(throw({:ok, 12})), "throw {:ok, 12}"},
-      {"raise/1", elixir_to_ast(raise "test error"), "raise \"test error\""},
+      {"raise/1", elixir_to_ast(raise "test error"), ~s(raise "test error")},
       {"raise/1 without msg", elixir_to_ast(raise RuntimeError), "raise RuntimeError"},
-      {"raise/2", elixir_to_ast(raise RuntimeError, "test error"), "raise \"test error\""},
+      {"raise/2", elixir_to_ast(raise RuntimeError, "test error"), ~s(raise "test error")},
       {"custom raise", elixir_to_ast(raise ArithmeticError, "only odd numbers"),
-       "raise ArithmeticError, \"only odd numbers\""}
+       ~s(raise ArithmeticError, "only odd numbers")}
     ]
   end
 
@@ -94,11 +94,11 @@ defmodule Gradient.ExprData do
 
   def map_test_data do
     [
-      {"string map", elixir_to_ast(%{"a" => 12}), "%{\"a\" => 12}"},
+      {"string map", elixir_to_ast(%{"a" => 12}), ~s(%{"a" => 12})},
       {"map pm", elixir_to_ast(%{a: a} = %{a: 12}), "%{a: a} = %{a: 12}"},
       {"update map", elixir_to_ast(%{%{} | a: 1}), "%{%{} | a: 1}"},
       {"struct expr", elixir_to_ast(%{__struct__: TestStruct, name: "John"}),
-       "%TestStruct{name: \"John\"}"}
+       ~s(%TestStruct{name: "John"})}
     ]
   end
 
@@ -158,7 +158,7 @@ defmodule Gradient.ExprData do
         "a" <> x
       end
 
-    {"binary <> joining", ast, "x = \"b\"; <<\"a\", x::binary>>"}
+    {"binary <> joining", ast, ~s(x = "b"; <<"a", x::binary>>)}
   end
 
   defp bin_with_bin_var do
@@ -168,7 +168,7 @@ defmodule Gradient.ExprData do
         <<"a", "b", x::binary>>
       end
 
-    {"binary with bin var", ast, "x = \"b\"; <<\"a\", \"b\", x::binary>>"}
+    {"binary with bin var", ast, ~s(x = "b"; <<"a", "b", x::binary>>)}
   end
 
   defp bin_with_pp_int_size do
@@ -177,7 +177,7 @@ defmodule Gradient.ExprData do
         <<a::16>> = <<"abcd">>
       end
 
-    {"binary with int size", ast, "<<a::16>> = \"abcd\""}
+    {"binary with int size", ast, ~s(<<a::16>> = "abcd")}
   end
 
   defp bin_with_pp_and_bitstring_size do

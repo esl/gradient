@@ -93,7 +93,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "receive do {:hello, msg} -> msg after 1000 -> \"nothing happened\" end" == actual
+      assert ~s(receive do {:hello, msg} -> msg after 1000 -> "nothing happened" end) == actual
     end
 
     test "call pipe" do
@@ -140,7 +140,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "try do raise \"ok\"; catch :error, e -> IO.puts(Exception.format(:error, e, __STACKTRACE__)); reraise e, __STACKTRACE__ end" ==
+      assert ~s(try do raise "ok"; catch :error, e -> IO.puts(Exception.format(:error, e, __STACKTRACE__\)\); reraise e, __STACKTRACE__ end) ==
                actual
     end
 
@@ -155,7 +155,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "try do raise \"oops\"; catch :error, %RuntimeError{} = _ -> \"Error!\" end" ==
+      assert ~s(try do raise "oops"; catch :error, %RuntimeError{} = _ -> "Error!" end) ==
                actual
     end
 
@@ -215,7 +215,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "try do throw \"good\"; :ok; else v when v == :ok -> :ok; v -> :nok; catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> val; :throw, _ -> 0; after IO.puts(\"Cleaning!\") end" ==
+      assert ~s(try do throw "good"; :ok; else v when v == :ok -> :ok; v -> :nok; catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> val; :throw, _ -> 0; after IO.puts("Cleaning!"\) end) ==
                actual
     end
 
@@ -301,73 +301,29 @@ defmodule Gradient.ElixirExprTest do
     end
 
     test "try with rescue and catch" do
-      try_expr =
-        {:try, 3,
-         [
-           {:case, 4, {:atom, 4, true},
-            [
-              {:clause, [generated: true, location: 4], [{:atom, 0, false}], [],
-               [
-                 {:call, 7, {:remote, 7, {:atom, 7, :erlang}, {:atom, 7, :error}},
-                  [
-                    {:call, 7, {:remote, 7, {:atom, 7, RuntimeError}, {:atom, 7, :exception}},
-                     [
-                       {:bin, 7,
-                        [
-                          {:bin_element, 7, {:string, 7, 'oops'}, :default, :default}
-                        ]}
-                     ]}
-                  ]}
-               ]},
-              {:clause, [generated: true, location: 4], [{:atom, 0, true}], [],
-               [
-                 {:call, 5, {:remote, 5, {:atom, 5, :erlang}, {:atom, 5, :throw}},
-                  [
-                    {:bin, 5, [{:bin_element, 5, {:string, 5, 'good'}, :default, :default}]}
-                  ]}
-               ]}
-            ]}
-         ], [],
-         [
-           {:clause, 10,
-            [
-              {:tuple, 10,
-               [
-                 {:atom, 10, :error},
-                 {:var, 10, :_@1},
-                 {:var, 10, :___STACKTRACE__@1}
-               ]}
-            ],
-            [
-              [
-                {:op, 10, :andalso,
-                 {:op, 10, :==,
-                  {:call, 10, {:remote, 10, {:atom, 10, :erlang}, {:atom, 10, :map_get}},
-                   [{:atom, 10, :__struct__}, {:var, 10, :_@1}]}, {:atom, 10, RuntimeError}},
-                 {:call, 10, {:remote, 10, {:atom, 10, :erlang}, {:atom, 10, :map_get}},
-                  [{:atom, 10, :__exception__}, {:var, 10, :_@1}]}}
-              ]
-            ],
-            [
-              {:match, 10, {:var, 10, :_e@1}, {:var, 10, :_@1}},
-              {:integer, 11, 11},
-              {:var, 12, :_e@1}
-            ]},
-           {:clause, 14,
-            [
-              {:tuple, 14,
-               [
-                 {:atom, 14, :throw},
-                 {:var, 14, :_val@1},
-                 {:var, 14, :___STACKTRACE__@1}
-               ]}
-            ], [], [{:integer, 15, 12}, {:var, 16, :_val@1}]}
-         ], []}
+      actual =
+        elixir_to_ast do
+          try do
+            if true do
+              throw("good")
+            else
+              raise "oops"
+            end
+          rescue
+            e in RuntimeError ->
+              11
+              e
+          catch
+            val ->
+              12
+              val
+          end
+        end
+        |> ElixirExpr.pp_expr()
 
-      result = ElixirExpr.pp_expr(try_expr)
-
-      assert "try do if true do throw \"good\" else raise \"oops\" end;" <>
-               " catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> 12; val end" == result
+      assert ~s(try do if true do throw "good" else raise "oops" end;) <>
+               ~s( catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> 12; val end) ==
+               actual
     end
   end
 end
