@@ -61,6 +61,9 @@ defmodule WrongRet do
   @spec ret_wrong_keyword() :: keyword()
   def ret_wrong_keyword, do: [1, 2, 3]
 
+  @spec ret_wrong_list() :: list()
+  def ret_wrong_list, do: ?c
+
   @spec ret_wrong_tuple() :: tuple()
   def ret_wrong_tuple, do: %{a: 1, b: 2}
 
@@ -69,4 +72,10 @@ defmodule WrongRet do
 
   @spec ret_wrong_fun() :: (... -> atom())
   def ret_wrong_fun, do: fn -> 12 end
+
+  @spec ret_wrong_call() :: integer()
+  def ret_wrong_call, do: ret_wrong_boolean()
+
+  @spec ret_wrong_integer5() :: integer()
+  def ret_wrong_integer5, do: &ret_wrong_atom/0
 end

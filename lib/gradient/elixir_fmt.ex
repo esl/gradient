@@ -6,6 +6,7 @@ defmodule Gradient.ElixirFmt do
 
   alias :gradualizer_fmt, as: FmtLib
   alias Gradient.ElixirType
+  alias Gradient.ElixirExpr
 
   def print_errors(errors, opts) do
     for {file, e} <- errors do
@@ -28,7 +29,8 @@ defmodule Gradient.ElixirFmt do
   end
 
   def format_error(error, opts) do
-    opts = Keyword.put(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
+    opts = Keyword.put_new(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
+    opts = Keyword.put_new(opts, :fmt_expr_fun, &ElixirExpr.pp_expr/1)
     format_type_error(error, opts)
   end
 
@@ -40,10 +42,10 @@ defmodule Gradient.ElixirFmt do
 
   def format_type_error({:call_undef, anno, module, func, arity}, opts) do
     :io_lib.format(
-      "~sCall to undefined function ~p:~p/~p~s~n",
+      "~sCall to undefined function ~s~p/~p~s~n",
       [
         format_location(anno, :brief, opts),
-        module,
+        parse_module(module),
         func,
         arity,
         format_location(anno, :verbose, opts)
@@ -143,13 +145,24 @@ defmodule Gradient.ElixirFmt do
     end
   end
 
-  def pp_expr(expression, _opts) do
-    IO.ANSI.blue() <> "#{inspect(expression)}" <> IO.ANSI.reset()
+  def pp_expr(expression, opts) do
+    fmt = Keyword.get(opts, :fmt_expr_fun, &ElixirExpr.pp_expr/1)
+
+    if Keyword.get(opts, :colors, true) do
+      IO.ANSI.blue() <> fmt.(expression) <> IO.ANSI.reset()
+    else
+      fmt.(expression)
+    end
   end
 
-  def pp_type(type, _opts) do
-    pp = ElixirType.pretty_print(type)
-    IO.ANSI.cyan() <> pp <> IO.ANSI.reset()
+  def pp_type(type, opts) do
+    fmt = Keyword.get(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
+
+    if Keyword.get(opts, :colors, true) do
+      IO.ANSI.cyan() <> fmt.(type) <> IO.ANSI.reset()
+    else
+      fmt.(type)
+    end
   end
 
   def try_highlight_in_context(expression, opts) do
@@ -201,6 +214,16 @@ defmodule Gradient.ElixirFmt do
 
   def get_ex_file_path([{:attribute, 1, :file, {path, 1}} | _]), do: {:ok, path}
   def get_ex_file_path(_), do: {:error, :not_found}
+
+  @spec parse_module(atom()) :: String.t()
+  def parse_module(:elixir), do: ""
+
+  def parse_module(mod) do
+    case Atom.to_string(mod) do
+      "Elixir." <> mod_str -> mod_str <> "."
+      mod -> ":" <> mod <> "."
+    end
+  end
 
   # defp warning_error_not_handled(error) do
   # msg = "\nElixir formatter not exist for #{inspect(error, pretty: true)} using default \n"

@@ -8,6 +8,8 @@ defmodule Gradient.ElixirType do
   are not used by Elixir so the pp support has not been added.
   """
 
+  alias Gradient.ElixirFmt
+
   @type abstract_type() :: Gradient.Types.abstract_type()
 
   @doc """
@@ -17,7 +19,7 @@ defmodule Gradient.ElixirType do
   def pretty_print({:remote_type, _, [{:atom, _, mod}, {:atom, _, name}, args]}) do
     args_str = Enum.map(args, &pretty_print(&1)) |> Enum.join(", ")
     name_str = Atom.to_string(name)
-    mod_str = parse_module(mod)
+    mod_str = ElixirFmt.parse_module(mod)
     mod_str <> name_str <> "(#{args_str})"
   end
 
@@ -122,16 +124,6 @@ defmodule Gradient.ElixirType do
   ######
   ### Private
   ######
-
-  @spec parse_module(atom()) :: String.t()
-  defp parse_module(:elixir), do: ""
-
-  defp parse_module(mod) do
-    case Atom.to_string(mod) do
-      "Elixir." <> mod_str -> mod_str <> "."
-      mod -> mod <> "."
-    end
-  end
 
   @spec association_type(tuple()) :: String.t()
   defp association_type({:type, _, :map_field_assoc, [key, value]}) do

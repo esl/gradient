@@ -709,40 +709,42 @@ defmodule Gradient.AstSpecifierTest do
 
     [block | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
-    assert {:function, 2, :lc, 0,
+    assert {:function, 11, :lc_complex, 0,
             [
-              {:clause, 2, [], [],
+              {:clause, 11, [], [],
                [
-                 {:call, 3, {:remote, 3, {:atom, 3, :lists}, {:atom, 3, :reverse}},
+                 {:call, 12, {:remote, 12, {:atom, 12, :lists}, {:atom, 12, :reverse}},
                   [
-                    {:call, 3, {:remote, 3, {:atom, 3, Enum}, {:atom, 3, :reduce}},
+                    {:call, 12, {:remote, 12, {:atom, 12, Enum}, {:atom, 12, :reduce}},
                      [
-                       {:map, 3,
+                       {:map, 12,
                         [
-                          {:map_field_assoc, 3, {:atom, 3, :__struct__}, {:atom, 3, Range}},
-                          {:map_field_assoc, 3, {:atom, 3, :first}, {:integer, 3, 0}},
-                          {:map_field_assoc, 3, {:atom, 3, :last}, {:integer, 3, 5}},
-                          {:map_field_assoc, 3, {:atom, 3, :step}, {:integer, 3, 1}}
+                          {:map_field_assoc, 12, {:atom, 12, :__struct__}, {:atom, 12, Range}},
+                          {:map_field_assoc, 12, {:atom, 12, :first}, {:integer, 12, 0}},
+                          {:map_field_assoc, 12, {:atom, 12, :last}, {:integer, 12, 5}},
+                          {:map_field_assoc, 12, {:atom, 12, :step}, {:integer, 12, 1}}
                         ]},
-                       {nil, 3},
-                       {:fun, 3,
+                       {nil, 12},
+                       {:fun, 12,
                         {:clauses,
                          [
-                           {:clause, 3, [{:var, 3, :_n@1}, {:var, 3, :_@1}], [],
+                           {:clause, 12, [{:var, 12, :_n@1}, {:var, 12, :_@1}], [],
                             [
-                              {:case, [generated: true, location: 3],
-                               {:op, 3, :==, {:op, 3, :rem, {:var, 3, :_n@1}, {:integer, 3, 3}},
-                                {:integer, 3, 0}},
+                              {:case, [generated: true, location: 12],
+                               {:op, 12, :==,
+                                {:op, 12, :rem, {:var, 12, :_n@1}, {:integer, 12, 3}},
+                                {:integer, 12, 0}},
                                [
-                                 {:clause, [generated: true, location: 3],
-                                  [{:atom, [generated: true, location: 3], true}], [],
+                                 {:clause, [generated: true, location: 12],
+                                  [{:atom, [generated: true, location: 12], true}], [],
                                   [
-                                    {:cons, 3, {:op, 3, :*, {:var, 3, :_n@1}, {:var, 3, :_n@1}},
-                                     {:var, 3, :_@1}}
+                                    {:cons, 12,
+                                     {:op, 12, :*, {:var, 12, :_n@1}, {:var, 12, :_n@1}},
+                                     {:var, 12, :_@1}}
                                   ]},
-                                 {:clause, [generated: true, location: 3],
-                                  [{:atom, [generated: true, location: 3], false}], [],
-                                  [{:var, 3, :_@1}]}
+                                 {:clause, [generated: true, location: 12],
+                                  [{:atom, [generated: true, location: 12], false}], [],
+                                  [{:var, 12, :_@1}]}
                                ]}
                             ]}
                          ]}}
