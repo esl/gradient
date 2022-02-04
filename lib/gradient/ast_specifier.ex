@@ -203,6 +203,8 @@ defmodule Gradient.AstSpecifier do
         if not :erl_anno.generated(anno) do
           context_mapper_fold(args, tokens, opts)
         else
+          opts = Keyword.put(opts, :generated, :erl_anno.generated(anno))
+          {args, []} = context_mapper_fold(args, [], opts)
           {args, tokens}
         end
 
@@ -211,6 +213,8 @@ defmodule Gradient.AstSpecifier do
       {:clause, anno, args, guards, children}
       |> pass_tokens(tokens)
     else
+      arg_opts = Keyword.put(opts, :generated, :erl_anno.generated(anno))
+      {args, []} = context_mapper_fold(args, [], arg_opts)
       {children, tokens} = children |> context_mapper_fold(tokens, opts)
 
       {:clause, anno, args, guards, children}
@@ -263,7 +267,6 @@ defmodule Gradient.AstSpecifier do
   def mapper({:cons, anno, value, more} = cons, tokens, opts) do
     # anno could be 0
     {:ok, line, anno, opts, _} = get_line(anno, opts)
-
     tokens = drop_tokens_to_line(tokens, line)
 
     case get_list(tokens, opts) do
@@ -286,14 +289,16 @@ defmodule Gradient.AstSpecifier do
 
   def mapper({:tuple, anno, elements}, tokens, opts) do
     # anno could be 0
-    {:ok, line, anno, opts, has_line?} = get_line(anno, opts)
+    {:ok, line, anno, opts, _} = get_line(anno, opts)
 
     tokens
     |> drop_tokens_to_line(line)
     |> get_tuple(opts)
     |> case do
       {:tuple, tokens} ->
-        {anno, opts} = update_line_from_tokens(tokens, anno, opts, has_line?)
+        {anno, opts} = update_line_from_tokens(tokens, anno, opts)
+        # drop a token that begins tuple
+        tokens = drop_tokens_while(tokens, fn t -> elem(t, 0) in [:"{"] end)
 
         {elements, tokens} = context_mapper_fold(elements, tokens, opts)
 
@@ -412,12 +417,21 @@ defmodule Gradient.AstSpecifier do
     end
   end
 
-  def mapper({type, 0, value}, tokens, opts)
+  def mapper({nil, _}, tokens, opts) do
+    {:ok, line} = Keyword.fetch(opts, :line)
+
+    {nil, line}
+    |> pass_tokens(tokens)
+  end
+
+  def mapper({type, anno, value}, tokens, opts)
       when type in [:atom, :char, :float, :integer, :string, :bin] do
     # TODO check what happend for :string
     {:ok, line} = Keyword.fetch(opts, :line)
+    anno = :erl_anno.set_line(line, anno)
+    anno = :erl_anno.set_generated(Keyword.get(opts, :generated, false), anno)
 
-    {type, line, value}
+    {type, anno, value}
     |> specify_line(tokens, opts)
   end
 
@@ -560,9 +574,11 @@ defmodule Gradient.AstSpecifier do
   """
   @spec cons_mapper(form(), [token()], options()) :: {form(), tokens()}
   def cons_mapper({:cons, anno, value, tail}, tokens, opts) do
-    {:ok, _, anno, opts, has_line?} = get_line(anno, opts)
+    {:ok, _, anno0, opts0, _} = get_line(anno, opts)
 
-    {anno, opts} = update_line_from_tokens(tokens, anno, opts, has_line?)
+    {anno, opts} = update_line_from_tokens(tokens, anno0, opts0)
+    # drop a token that begins list
+    tokens = drop_tokens_while(tokens, fn t -> elem(t, 0) in [:"["] end)
 
     {new_value, tokens} = mapper(value, tokens, opts)
 
@@ -720,18 +736,14 @@ defmodule Gradient.AstSpecifier do
     {:cons, loc, {:integer, loc, value}, charlist_set_loc(tail, loc)}
   end
 
-  def charlist_set_loc({nil, loc}, _), do: {nil, loc}
+  def charlist_set_loc({nil, _}, loc), do: {nil, loc}
 
-  def put_line(anno, opts, line) do
+  def update_line_from_tokens([token | _], anno, opts) do
+    line = get_line_from_token(token)
     {:erl_anno.set_line(line, anno), Keyword.put(opts, :line, line)}
   end
 
-  def update_line_from_tokens([token | _], anno, opts, false) do
-    line = get_line_from_token(token)
-    put_line(anno, opts, line)
-  end
-
-  def update_line_from_tokens(_, anno, opts, _) do
+  def update_line_from_tokens(_, anno, opts) do
     {anno, opts}
   end
 
@@ -761,6 +773,14 @@ defmodule Gradient.AstSpecifier do
   end
 
   defp set_form_end_line(opts, form, forms) do
+    if elem(form, 0) not in [:bin, :cons] do
+      set_form_end_line_(opts, form, forms)
+    else
+      opts
+    end
+  end
+
+  defp set_form_end_line_(opts, form, forms) do
     case Enum.find(forms, fn f ->
            anno = elem(f, 1)
 
