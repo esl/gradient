@@ -1294,6 +1294,36 @@ defmodule Gradient.AstSpecifierTest do
             ]} = recv
   end
 
+  test "typespec when" do
+    {tokens, ast} = load("/Elixir.TypespecWhen.beam", "/typespec_when.ex")
+
+    [spec | _] =
+      AstSpecifier.run_mappers(ast, tokens)
+      |> filter_specs()
+      |> Enum.reverse()
+
+    assert {:attribute, 2, :spec,
+            {{:foo, 1},
+             [
+               {:type, 2, :bounded_fun,
+                [
+                  {:type, 2, :fun,
+                   [
+                     {:type, 2, :product, [{:type, 2, :tuple, [{:atom, 2, :a}, {:var, 2, :x}]}]},
+                     {:type, 2, :union,
+                      [
+                        {:type, 2, :tuple, [{:atom, 2, :a}, {:var, 2, :x}]},
+                        {:type, 2, :tuple, [{:atom, 2, :b}, {:var, 2, :x}]}
+                      ]}
+                   ]},
+                  [
+                    {:type, 2, :constraint,
+                     [{:atom, 2, :is_subtype}, [{:var, 2, :x}, {:type, 2, :term, []}]]}
+                  ]
+                ]}
+             ]}} = spec
+  end
+
   test "typespec" do
     {tokens, ast} = load("/Elixir.Typespec.beam", "/typespec.ex")
 

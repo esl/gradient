@@ -478,6 +478,24 @@ defmodule Gradient.AstSpecifier do
     |> pass_tokens(tokens)
   end
 
+  def spec_mapper({:type, anno, :constraint, [subtype, vt]}, tokens, opts) do
+    {:ok, _, anno, opts, _} = get_line(anno, opts)
+    {subtype, _} = spec_mapper(subtype, tokens, opts)
+    vt = context_mapper_map(vt, tokens, opts, &spec_mapper/3)
+
+    {:type, anno, :constraint, [subtype, vt]}
+    |> pass_tokens(tokens)
+  end
+
+  def spec_mapper({:type, anno, :bounded_fun, [fn_type, when_type]}, tokens, opts) do
+    {:ok, _line, anno, opts, _} = get_line(anno, opts)
+    {fn_type, _} = spec_mapper(fn_type, tokens, opts)
+    when_type = context_mapper_map(when_type, tokens, opts, &spec_mapper/3)
+
+    {:type, anno, :bounded_fun, [fn_type, when_type]}
+    |> pass_tokens(tokens)
+  end
+
   def spec_mapper({:type, anno, type_name, args}, tokens, opts) do
     {:ok, _line, anno, opts, _} = get_line(anno, opts)
     new_args = context_mapper_map(args, tokens, opts, &spec_mapper/3)
