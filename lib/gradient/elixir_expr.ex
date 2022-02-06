@@ -186,7 +186,7 @@ defmodule Gradient.ElixirExpr do
   def pp_expr({:b_generate, _, pattern, expr}) do
     # drop >> to insert quantifier before
     ppatern = String.slice(pp_expr(pattern), 0..-3)
-    # add a space before >> for a case whan expr is a bin
+    # add a space before >> for a case when expr is a bin
     ppatern <> " <- " <> pp_expr(expr) <> " >>"
   end
 
