@@ -71,7 +71,7 @@ defmodule Gradient.AstSpecifier do
       run_mappers(forms, tokens)
     else
       error ->
-        IO.puts("Error occured when specifying forms : #{inspect(error)}")
+        IO.puts("Error occurred when specifying forms : #{inspect(error)}")
         forms
     end
   end
@@ -414,7 +414,7 @@ defmodule Gradient.AstSpecifier do
 
   def mapper({type, 0, value}, tokens, opts)
       when type in [:atom, :char, :float, :integer, :string, :bin] do
-    # TODO check what happend for :string
+    # TODO check what happened for :string
     {:ok, line} = Keyword.fetch(opts, :line)
 
     {type, line, value}
