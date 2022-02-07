@@ -68,7 +68,7 @@ defmodule Gradient.AstSpecifierTest do
                 {:clause, 2, [], [],
                  [
                    {:cons, 2, {:integer, 2, 97},
-                    {:cons, 2, {:integer, 2, 98}, {:cons, 2, {:integer, 2, 99}, {nil, 0}}}}
+                    {:cons, 2, {:integer, 2, 98}, {:cons, 2, {:integer, 2, 99}, {nil, 2}}}}
                  ]}
               ]} = inline
 
@@ -77,7 +77,7 @@ defmodule Gradient.AstSpecifierTest do
                 {:clause, 4, [], [],
                  [
                    {:cons, 5, {:integer, 5, 97},
-                    {:cons, 5, {:integer, 5, 98}, {:cons, 5, {:integer, 5, 99}, {nil, 0}}}}
+                    {:cons, 5, {:integer, 5, 98}, {:cons, 5, {:integer, 5, 99}, {nil, 5}}}}
                  ]}
               ]} = block
     end
@@ -123,7 +123,7 @@ defmodule Gradient.AstSpecifierTest do
                            {:cons, 20, {:tuple, 20, [{:atom, 20, :pretty}, {:atom, 20, true}]},
                             {:cons, 20,
                              {:tuple, 20, [{:atom, 20, :limit}, {:atom, 20, :infinity}]},
-                             {nil, 0}}}
+                             {nil, 20}}}
                          ]}, :default, [:binary]},
                        {:bin_element, 20, {:string, 20, ' using default \n'}, :default, :default}
                      ]}},
@@ -188,7 +188,7 @@ defmodule Gradient.AstSpecifierTest do
                                        ]}
                                     ]}, :default, [:binary]}
                                 ]}
-                             ]}, {nil, 0}}}
+                             ]}, {nil, 15}}}
                         ]}, :default, [:binary]},
                       {:bin_element, 15, {:integer, 15, 12}, :default, [:integer]}
                     ]}
@@ -200,7 +200,7 @@ defmodule Gradient.AstSpecifierTest do
                 {:clause, 10, [], [],
                  [
                    {:cons, 11, {:tuple, 11, [{:atom, 11, :a}, {:integer, 11, 12}]},
-                    {:cons, 11, {:tuple, 11, [{:atom, 11, :b}, {:atom, 11, :ok}]}, {nil, 0}}}
+                    {:cons, 11, {:tuple, 11, [{:atom, 11, :b}, {:atom, 11, :ok}]}, {nil, 11}}}
                  ]}
               ]} = tuple_in_list
 
@@ -319,10 +319,11 @@ defmodule Gradient.AstSpecifierTest do
                  [
                    {:case, 13, {:op, 13, :<, {:integer, 13, 1}, {:integer, 13, 5}},
                     [
-                      {:clause, [generated: true, location: 13], [{:atom, 0, false}], [],
+                      {:clause, [generated: true, location: 13],
+                       [{:atom, [generated: true, location: 13], false}], [],
                        [{:atom, 16, :error}]},
-                      {:clause, [generated: true, location: 13], [{:atom, 0, true}], [],
-                       [{:atom, 14, :ok}]}
+                      {:clause, [generated: true, location: 13],
+                       [{:atom, [generated: true, location: 13], true}], [], [{:atom, 14, :ok}]}
                     ]}
                  ]}
               ]} = block
@@ -333,10 +334,11 @@ defmodule Gradient.AstSpecifierTest do
                  [
                    {:case, 10, {:op, 10, :<, {:integer, 10, 1}, {:integer, 10, 5}},
                     [
-                      {:clause, [generated: true, location: 10], [{:atom, 0, false}], [],
+                      {:clause, [generated: true, location: 10],
+                       [{:atom, [generated: true, location: 10], false}], [],
                        [{:atom, 10, :error}]},
-                      {:clause, [generated: true, location: 10], [{:atom, 0, true}], [],
-                       [{:atom, 10, :ok}]}
+                      {:clause, [generated: true, location: 10],
+                       [{:atom, [generated: true, location: 10], true}], [], [{:atom, 10, :ok}]}
                     ]}
                  ]}
               ]} = inline
@@ -347,10 +349,11 @@ defmodule Gradient.AstSpecifierTest do
                  [
                    {:case, 4, {:op, 4, :<, {:integer, 4, 1}, {:integer, 4, 5}},
                     [
-                      {:clause, [generated: true, location: 4], [{:atom, 0, false}], [],
+                      {:clause, [generated: true, location: 4],
+                       [{:atom, [generated: true, location: 4], false}], [],
                        [{:atom, 7, :error}]},
-                      {:clause, [generated: true, location: 4], [{:atom, 0, true}], [],
-                       [{:atom, 5, :ok}]}
+                      {:clause, [generated: true, location: 4],
+                       [{:atom, [generated: true, location: 4], true}], [], [{:atom, 5, :ok}]}
                     ]}
                  ]}
               ]} = if_
@@ -372,14 +375,14 @@ defmodule Gradient.AstSpecifierTest do
                   [
                     {:case, 3, {:atom, 3, false},
                      [
-                       {:clause, [generated: true, location: 3], [{:atom, 0, false}], [],
-                        [{:atom, 4, :ok}]},
-                       {:clause, [generated: true, location: 3], [{:atom, 0, true}], [],
-                        [{:atom, 6, :error}]}
+                       {:clause, [generated: true, location: 3],
+                        [{:atom, [generated: true, location: 3], false}], [], [{:atom, 4, :ok}]},
+                       {:clause, [generated: true, location: 3],
+                        [{:atom, [generated: true, location: 3], true}], [], [{:atom, 6, :error}]}
                      ]}
                   ]}
                ]
-             } == block
+             } = block
     end
 
     test "cond conditional" do
@@ -393,19 +396,19 @@ defmodule Gradient.AstSpecifierTest do
                  [
                    {:case, 4, {:op, 5, :==, {:var, 5, :_a@1}, {:atom, 5, :ok}},
                     [
-                      {:clause, 5, [{:atom, 0, true}], [], [{:atom, 5, :ok}]},
-                      {:clause, 6, [{:atom, 0, false}], [],
+                      {:clause, 5, [{:atom, 5, true}], [], [{:atom, 5, :ok}]},
+                      {:clause, 6, [{:atom, 6, false}], [],
                        [
                          {:case, 6, {:op, 6, :>, {:var, 6, :_a@1}, {:integer, 6, 5}},
                           [
-                            {:clause, 6, [{:atom, 0, true}], [], [{:atom, 6, :ok}]},
-                            {:clause, 7, [{:atom, 0, false}], [],
+                            {:clause, 6, [{:atom, 6, true}], [], [{:atom, 6, :ok}]},
+                            {:clause, 7, [{:atom, 7, false}], [],
                              [
                                {:case, 7, {:atom, 7, true},
                                 [
-                                  {:clause, 7, [{:atom, 0, true}], [], [{:atom, 7, :error}]},
-                                  {:clause, [generated: true, location: 7], [{:atom, 0, false}],
-                                   [],
+                                  {:clause, 7, [{:atom, 7, true}], [], [{:atom, 7, :error}]},
+                                  {:clause, [generated: true, location: 7],
+                                   [{:atom, [generated: true, location: 7], false}], [],
                                    [
                                      {:call, 7,
                                       {:remote, 7, {:atom, 7, :erlang}, {:atom, 7, :error}},
@@ -426,19 +429,19 @@ defmodule Gradient.AstSpecifierTest do
                    {:match, 11, {:var, 11, :_a@1}, {:integer, 11, 5}},
                    {:case, 13, {:op, 14, :==, {:var, 14, :_a@1}, {:atom, 14, :ok}},
                     [
-                      {:clause, 14, [{:atom, 0, true}], [], [{:atom, 14, :ok}]},
-                      {:clause, 15, [{:atom, 0, false}], [],
+                      {:clause, 14, [{:atom, 14, true}], [], [{:atom, 14, :ok}]},
+                      {:clause, 15, [{:atom, 15, false}], [],
                        [
                          {:case, 15, {:op, 15, :>, {:var, 15, :_a@1}, {:integer, 15, 5}},
                           [
-                            {:clause, 15, [{:atom, 0, true}], [], [{:atom, 15, :ok}]},
-                            {:clause, 16, [{:atom, 0, false}], [],
+                            {:clause, 15, [{:atom, 15, true}], [], [{:atom, 15, :ok}]},
+                            {:clause, 16, [{:atom, 16, false}], [],
                              [
                                {:case, 16, {:atom, 16, true},
                                 [
-                                  {:clause, 16, [{:atom, 0, true}], [], [{:atom, 16, :error}]},
-                                  {:clause, [generated: true, location: 16], [{:atom, 0, false}],
-                                   [],
+                                  {:clause, 16, [{:atom, 16, true}], [], [{:atom, 16, :error}]},
+                                  {:clause, [generated: true, location: 16],
+                                   [{:atom, [generated: true, location: 16], false}], [],
                                    [
                                      {:call, 16,
                                       {:remote, 16, {:atom, 16, :erlang}, {:atom, 16, :error}},
@@ -476,7 +479,7 @@ defmodule Gradient.AstSpecifierTest do
                                 [{:bin_element, 11, {:string, 11, 'error'}, :default, :default}]}
                              ]},
                             {:cons, 12, {:integer, 12, 49},
-                             {:cons, 12, {:integer, 12, 50}, {nil, 0}}}
+                             {:cons, 12, {:integer, 12, 50}, {nil, 12}}}
                           ]}
                        ]}
                     ]}
@@ -544,7 +547,7 @@ defmodule Gradient.AstSpecifierTest do
                   [
                     {:bin, 7, [{:bin_element, 7, {:string, 7, 'ala'}, :default, :default}]},
                     {:cons, 8, {:integer, 8, 97},
-                     {:cons, 8, {:integer, 8, 108}, {:cons, 8, {:integer, 8, 97}, {nil, 0}}}},
+                     {:cons, 8, {:integer, 8, 108}, {:cons, 8, {:integer, 8, 97}, {nil, 8}}}},
                     {:integer, 9, 12}
                   ]}
                ]}
@@ -570,7 +573,7 @@ defmodule Gradient.AstSpecifierTest do
                            :integer,
                            4,
                            2
-                         }, {:cons, 4, {:integer, 4, 3}, {nil, 0}}}},
+                         }, {:cons, 4, {:integer, 4, 3}, {nil, 4}}}},
                        {:fun, 4,
                         {:clauses,
                          [
@@ -764,13 +767,13 @@ defmodule Gradient.AstSpecifierTest do
               {:clause, 5, [], [],
                [
                  {:cons, 6,
-                  {:cons, 6, {:integer, 6, 49}, {:cons, 6, {:integer, 6, 49}, {nil, 0}}},
+                  {:cons, 6, {:integer, 6, 49}, {:cons, 6, {:integer, 6, 49}, {nil, 6}}},
                   {:cons, 6,
                    {:bin, 6, [{:bin_element, 6, {:string, 6, '12'}, :default, :default}]},
                    {:cons, 6, {:integer, 6, 1},
                     {:cons, 6, {:integer, 6, 2},
                      {:cons, 6, {:integer, 6, 3},
-                      {:cons, 6, {:call, 6, {:atom, 6, :wrap}, [{:integer, 6, 4}]}, {nil, 0}}}}}}}
+                      {:cons, 6, {:call, 6, {:atom, 6, :wrap}, [{:integer, 6, 4}]}, {nil, 6}}}}}}}
                ]}
             ]} = list
 
@@ -780,7 +783,7 @@ defmodule Gradient.AstSpecifierTest do
                [
                  {:cons, 10, {:var, 10, :_a@1},
                   {:cons, 10, {:integer, 10, 1},
-                   {:cons, 10, {:integer, 10, 2}, {:cons, 10, {:integer, 10, 3}, {nil, 0}}}}}
+                   {:cons, 10, {:integer, 10, 2}, {:cons, 10, {:integer, 10, 3}, {nil, 10}}}}}
                ]}
             ]} = ht
 
@@ -808,7 +811,8 @@ defmodule Gradient.AstSpecifierTest do
                   [
                     {:case, 4, {:atom, 4, true},
                      [
-                       {:clause, [generated: true, location: 4], [{:atom, 0, false}], [],
+                       {:clause, [generated: true, location: 4],
+                        [{:atom, [generated: true, location: 4], false}], [],
                         [
                           {:call, 7, {:remote, 7, {:atom, 7, :erlang}, {:atom, 7, :error}},
                            [
@@ -822,7 +826,8 @@ defmodule Gradient.AstSpecifierTest do
                               ]}
                            ]}
                         ]},
-                       {:clause, [generated: true, location: 4], [{:atom, 0, true}], [],
+                       {:clause, [generated: true, location: 4],
+                        [{:atom, [generated: true, location: 4], true}], [],
                         [
                           {:call, 5, {:remote, 5, {:atom, 5, :erlang}, {:atom, 5, :throw}},
                            [
@@ -922,7 +927,7 @@ defmodule Gradient.AstSpecifierTest do
                    [
                      {:bin, 41,
                       [{:bin_element, 41, {:string, 41, 'sample'}, :default, :default}]},
-                     {:cons, 41, {:atom, 41, :utf8}, {:cons, 41, {:atom, 41, :write}, {nil, 0}}}
+                     {:cons, 41, {:atom, 41, :utf8}, {:cons, 41, {:atom, 41, :write}, {nil, 41}}}
                    ]}},
                  {:try, 43,
                   [
@@ -966,7 +971,7 @@ defmodule Gradient.AstSpecifierTest do
                        {:call, 52, {:remote, 52, {:atom, 52, Kernel.Utils}, {:atom, 52, :raise}},
                         [
                           {:cons, 52, {:integer, 52, 49},
-                           {:cons, 52, {:integer, 52, 50}, {nil, 0}}}
+                           {:cons, 52, {:integer, 52, 50}, {nil, 52}}}
                         ]}
                      ]},
                     {:integer, 53, 1}
@@ -1065,7 +1070,7 @@ defmodule Gradient.AstSpecifierTest do
                       [
                         {:map, 17,
                          [
-                           {:map_field_exact, 17, {:atom, 17, :x},
+                           {:map_field_exact, 17, {:atom, [generated: true, location: 17], :x},
                             {:var, [generated: true, location: 17], :_@1}}
                          ]}
                       ], [], [{:var, [generated: true, location: 17], :_@1}]},
@@ -1166,7 +1171,6 @@ defmodule Gradient.AstSpecifierTest do
             [
               {:clause, 7, [], [],
                [{:tuple, 8, [{:atom, 8, :record_ex}, {:integer, 8, 0}, {:integer, 8, 0}]}]}
-              # FIXME Should be a tuple with line 8, not 12. The line is taken from a token that is in another scope. Related to the cutting out tokens at the bottom
             ]} = empty
 
     assert {:function, 11, :init, 0,
@@ -1175,14 +1179,16 @@ defmodule Gradient.AstSpecifierTest do
                [{:tuple, 12, [{:atom, 12, :record_ex}, {:integer, 12, 1}, {:integer, 12, 0}]}]}
             ]} = init
 
+    elixir_env_arg = if System.version() >= "1.13", do: :to_caller, else: :linify
+
     assert {:function, 5, :"MACRO-record_ex", 1,
             [
               {:clause, 5, [{:var, 5, :_@CALLER}], [],
                [
                  {:match, 5, {:var, 5, :__CALLER__},
-                  {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, :linify}},
+                  {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, ^elixir_env_arg}},
                    [{:var, 5, :_@CALLER}]}},
-                 {:call, 5, {:atom, 5, :"MACRO-record_ex"}, [{:var, 5, :__CALLER__}, {nil, 0}]}
+                 {:call, 5, {:atom, 5, :"MACRO-record_ex"}, [{:var, 5, :__CALLER__}, {nil, 5}]}
                ]}
             ]} = macro1
 
@@ -1191,13 +1197,13 @@ defmodule Gradient.AstSpecifierTest do
               {:clause, 5, [{:var, 5, :_@CALLER}, {:var, 5, :_@1}], [],
                [
                  {:match, 5, {:var, 5, :__CALLER__},
-                  {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, :linify}},
+                  {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, ^elixir_env_arg}},
                    [{:var, 5, :_@CALLER}]}},
                  {:call, 5, {:remote, 5, {:atom, 5, Record}, {:atom, 5, :__access__}},
                   [
                     {:atom, 5, :record_ex},
                     {:cons, 5, {:tuple, 5, [{:atom, 5, :x}, {:integer, 5, 0}]},
-                     {:cons, 5, {:tuple, 5, [{:atom, 5, :y}, {:integer, 5, 0}]}, {nil, 0}}},
+                     {:cons, 5, {:tuple, 5, [{:atom, 5, :y}, {:integer, 5, 0}]}, {nil, 5}}},
                     {:var, 5, :_@1},
                     {:var, 5, :__CALLER__}
                   ]}
@@ -1209,13 +1215,13 @@ defmodule Gradient.AstSpecifierTest do
               {:clause, 5, [{:var, 5, :_@CALLER}, {:var, 5, :_@1}, {:var, 5, :_@2}], [],
                [
                  {:match, 5, {:var, 5, :__CALLER__},
-                  {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, :linify}},
+                  {:call, 5, {:remote, 5, {:atom, 5, :elixir_env}, {:atom, 5, ^elixir_env_arg}},
                    [{:var, 5, :_@CALLER}]}},
                  {:call, 5, {:remote, 5, {:atom, 5, Record}, {:atom, 5, :__access__}},
                   [
                     {:atom, 5, :record_ex},
                     {:cons, 5, {:tuple, 5, [{:atom, 5, :x}, {:integer, 5, 0}]},
-                     {:cons, 5, {:tuple, 5, [{:atom, 5, :y}, {:integer, 5, 0}]}, {nil, 0}}},
+                     {:cons, 5, {:tuple, 5, [{:atom, 5, :y}, {:integer, 5, 0}]}, {nil, 5}}},
                     {:var, 5, :_@1},
                     {:var, 5, :_@2},
                     {:var, 5, :__CALLER__}

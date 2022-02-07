@@ -24,7 +24,11 @@ defmodule Gradient.Debug do
   @spec quoted_to_ast(elixir_form()) :: erlang_form()
   def quoted_to_ast(qt) do
     env = :elixir_env.new()
-    {ast, _, _} = :elixir.quoted_to_erl(qt, env)
+
+    ast =
+      :elixir.quoted_to_erl(qt, env)
+      |> elem(0)
+
     Macro.escape(ast)
   end
 
