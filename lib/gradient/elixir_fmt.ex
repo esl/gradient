@@ -101,7 +101,7 @@ defmodule Gradient.ElixirFmt do
     module = "#{inspect(module)}"
 
     :io_lib.format(
-      "~sUndefined ~s ~s:~p/~p~s~n",
+      "~sUndefined ~s ~s.~p/~p~s~n",
       [
         format_location(anno, :brief, opts),
         type,
