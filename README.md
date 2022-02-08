@@ -24,7 +24,7 @@ Gradient can be installed by adding `gradient` to your list of dependencies in `
 ```elixir
 def deps do
   [
-    {:gradient, github: "esl/gradient"}
+    {:gradient, github: "esl/gradient", only: [:dev], runtime: false}
   ]
 end
 ```
