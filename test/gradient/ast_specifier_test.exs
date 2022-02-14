@@ -1362,6 +1362,19 @@ defmodule Gradient.AstSpecifierTest do
              ]}} = missing_type
   end
 
+  test "clauses without a line" do
+    forms = [
+      {:function, 8, :__impl__, 1,
+       [
+         {:clause, [generated: true, location: 0],
+          [{:atom, [generated: true, location: 0], :for}], [],
+          [{:atom, [generated: true, location: 0], TypedSchemaTest}]}
+       ]}
+    ]
+
+    assert [_] = AstSpecifier.run_mappers(forms, [])
+  end
+
   # Helpers
 
   def filter_specs(ast) do

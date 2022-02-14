@@ -145,6 +145,7 @@ defmodule Gradient.AstSpecifier do
 
   def mapper({:function, anno, name, arity, clauses}, tokens, opts) do
     # anno has line
+    opts = Keyword.put(opts, :line, :erl_anno.line(anno))
     {clauses, tokens} = context_mapper_fold(clauses, tokens, opts)
 
     {:function, anno, name, arity, clauses}
