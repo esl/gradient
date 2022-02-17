@@ -131,10 +131,11 @@ defmodule Gradient.AstSpecifier do
   @spec mapper(form(), [token()], options()) :: {form(), [token()]}
   def mapper(form, tokens, opts)
 
-  def mapper({:attribute, anno, :spec, {name_arity, specs}}, tokens, opts) do
+  def mapper({:attribute, anno, spec, {name_arity, specs}}, tokens, opts)
+      when spec in [:spec, :callback] do
     new_specs = context_mapper_map(specs, [], opts, &spec_mapper/3)
 
-    {:attribute, anno, :spec, {name_arity, new_specs}}
+    {:attribute, anno, spec, {name_arity, new_specs}}
     |> pass_tokens(tokens)
   end
 

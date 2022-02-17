@@ -1299,7 +1299,7 @@ defmodule Gradient.AstSpecifierTest do
 
     [spec | _] =
       AstSpecifier.run_mappers(ast, tokens)
-      |> filter_specs()
+      |> filter_attributes(:spec)
       |> Enum.reverse()
 
     assert {:attribute, 2, :spec,
@@ -1324,12 +1324,54 @@ defmodule Gradient.AstSpecifierTest do
              ]}} = spec
   end
 
+  test "typespec behavior" do
+    {tokens, ast} = load("/Elixir.TypespecBeh.beam", "/typespec_beh.ex")
+
+    [callback1, callback2 | _] =
+      AstSpecifier.run_mappers(ast, tokens)
+      |> filter_attributes(:callback)
+      |> Enum.reverse()
+
+    assert {:attribute, 4, :callback,
+            {{:"MACRO-non_vital_macro", 2},
+             [
+               {:type, 4, :fun,
+                [
+                  {:type, 4, :product,
+                   [
+                     {:type, 4, :term, []},
+                     {:ann_type, 4, [{:var, 4, :arg}, {:type, 4, :any, []}]}
+                   ]},
+                  {:remote_type, 4, [{:atom, 4, Macro}, {:atom, 4, :t}, []]}
+                ]}
+             ]}} = callback1
+
+    assert {:attribute, 3, :callback,
+            {{:non_vital_fun, 0},
+             [
+               {:type, 3, :bounded_fun,
+                [
+                  {:type, 3, :fun, [{:type, 3, :product, []}, {:var, 3, :a}]},
+                  [
+                    {:type, 3, :constraint,
+                     [
+                       {:atom, 3, :is_subtype},
+                       [
+                         {:var, 3, :a},
+                         {:type, 3, :tuple, [{:type, 3, :integer, []}, {:type, 3, :atom, []}]}
+                       ]
+                     ]}
+                  ]
+                ]}
+             ]}} = callback2
+  end
+
   test "typespec" do
     {tokens, ast} = load("/Elixir.Typespec.beam", "/typespec.ex")
 
     [atoms_type2, atoms_type, named_type, missing_type_arg, missing_type | _] =
       AstSpecifier.run_mappers(ast, tokens)
-      |> filter_specs()
+      |> filter_attributes(:spec)
       |> Enum.reverse()
 
     assert {:attribute, 17, :spec,
@@ -1413,7 +1455,7 @@ defmodule Gradient.AstSpecifierTest do
 
   # Helpers
 
-  def filter_specs(ast) do
-    Enum.filter(ast, &match?({:attribute, _, :spec, _}, &1))
+  def filter_attributes(ast, type) do
+    Enum.filter(ast, &match?({:attribute, _, ^type, _}, &1))
   end
 end
