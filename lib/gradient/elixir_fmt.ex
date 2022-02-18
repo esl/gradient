@@ -1,12 +1,40 @@
 defmodule Gradient.ElixirFmt do
   @moduledoc """
-  Module that handles formatting and printing error messages produced by Gradient in Elixir.
+  Module that handles formatting and printing error messages produced by Gradualizer in Elixir.
+
+  Options:
+  - `ex_colors`: list of color options:
+    - {`use_colors`, boolean()}: - wheather to use the colors, default: true
+    - {`expression`, ansicode()}: color of the expressions, default: :yellow
+    - {`type`, ansicode()}: color of the types, default: :cyan
+    - {`underscored_line`, ansicode()}: color of the underscored line pointed the error in code, default: :red
+
+  - `ex_fmt_expr_fun`: function to pretty print an expression AST in Elixir `(abstract_expr()) -> iodata()`.
+
+  - `ex_fmt_type_fun`: function to pretty print an type AST in Elixir `(abstract_type() -> iodata())`.
+
+  - Gradualizer options, but some of them are overwritten by Gradient.
   """
   @behaviour Gradient.Fmt
 
   alias :gradualizer_fmt, as: FmtLib
   alias Gradient.ElixirType
   alias Gradient.ElixirExpr
+  alias Gradient.Types
+
+  @type colors_opts() :: [
+          use_colors: boolean(),
+          expression: IO.ANSI.ansicode(),
+          type: IO.ANSI.ansicode(),
+          underscored_line: IO.ANSI.ansicode()
+        ]
+  @type options() :: [
+          ex_colors: colors_opts(),
+          ex_fmt_type_fun: (Types.abstract_type() -> iodata()),
+          ex_fmt_expr_fun: (Types.abstract_expr() -> iodata())
+        ]
+
+  @default_colors [use_colors: true, expression: :yellow, type: :cyan, underscored_line: :red]
 
   def print_errors(errors, opts) do
     for {file, e} <- errors do
@@ -29,8 +57,9 @@ defmodule Gradient.ElixirFmt do
   end
 
   def format_error(error, opts) do
-    opts = Keyword.put_new(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
-    opts = Keyword.put_new(opts, :fmt_expr_fun, &ElixirExpr.pp_expr/1)
+    opts = Keyword.put_new(opts, :color, false)
+    opts = Keyword.put_new(opts, :fmt_type_fun, pp_type_fun(opts))
+    opts = Keyword.put_new(opts, :fmt_expr_fun, pp_expr_fun(opts))
     format_type_error(error, opts)
   end
 
@@ -120,7 +149,7 @@ defmodule Gradient.ElixirFmt do
   def format_expr_type_error(expression, actual_type, expected_type, opts) do
     {inline_expr, fancy_expr} =
       case try_highlight_in_context(expression, opts) do
-        {:error, _e} -> {" " <> pp_expr(expression, opts), ""}
+        {:error, _e} -> {[" " | pp_expr(expression, opts)], ""}
         {:ok, fancy} -> {"", fancy}
       end
 
@@ -145,26 +174,48 @@ defmodule Gradient.ElixirFmt do
     end
   end
 
-  def pp_expr(expression, opts) do
-    fmt = Keyword.get(opts, :fmt_expr_fun, &ElixirExpr.pp_expr/1)
+  def pp_expr_fun(opts) do
+    fmt = Keyword.get(opts, :ex_fmt_expr_fun, &ElixirExpr.pp_expr_format/1)
+    colors = get_colors_with_default(opts)
+    {:ok, use_colors} = Keyword.fetch(colors, :use_colors)
+    {:ok, expr_color} = Keyword.fetch(colors, :expression)
 
-    if Keyword.get(opts, :colors, true) do
-      IO.ANSI.blue() <> fmt.(expression) <> IO.ANSI.reset()
-    else
-      fmt.(expression)
+    fn expression ->
+      IO.ANSI.format([expr_color, fmt.(expression)], use_colors)
     end
+  end
+
+  def pp_type_fun(opts) do
+    fmt = Keyword.get(opts, :ex_fmt_type_fun, &ElixirType.pp_type_format/1)
+    colors = get_colors_with_default(opts)
+    {:ok, use_colors} = Keyword.fetch(colors, :use_colors)
+    {:ok, type_color} = Keyword.fetch(colors, :type)
+
+    fn type ->
+      IO.ANSI.format([type_color, fmt.(type)], use_colors)
+    end
+  end
+
+  def get_colors_with_default(opts) do
+    case Keyword.fetch(opts, :ex_colors) do
+      {:ok, colors} ->
+        colors ++ @default_colors
+
+      _ ->
+        @default_colors
+    end
+  end
+
+  def pp_expr(expression, opts) do
+    pp_expr_fun(opts).(expression)
   end
 
   def pp_type(type, opts) do
-    fmt = Keyword.get(opts, :fmt_type_fun, &ElixirType.pretty_print/1)
-
-    if Keyword.get(opts, :colors, true) do
-      IO.ANSI.cyan() <> fmt.(type) <> IO.ANSI.reset()
-    else
-      fmt.(type)
-    end
+    pp_type_fun(opts).(type)
   end
 
+  @spec try_highlight_in_context(Types.abstract_expr(), options()) ::
+          {:ok, iodata()} | {:error, term()}
   def try_highlight_in_context(expression, opts) do
     forms = Keyword.get(opts, :forms)
 
@@ -172,7 +223,7 @@ defmodule Gradient.ElixirFmt do
          {:ok, path} <- get_ex_file_path(forms),
          {:ok, code} <- File.read(path) do
       code_lines = String.split(code, ~r/\R/)
-      {:ok, highlight_in_context(expression, code_lines)}
+      {:ok, highlight_in_context(expression, code_lines, opts)}
     end
   end
 
@@ -184,14 +235,14 @@ defmodule Gradient.ElixirFmt do
     end
   end
 
-  @spec highlight_in_context(tuple(), [String.t()]) :: String.t()
-  def highlight_in_context(expression, context) do
+  @spec highlight_in_context(tuple(), [String.t()], options()) :: iodata()
+  def highlight_in_context(expression, context, opts) do
     line = elem(expression, 1)
 
     context
     |> Enum.with_index(1)
     |> filter_context(line, 2)
-    |> underscore_line(line)
+    |> underscore_line(line, opts)
     |> Enum.join("\n")
   end
 
@@ -202,10 +253,19 @@ defmodule Gradient.ElixirFmt do
     Enum.filter(lines, fn {_, number} -> number in range end)
   end
 
-  def underscore_line(lines, line) do
+  def underscore_line(lines, line, opts) do
     Enum.map(lines, fn {str, n} ->
       if(n == line) do
-        IO.ANSI.underline() <> IO.ANSI.red() <> to_string(n) <> " " <> str <> IO.ANSI.reset()
+        colors = get_colors_with_default(opts)
+        {:ok, use_colors} = Keyword.fetch(colors, :use_colors)
+        {:ok, color} = Keyword.fetch(colors, :underscored_line)
+        line_str = to_string(n) <> " " <> str
+
+        [
+          IO.ANSI.underline(),
+          IO.ANSI.format_fragment([color, line_str], use_colors),
+          IO.ANSI.reset()
+        ]
       else
         to_string(n) <> " " <> str
       end
@@ -224,11 +284,6 @@ defmodule Gradient.ElixirFmt do
       mod -> ":" <> mod <> "."
     end
   end
-
-  # defp warning_error_not_handled(error) do
-  # msg = "\nElixir formatter not exist for #{inspect(error, pretty: true)} using default \n"
-  # String.to_charlist(IO.ANSI.light_yellow() <> msg <> IO.ANSI.reset())
-  # end
 
   @spec describe_expr(:gradualizer_type.abstract_expr()) :: binary()
   def describe_expr({:atom, _, _}), do: "atom"

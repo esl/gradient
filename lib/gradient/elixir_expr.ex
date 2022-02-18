@@ -11,7 +11,7 @@ defmodule Gradient.ElixirExpr do
   @doc """
   Convert abstract expressions to Elixir code and format output with formatter.
   """
-  @spec pp_expr_format([expr()], keyword()) :: iodata()
+  @spec pp_expr_format(expr() | [expr()], keyword()) :: iodata()
   def pp_expr_format(exprs, fmt_opts \\ []) do
     exprs
     |> pp_expr()

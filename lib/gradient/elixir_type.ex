@@ -1,16 +1,21 @@
 defmodule Gradient.ElixirType do
   @moduledoc """
-  Module to format types.
-
-  Seems that:
-  - record type
-  - constrained function type
-  are not used by Elixir so the pp support has not been added.
+  Convert the Erlang abstract types to the Elixir code.
   """
 
   alias Gradient.ElixirFmt
 
   @type abstract_type() :: Gradient.Types.abstract_type()
+
+  @doc """
+  Convert abstract type to Elixir code and format output with formatter.
+  """
+  @spec pp_type_format(abstract_type(), keyword()) :: iodata()
+  def pp_type_format(type, fmt_opts \\ []) do
+    type
+    |> pretty_print()
+    |> Code.format_string!(fmt_opts)
+  end
 
   @doc """
   Take type and prepare a pretty string representation.
