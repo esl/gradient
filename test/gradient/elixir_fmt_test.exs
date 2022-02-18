@@ -209,7 +209,7 @@ defmodule Gradient.ElixirFmtTest do
 
     test "string", %{wrong_ret_errors: errors} do
       expr = expr_format_error_to_binary(errors.ret_wrong_boolean2)
-      assert String.contains?(expr, "\"1234\"")
+      assert String.contains?(expr, ~s("1234"))
     end
 
     test "char", %{wrong_ret_errors: errors} do
@@ -225,7 +225,7 @@ defmodule Gradient.ElixirFmtTest do
 
     test "record", %{record_type_errors: errors} do
       expr = expr_format_error_to_binary(errors.ret_wrong_atom)
-      assert String.contains?(expr, "{:user, \"Kate\", 25}")
+      assert String.contains?(expr, ~s({:user, "Kate", 25}))
     end
 
     test "call", %{wrong_ret_errors: errors} do
@@ -270,8 +270,8 @@ defmodule Gradient.ElixirFmtTest do
   end
 
   defp expr_format_error_to_binary(error, opts \\ []) do
-    opts = Keyword.put_new(opts, :fmt_type_fun, &mock_fmt/1)
-    opts = Keyword.put_new(opts, :colors, false)
+    opts = Keyword.put_new(opts, :ex_fmt_type_fun, &mock_fmt/1)
+    opts = Keyword.put_new(opts, :ex_colors, use_colors: false)
 
     error
     |> ElixirFmt.format_error(opts)
@@ -281,8 +281,8 @@ defmodule Gradient.ElixirFmtTest do
   end
 
   defp type_format_error_to_binary(error, opts \\ []) do
-    opts = Keyword.put_new(opts, :fmt_expr_fun, &mock_fmt/1)
-    opts = Keyword.put_new(opts, :colors, false)
+    opts = Keyword.put_new(opts, :ex_fmt_expr_fun, &mock_fmt/1)
+    opts = Keyword.put_new(opts, :ex_colors, use_colors: false)
 
     error
     |> ElixirFmt.format_error(opts)

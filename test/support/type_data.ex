@@ -16,7 +16,7 @@ defmodule Gradient.TypeData do
   def value_test_data() do
     [
       {"integer value", {:integer, 0, 12}, "12"},
-      {"atom value", {:atom, 0, :ok}, ":ok"},
+      {"atom value", {:atom, 0, :ok}, ~s(:"ok")},
       {"boolean false", {:atom, 0, false}, "false"},
       {"boolean true", {:atom, 0, true}, "true"},
       {"nil", {:atom, 0, nil}, "nil"}
@@ -49,7 +49,7 @@ defmodule Gradient.TypeData do
     [
       {"any fun type", {:type, 0, :fun, []}, "fun()"},
       {"fun with any args returning a specific type",
-       {:type, 0, :fun, [{:type, 0, :any}, {:atom, 0, :ok}]}, "(... -> :ok)"},
+       {:type, 0, :fun, [{:type, 0, :any}, {:atom, 0, :ok}]}, ~s((... -> :"ok"\))},
       {"fun with specific arg types returning a specific type",
        {:type, 0, :fun, [{:type, 0, :product, [{:type, 0, :atom, []}]}, {:type, 0, :atom, []}]},
        "(atom() -> atom())"}
@@ -64,14 +64,14 @@ defmodule Gradient.TypeData do
         [
           {:type, 0, :map_field_assoc, [{:atom, 0, :value_a}, {:integer, 0, 5}]},
           {:type, 0, :map_field_exact, [{:atom, 0, :value_b}, {:atom, 0, :neo}]}
-        ]}, "%{optional(:value_a) => 5, required(:value_b) => :neo}"}
+        ]}, ~s(%{optional(:"value_a"\) => 5, required(:"value_b"\) => :"neo"})}
     ]
   end
 
   def tuple_types_test_data() do
     [
       {"any tuple type", {:type, 0, :tuple, :any}, "tuple()"},
-      {"tuple {:ok, 8}", {:type, 0, :tuple, [{:atom, 0, :ok}, {:integer, 0, 8}]}, "{:ok, 8}"}
+      {"tuple {:ok, 8}", {:type, 0, :tuple, [{:atom, 0, :ok}, {:integer, 0, 8}]}, ~s({:"ok", 8})}
     ]
   end
 
