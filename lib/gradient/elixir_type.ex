@@ -84,7 +84,10 @@ defmodule Gradient.ElixirType do
   end
 
   def pretty_print({:atom, _, val}) do
-    ":" <> Atom.to_string(val)
+    case Atom.to_string(val) do
+      "Elixir." <> mod -> mod
+      str -> ":\"" <> str <> "\""
+    end
   end
 
   def pretty_print({:integer, _, val}) do
