@@ -326,4 +326,69 @@ defmodule Gradient.ElixirExprTest do
                actual
     end
   end
+
+  test "pp and format complex try expression" do
+    {_tokens, ast} =
+      Gradient.TestHelpers.load("/Elixir.CallRemoteException.beam", "/call_remote_exception.ex")
+
+    {:function, _, :call, 2, [{:clause, _ann, _args, _guards, [try_expr]}]} =
+      Enum.reverse(ast) |> List.first()
+
+    res = ElixirExpr.pp_expr_format(try_expr)
+
+    # FIXME `raise {:badkey, :stack, _gen}` is not correct
+
+    expected = ~s"""
+    try do
+      :ok
+    catch
+      :error, %Plug.Conn.WrapperError{} = e ->
+        exception =
+          Exception.normalize(
+            :error,
+            case e do
+              %{reason: _gen} -> _gen
+              _gen when :erlang.is_map(_gen) -> raise {:badkey, :reason, _gen}
+              _gen -> _gen.reason()
+            end,
+            case e do
+              %{stack: _gen} -> _gen
+              _gen when :erlang.is_map(_gen) -> raise {:badkey, :stack, _gen}
+              _gen -> _gen.stack()
+            end
+          )
+
+        _ =
+          Sentry.capture_exception(exception, [
+            {:stacktrace,
+             case e do
+               %{stack: _gen} -> _gen
+               _gen when :erlang.is_map(_gen) -> raise {:badkey, :stack, _gen}
+               _gen -> _gen.stack()
+             end},
+            {:event_source, :plug}
+          ])
+
+        Plug.Conn.WrapperError.reraise(e)
+
+      :error, e ->
+        _ = Sentry.capture_exception(e, [{:stacktrace, __STACKTRACE__}, {:event_source, :plug}])
+        :erlang.raise(:error, e, __STACKTRACE__)
+
+      kind, reason ->
+        message =
+          <<"Uncaught ",
+            case kind do
+              _gen when :erlang.is_binary(_gen) -> _gen
+              _gen -> String.Chars.to_string(_gen)
+            end::binary, " - ", Kernel.inspect(reason)::binary>>
+
+        stack = __STACKTRACE__
+        _ = Sentry.capture_message(message, [{:stacktrace, stack}, {:event_source, :plug}])
+        :erlang.raise(kind, reason, stack)
+    end
+    """
+
+    assert expected == :erlang.iolist_to_binary(res) <> "\n"
+  end
 end
