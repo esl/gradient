@@ -47,7 +47,7 @@ defmodule Gradient.TokensTest do
 
   describe "get_conditional/1" do
     test "case" do
-      {tokens, _ast} = load("/conditional/Elixir.Conditional.Case.beam", "/conditional/case.ex")
+      {tokens, _ast} = load("conditional/Elixir.Conditional.Case.beam", "conditional/case.ex")
       tokens = Tokens.drop_tokens_to_line(tokens, 2)
       opts = [end_line: -1]
       assert {:case, _} = Tokens.get_conditional(tokens, 4, opts)
@@ -57,7 +57,7 @@ defmodule Gradient.TokensTest do
     end
 
     test "if" do
-      {tokens, _ast} = load("/conditional/Elixir.Conditional.If.beam", "/conditional/if.ex")
+      {tokens, _ast} = load("conditional/Elixir.Conditional.If.beam", "conditional/if.ex")
       tokens = Tokens.drop_tokens_to_line(tokens, 2)
       opts = [end_line: -1]
       assert {:if, _} = Tokens.get_conditional(tokens, 4, opts)
@@ -68,7 +68,7 @@ defmodule Gradient.TokensTest do
 
     test "unless" do
       {tokens, _ast} =
-        load("/conditional/Elixir.Conditional.Unless.beam", "/conditional/unless.ex")
+        load("conditional/Elixir.Conditional.Unless.beam", "conditional/unless.ex")
 
       tokens = Tokens.drop_tokens_to_line(tokens, 2)
       opts = [end_line: -1]
@@ -76,7 +76,7 @@ defmodule Gradient.TokensTest do
     end
 
     test "cond" do
-      {tokens, _ast} = load("/conditional/Elixir.Conditional.Cond.beam", "/conditional/cond.ex")
+      {tokens, _ast} = load("conditional/Elixir.Conditional.Cond.beam", "conditional/cond.ex")
 
       tokens = Tokens.drop_tokens_to_line(tokens, 2)
       opts = [end_line: -1]
@@ -87,7 +87,7 @@ defmodule Gradient.TokensTest do
     end
 
     test "with" do
-      {tokens, _ast} = load("/conditional/Elixir.Conditional.With.beam", "/conditional/with.ex")
+      {tokens, _ast} = load("conditional/Elixir.Conditional.With.beam", "conditional/with.ex")
 
       tokens = Tokens.drop_tokens_to_line(tokens, 6)
       opts = [end_line: -1]

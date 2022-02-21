@@ -294,7 +294,7 @@ defmodule Gradient.ElixirFmtTest do
 
   @spec load_record_type_example(map()) :: map()
   defp load_record_type_example(config) do
-    {_tokens, ast} = load("/type/Elixir.RecordEx.beam", "/type/record.ex")
+    {_tokens, ast} = load("type/Elixir.RecordEx.beam", "type/record.ex")
 
     {errors, forms} = type_check_file(ast, [])
 
@@ -311,7 +311,7 @@ defmodule Gradient.ElixirFmtTest do
 
   @spec load_wrong_ret_error_examples(map()) :: map()
   defp load_wrong_ret_error_examples(config) do
-    {_tokens, ast} = load("/type/Elixir.WrongRet.beam", "/type/wrong_ret.ex")
+    {_tokens, ast} = load("type/Elixir.WrongRet.beam", "type/wrong_ret.ex")
 
     {errors, forms} = type_check_file(ast, [])
     names = get_function_names_from_ast(forms)

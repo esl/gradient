@@ -1,7 +1,7 @@
 defmodule Gradient.TestHelpers do
   alias Gradient.Types, as: T
 
-  @examples_path "test/examples"
+  @examples_path "test/examples/"
 
   @spec load(String.t(), String.t()) :: {T.tokens(), T.forms()}
   def load(beam_file, ex_file) do
@@ -25,8 +25,8 @@ defmodule Gradient.TestHelpers do
 
   @spec example_data() :: {T.tokens(), T.forms()}
   def example_data() do
-    beam_path = (@examples_path <> "/Elixir.SimpleApp.beam") |> String.to_charlist()
-    file_path = @examples_path <> "/simple_app.ex"
+    beam_path = (@examples_path <> "Elixir.SimpleApp.beam") |> String.to_charlist()
+    file_path = @examples_path <> "simple_app.ex"
 
     code =
       File.read!(file_path)
@@ -45,7 +45,7 @@ defmodule Gradient.TestHelpers do
 
   @spec example_tokens() :: T.tokens()
   def example_tokens() do
-    file_path = @examples_path <> "/conditional/cond.ex"
+    file_path = @examples_path <> "conditional/cond.ex"
 
     code =
       File.read!(file_path)
@@ -60,7 +60,7 @@ defmodule Gradient.TestHelpers do
 
   @spec example_string_tokens() :: T.tokens()
   def example_string_tokens() do
-    file_path = @examples_path <> "/string_example.ex"
+    file_path = @examples_path <> "string_example.ex"
 
     code =
       File.read!(file_path)
