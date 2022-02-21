@@ -239,6 +239,7 @@ defmodule Gradient.ElixirFmtTest do
     end
   end
 
+  @tag :skip
   test "format call_intersect error" do
     error =
       {:type_error, :call_intersect, 7,
