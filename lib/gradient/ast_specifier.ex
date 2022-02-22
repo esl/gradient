@@ -131,10 +131,11 @@ defmodule Gradient.AstSpecifier do
   @spec mapper(form(), [token()], options()) :: {form(), [token()]}
   def mapper(form, tokens, opts)
 
-  def mapper({:attribute, anno, :spec, {name_arity, specs}}, tokens, opts) do
+  def mapper({:attribute, anno, spec, {name_arity, specs}}, tokens, opts)
+      when spec in [:spec, :callback] do
     new_specs = context_mapper_map(specs, [], opts, &spec_mapper/3)
 
-    {:attribute, anno, :spec, {name_arity, new_specs}}
+    {:attribute, anno, spec, {name_arity, new_specs}}
     |> pass_tokens(tokens)
   end
 
@@ -475,6 +476,24 @@ defmodule Gradient.AstSpecifier do
 
   def spec_mapper({:type, anno, :any}, tokens, _opts) do
     {:type, anno, :any}
+    |> pass_tokens(tokens)
+  end
+
+  def spec_mapper({:type, anno, :constraint, [subtype, vt]}, tokens, opts) do
+    {:ok, _, anno, opts, _} = get_line(anno, opts)
+    {subtype, _} = spec_mapper(subtype, tokens, opts)
+    vt = context_mapper_map(vt, tokens, opts, &spec_mapper/3)
+
+    {:type, anno, :constraint, [subtype, vt]}
+    |> pass_tokens(tokens)
+  end
+
+  def spec_mapper({:type, anno, :bounded_fun, [fn_type, when_type]}, tokens, opts) do
+    {:ok, _line, anno, opts, _} = get_line(anno, opts)
+    {fn_type, _} = spec_mapper(fn_type, tokens, opts)
+    when_type = context_mapper_map(when_type, tokens, opts, &spec_mapper/3)
+
+    {:type, anno, :bounded_fun, [fn_type, when_type]}
     |> pass_tokens(tokens)
   end
 

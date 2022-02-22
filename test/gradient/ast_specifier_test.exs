@@ -1294,78 +1294,276 @@ defmodule Gradient.AstSpecifierTest do
             ]} = recv
   end
 
+  test "typespec when" do
+    {tokens, ast} = load("/Elixir.TypespecWhen.beam", "/typespec_when.ex")
+
+    [spec | _] =
+      AstSpecifier.run_mappers(ast, tokens)
+      |> filter_attributes(:spec)
+      |> Enum.reverse()
+
+    assert {:attribute, 2, :spec,
+            {{:foo, 1},
+             [
+               {:type, 2, :bounded_fun,
+                [
+                  {:type, 2, :fun,
+                   [
+                     {:type, 2, :product, [{:type, 2, :tuple, [{:atom, 2, :a}, {:var, 2, :x}]}]},
+                     {:type, 2, :union,
+                      [
+                        {:type, 2, :tuple, [{:atom, 2, :a}, {:var, 2, :x}]},
+                        {:type, 2, :tuple, [{:atom, 2, :b}, {:var, 2, :x}]}
+                      ]}
+                   ]},
+                  [
+                    {:type, 2, :constraint,
+                     [{:atom, 2, :is_subtype}, [{:var, 2, :x}, {:type, 2, :term, []}]]}
+                  ]
+                ]}
+             ]}} = spec
+  end
+
+  test "typespec behavior" do
+    {tokens, ast} = load("/Elixir.TypespecBeh.beam", "/typespec_beh.ex")
+
+    [callback1, callback2 | _] =
+      AstSpecifier.run_mappers(ast, tokens)
+      |> filter_attributes(:callback)
+      |> Enum.reverse()
+
+    assert {:attribute, 4, :callback,
+            {{:"MACRO-non_vital_macro", 2},
+             [
+               {:type, 4, :fun,
+                [
+                  {:type, 4, :product,
+                   [
+                     {:type, 4, :term, []},
+                     {:ann_type, 4, [{:var, 4, :arg}, {:type, 4, :any, []}]}
+                   ]},
+                  {:remote_type, 4, [{:atom, 4, Macro}, {:atom, 4, :t}, []]}
+                ]}
+             ]}} = callback1
+
+    assert {:attribute, 3, :callback,
+            {{:non_vital_fun, 0},
+             [
+               {:type, 3, :bounded_fun,
+                [
+                  {:type, 3, :fun, [{:type, 3, :product, []}, {:var, 3, :a}]},
+                  [
+                    {:type, 3, :constraint,
+                     [
+                       {:atom, 3, :is_subtype},
+                       [
+                         {:var, 3, :a},
+                         {:type, 3, :tuple, [{:type, 3, :integer, []}, {:type, 3, :atom, []}]}
+                       ]
+                     ]}
+                  ]
+                ]}
+             ]}} = callback2
+  end
+
   test "typespec" do
     {tokens, ast} = load("/Elixir.Typespec.beam", "/typespec.ex")
 
-    [atoms_type2, atoms_type, named_type, missing_type_arg, missing_type | _] =
+    result =
       AstSpecifier.run_mappers(ast, tokens)
-      |> filter_specs()
-      |> Enum.reverse()
+      |> filter_attributes(:spec)
+      |> make_spec_map()
 
-    assert {:attribute, 17, :spec,
-            {{:atoms_type2, 1},
+    assert {:attribute, 6, :spec,
+            {{:spec_remote_type, 0},
              [
-               {:type, 17, :fun,
+               {:type, 6, :fun,
                 [
-                  {:type, 17, :product,
-                   [{:type, 17, :union, [{:atom, 17, :ok}, {:atom, 17, :error}]}]},
-                  {:remote_type, 17,
-                   [
-                     {:atom, 17, Unknown},
-                     {:atom, 17, :atom},
-                     [{:type, 17, :union, [{:atom, 17, :ok}, {:atom, 17, :error}]}]
-                   ]}
+                  {:type, 6, :product, []},
+                  {:remote_type, 6, [{:atom, 6, Unknown}, {:atom, 6, :atom}, []]}
                 ]}
-             ]}} = atoms_type2
+             ]}} = result.spec_remote_type
 
-    assert {:attribute, 14, :spec,
-            {{:atoms_type, 1},
+    assert {:attribute, 9, :spec,
+            {{:spec_user_type, 0},
              [
-               {:type, 14, :fun,
+               {:type, 9, :fun,
                 [
-                  {:type, 14, :product,
-                   [{:type, 14, :union, [{:atom, 14, :ok}, {:atom, 14, :error}]}]},
-                  {:type, 14, :union, [{:atom, 14, :ok}, {:atom, 14, :error}]}
+                  {:type, 9, :product, []},
+                  {:user_type, 9, :mylist,
+                   [{:type, 9, :union, [{:atom, 9, :ok}, {:type, 9, :atom, []}]}]}
                 ]}
-             ]}} = atoms_type
+             ]}} = result.spec_user_type
 
-    assert {:attribute, 11, :spec,
-            {{:named_type, 1},
+    assert {:attribute, 12, :spec,
+            {{:spec_map_and_named_type, 1},
              [
-               {:type, 11, :fun,
+               {:type, 12, :fun,
                 [
-                  {:type, 11, :product,
+                  {:type, 12, :product,
                    [
-                     {:ann_type, 11,
+                     {:ann_type, 12,
                       [
-                        {:var, 11, :name},
-                        {:remote_type, 11, [{:atom, 11, Unknown}, {:atom, 11, :atom}, []]}
+                        {:var, 12, :type},
+                        {:remote_type, 12, [{:atom, 12, Unknown}, {:atom, 12, :atom}, []]}
                       ]}
                    ]},
-                  {:type, 11, :atom, []}
+                  {:type, 12, :map,
+                   [
+                     {:type, 13, :map_field_assoc,
+                      [{:atom, 13, :value}, {:type, 13, :integer, []}]},
+                     {:type, 14, :map_field_exact,
+                      [
+                        {:atom, 14, :type},
+                        {:remote_type, 14, [{:atom, 14, Unknown}, {:atom, 14, :atom}, []]}
+                      ]}
+                   ]}
                 ]}
-             ]}} = named_type
+             ]}} = result.spec_map_and_named_type
 
-    assert {:attribute, 8, :spec,
-            {{:missing_type_arg, 0},
+    assert {:attribute, 18, :spec,
+            {{:spec_atom, 1},
              [
-               {:type, 8, :fun,
+               {:type, 18, :fun,
                 [
-                  {:type, 8, :product, []},
-                  {:user_type, 8, :mylist,
-                   [{:remote_type, 8, [{:atom, 8, Unknown}, {:atom, 8, :atom}, []]}]}
+                  {:type, 18, :product,
+                   [
+                     {:type, 18, :union,
+                      [{:atom, 18, :ok}, {:atom, 18, nil}, {:atom, 18, true}, {:atom, 18, false}]}
+                   ]},
+                  {:remote_type, 18,
+                   [
+                     {:atom, 18, Unknown},
+                     {:atom, 18, :atom},
+                     [
+                       {:type, 18, :union,
+                        [
+                          {:atom, 18, :ok},
+                          {:atom, 18, nil},
+                          {:atom, 18, true},
+                          {:atom, 18, false}
+                        ]}
+                     ]
+                   ]}
                 ]}
-             ]}} = missing_type_arg
+             ]}} = result.spec_atom
 
-    assert {:attribute, 5, :spec,
-            {{:missing_type, 0},
+    assert {:attribute, 21, :spec,
+            {{:spec_function, 0},
              [
-               {:type, 5, :fun,
+               {:type, 21, :fun,
                 [
-                  {:type, 5, :product, []},
-                  {:remote_type, 5, [{:atom, 5, Unknown}, {:atom, 5, :atom}, []]}
+                  {:type, 21, :product, []},
+                  {:type, 21, :fun,
+                   [
+                     {:type, 21, :product,
+                      [
+                        {:type, 21, :atom, []},
+                        {:type, 21, :map,
+                         [
+                           {:type, 21, :map_field_exact,
+                            [
+                              {:atom, 21, :name},
+                              {:remote_type, 21, [{:atom, 21, String}, {:atom, 21, :t}, []]}
+                            ]}
+                         ]}
+                      ]},
+                     {:type, 21, :map, :any}
+                   ]}
                 ]}
-             ]}} = missing_type
+             ]}} = result.spec_function
+
+    assert {:attribute, 24, :spec,
+            {{:spec_struct, 1},
+             [
+               {:type, 24, :fun,
+                [
+                  {:type, 24, :product,
+                   [
+                     {:type, 24, :map,
+                      [
+                        {:type, 24, :map_field_exact,
+                         [{:atom, 24, :__struct__}, {:atom, 24, Typespec}]},
+                        {:type, 24, :map_field_exact,
+                         [{:atom, 24, :age}, {:type, 24, :term, []}]},
+                        {:type, 24, :map_field_exact,
+                         [{:atom, 24, :name}, {:type, 24, :term, []}]}
+                      ]}
+                   ]},
+                  {:type, 24, :map,
+                   [
+                     {:type, 24, :map_field_exact,
+                      [{:atom, 24, :__struct__}, {:atom, 24, Typespec}]},
+                     {:type, 24, :map_field_exact, [{:atom, 24, :age}, {:type, 24, :term, []}]},
+                     {:type, 24, :map_field_exact, [{:atom, 24, :name}, {:type, 24, :term, []}]}
+                   ]}
+                ]}
+             ]}} = result.spec_struct
+
+    assert {:attribute, 27, :spec,
+            {{:spec_list, 1},
+             [
+               {:type, 27, :fun,
+                [
+                  {:type, 27, :product,
+                   [{:type, 27, :nonempty_list, [{:type, 27, :integer, []}]}]},
+                  {:type, 27, :nonempty_list, []}
+                ]}
+             ]}} = result.spec_list
+
+    assert {:attribute, 30, :spec,
+            {{:spec_range, 1},
+             [
+               {:type, 30, :fun,
+                [
+                  {:type, 30, :product,
+                   [{:type, 30, :range, [{:integer, 30, 1}, {:integer, 30, 10}]}]},
+                  {:type, 30, :list,
+                   [{:type, 30, :range, [{:integer, 30, 1}, {:integer, 30, 10}]}]}
+                ]}
+             ]}} = result.spec_range
+
+    assert {:attribute, 33, :spec,
+            {{:spec_keyword, 1},
+             [
+               {:type, 33, :fun,
+                [
+                  {:type, 33, :product,
+                   [
+                     {:type, 33, :list,
+                      [
+                        {:type, 33, :union,
+                         [
+                           {:type, 33, :tuple, [{:atom, 33, :a}, {:type, 33, :integer, []}]},
+                           {:type, 33, :tuple, [{:atom, 33, :b}, {:type, 33, :integer, []}]}
+                         ]}
+                      ]}
+                   ]},
+                  {:type, 33, :integer, []}
+                ]}
+             ]}} = result.spec_keyword
+
+    assert {:attribute, 36, :spec,
+            {{:spec_tuple, 1},
+             [
+               {:type, 36, :fun,
+                [
+                  {:type, 36, :product,
+                   [{:type, 36, :tuple, [{:atom, 36, :ok}, {:type, 36, :integer, []}]}]},
+                  {:type, 36, :tuple, :any}
+                ]}
+             ]}} = result.spec_tuple
+
+    assert {:attribute, 39, :spec,
+            {{:spec_bitstring, 1},
+             [
+               {:type, 39, :fun,
+                [
+                  {:type, 39, :product,
+                   [{:type, 39, :binary, [{:integer, 39, 48}, {:integer, 39, 8}]}]},
+                  {:type, 39, :binary, [{:integer, 39, 0}, {:integer, 39, 0}]}
+                ]}
+             ]}} = result.spec_bitstring
   end
 
   test "clauses without a line" do
@@ -1383,7 +1581,13 @@ defmodule Gradient.AstSpecifierTest do
 
   # Helpers
 
-  def filter_specs(ast) do
-    Enum.filter(ast, &match?({:attribute, _, :spec, _}, &1))
+  def filter_attributes(ast, type) do
+    Enum.filter(ast, &match?({:attribute, _, ^type, _}, &1))
+  end
+
+  def make_spec_map(specs) do
+    specs
+    |> Enum.map(fn {:attribute, _, _, {{name, _arity}, _}} = attr -> {name, attr} end)
+    |> Enum.into(%{})
   end
 end
