@@ -45,7 +45,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "fn {:ok, v} -> v; {:error, _} -> :error end" == actual
+      assert ~s(fn {:"ok", v} -> v; {:"error", _} -> :"error" end) == actual
     end
 
     test "binary comprehension" do
@@ -79,7 +79,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "receive do {:hello, msg} -> msg end" == actual
+      assert ~s(receive do {:"hello", msg} -> msg end) == actual
     end
 
     test "receive after" do
@@ -93,7 +93,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert ~s(receive do {:hello, msg} -> msg after 1000 -> "nothing happened" end) == actual
+      assert ~s(receive do {:"hello", msg} -> msg after 1000 -> "nothing happened" end) == actual
     end
 
     test "call pipe" do
@@ -123,7 +123,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "map = %{a: 12, b: 0}; case :maps.find(:a, map) do {:ok, a} -> case :maps.find(:b, map) do {:ok, b} -> a + b; _gen -> case _gen do :error -> 0; _gen -> raise {:with_clause, _gen} end end; _gen -> case _gen do :error -> 0; _gen -> raise {:with_clause, _gen} end end" ==
+      assert ~s(map = %{"a": 12, "b": 0}; case :maps.find(:"a", map\) do {:"ok", a} -> case :maps.find(:"b", map\) do {:"ok", b} -> a + b; _gen -> case _gen do :"error" -> 0; _gen -> raise {:"with_clause", _gen} end end; _gen -> case _gen do :"error" -> 0; _gen -> raise {:"with_clause", _gen} end end) ==
                actual
     end
 
@@ -140,7 +140,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert ~s(try do raise "ok"; catch :error, e -> IO.puts(Exception.format(:error, e, __STACKTRACE__\)\); reraise e, __STACKTRACE__ end) ==
+      assert ~s(try do raise "ok"; catch :"error", e -> IO.puts(Exception.format(:"error", e, __STACKTRACE__\)\); reraise e, __STACKTRACE__ end) ==
                actual
     end
 
@@ -155,7 +155,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert ~s(try do raise "oops"; catch :error, %RuntimeError{} = _ -> "Error!" end) ==
+      assert ~s(try do raise "oops"; catch :"error", %RuntimeError{} = _ -> "Error!" end) ==
                actual
     end
 
@@ -170,7 +170,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "try do :ok; catch :error, _ -> :ok end" == actual
+      assert ~s(try do :"ok"; catch :"error", _ -> :"ok" end) == actual
     end
 
     test "simple after try" do
@@ -184,7 +184,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "try do :ok; after :ok end" == actual
+      assert ~s(try do :"ok"; after :"ok" end) == actual
     end
 
     test "try guard" do
@@ -215,7 +215,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert ~s(try do throw "good"; :ok; else v when v == :ok -> :ok; v -> :nok; catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> val; :throw, _ -> 0; after IO.puts("Cleaning!"\) end) ==
+      assert ~s(try do throw "good"; :"ok"; else v when v == :"ok" -> :"ok"; v -> :"nok"; catch :"error", %RuntimeError{} = e -> 11; e; :"throw", val -> val; :"throw", _ -> 0; after IO.puts("Cleaning!"\) end) ==
                actual
     end
 
@@ -235,7 +235,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "case {:ok, 10} do {:ok, v} when v > 0 and v > 1 or v < - 1 -> :ok; t when :erlang.is_tuple(t) -> :nok; _ -> :err end" ==
+      assert ~s(case {:"ok", 10} do {:"ok", v} when v > 0 and v > 1 or v < - 1 -> :"ok"; t when :erlang.is_tuple(t\) -> :"nok"; _ -> :"err" end) ==
                actual
     end
 
@@ -249,7 +249,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "case {:ok, 13} do {:ok, v} -> v; _err -> :error end" == actual
+      assert ~s(case {:"ok", 13} do {:"ok", v} -> v; _err -> :"error" end) == actual
     end
 
     test "if" do
@@ -263,7 +263,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "if :math.floor(1.9) == 1.0 do :ok else :error end" == actual
+      assert ~s(if :math.floor(1.9\) == 1.0 do :"ok" else :"error" end) == actual
     end
 
     test "unless" do
@@ -277,7 +277,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "if :math.floor(1.9) == 1.0 do :error else :ok end" == actual
+      assert ~s(if :math.floor(1.9\) == 1.0 do :"error" else :"ok" end) == actual
     end
 
     test "cond" do
@@ -296,7 +296,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "cond do true == false -> :ok; :math.floor(1.9) == 1.0 -> :ok; true -> :error end" ==
+      assert ~s(cond do true == false -> :"ok"; :math.floor\(1.9\) == 1.0 -> :"ok"; true -> :"error" end) ==
                actual
     end
 
@@ -322,7 +322,7 @@ defmodule Gradient.ElixirExprTest do
         |> ElixirExpr.pp_expr()
 
       assert ~s(try do if true do throw "good" else raise "oops" end;) <>
-               ~s( catch :error, %RuntimeError{} = e -> 11; e; :throw, val -> 12; val end) ==
+               ~s( catch :"error", %RuntimeError{} = e -> 11; e; :"throw", val -> 12; val end) ==
                actual
     end
   end
