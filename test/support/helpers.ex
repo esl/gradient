@@ -8,18 +8,13 @@ defmodule Gradient.TestHelpers do
     beam_file = String.to_charlist(@examples_path <> beam_file)
     ex_file = @examples_path <> ex_file
 
-    code =
-      File.read!(ex_file)
-      |> String.to_charlist()
-
-    {:ok, tokens} =
-      code
-      |> :elixir.string_to_tokens(1, 1, ex_file, [])
-
     {:ok, {_, [abstract_code: {:raw_abstract_v1, ast}]}} =
       :beam_lib.chunks(beam_file, [:abstract_code])
 
     ast = replace_file_path(ast, ex_file)
+
+    [_ | _] = tokens = Gradient.ElixirFileUtils.load_tokens(ast)
+
     {tokens, ast}
   end
 
