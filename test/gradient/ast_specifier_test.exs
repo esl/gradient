@@ -1578,6 +1578,19 @@ defmodule Gradient.AstSpecifierTest do
     assert [_] = AstSpecifier.run_mappers(forms, [])
   end
 
+  test "nested modules" do
+    {tokensA, astA} = load("Elixir.NestedModules.ModuleA.beam", "nested_modules.ex")
+    {tokensB, astB} = load("Elixir.NestedModules.ModuleB.beam", "nested_modules.ex")
+    {tokens, ast} = load("Elixir.NestedModules.beam", "nested_modules.ex")
+
+    assert {:function, 3, :name, 0, [{:clause, 3, [], [], [{:atom, 4, :module_a}]}]} =
+             List.last(AstSpecifier.run_mappers(astA, tokensA))
+    assert {:function, 9, :name, 0, [{:clause, 9, [], [], [{:atom, 10, :module_b}]}]} =
+             List.last(AstSpecifier.run_mappers(astB, tokensB))
+    assert {:function, 14, :name, 0, [{:clause, 14, [], [], [{:atom, 15, :module}]}]} =
+             List.last(AstSpecifier.run_mappers(ast, tokens))
+  end
+
   # Helpers
 
   def filter_attributes(ast, type) do
