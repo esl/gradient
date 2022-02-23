@@ -3,6 +3,8 @@ defmodule Gradient.ElixirFileUtils do
   Module used to load beam files generated from Elixir.
   """
 
+  alias Gradient.Types
+
   @type path() :: :file.filename() | String.t()
 
   @type abstract_forms() :: [:erl_parse.abstract_form() | :erl_parse.form_info()]
@@ -37,6 +39,20 @@ defmodule Gradient.ElixirFileUtils do
 
       {:error, :beam_lib, reason} ->
         {:forms_error, reason}
+    end
+  end
+
+  @spec load_tokens([:erl_parse.abstract_form()]) :: Types.tokens()
+  def load_tokens(forms) do
+    with [{:attribute, _, :file, {path, _}} | _] <- forms,
+         path <- to_string(path),
+         {:ok, code} <- File.read(path),
+         {:ok, tokens} <- :elixir.string_to_tokens(String.to_charlist(code), 1, 1, path, []) do
+      tokens
+    else
+      error ->
+        IO.puts("Cannot load tokens: #{inspect(error)}")
+        []
     end
   end
 end

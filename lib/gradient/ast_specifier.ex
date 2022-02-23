@@ -64,16 +64,8 @@ defmodule Gradient.AstSpecifier do
   """
   @spec specify(nonempty_list(:erl_parse.abstract_form())) :: [:erl_parse.abstract_form()]
   def specify(forms) do
-    with {:attribute, line, :file, {path, _}} <- hd(forms),
-         path <- to_string(path),
-         {:ok, code} <- File.read(path),
-         {:ok, tokens} <- :elixir.string_to_tokens(String.to_charlist(code), line, line, path, []) do
-      run_mappers(forms, tokens)
-    else
-      error ->
-        IO.puts("Error occurred when specifying forms : #{inspect(error)}")
-        forms
-    end
+    tokens = Gradient.ElixirFileUtils.load_tokens(forms)
+    run_mappers(forms, tokens)
   end
 
   @doc """
