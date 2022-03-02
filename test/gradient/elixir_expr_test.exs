@@ -329,7 +329,7 @@ defmodule Gradient.ElixirExprTest do
 
   test "pp and format complex try expression" do
     {_tokens, ast} =
-      Gradient.TestHelpers.load("/Elixir.CallRemoteException.beam", "/call_remote_exception.ex")
+      Gradient.TestHelpers.load("Elixir.CallRemoteException.beam", "call_remote_exception.ex")
 
     {:function, _, :call, 2, [{:clause, _ann, _args, _guards, [try_expr]}]} =
       Enum.reverse(ast) |> List.first()
