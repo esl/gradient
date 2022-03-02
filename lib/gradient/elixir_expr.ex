@@ -55,6 +55,10 @@ defmodule Gradient.ElixirExpr do
     "\'" <> List.to_string(charlist) <> "\'"
   end
 
+  def pp_expr({:remote, _, _, _} = remote_name) do
+    pp_name(remote_name)
+  end
+
   def pp_expr({:cons, _, _, _} = cons) do
     case cons_to_int_list(cons) do
       {:ok, l} ->
@@ -291,6 +295,9 @@ defmodule Gradient.ElixirExpr do
       {:throw, :not_found} ->
         # throw
         pp_expr(type) <> ", " <> pp_expr(var) <> " -> " <> pp_expr(body)
+
+      {_variable, :not_found} ->
+        pp_expr(type) <> ", " <> pp_expr(var) <> " -> " <> pp_expr(body)
     end
   end
 
@@ -481,6 +488,9 @@ defmodule Gradient.ElixirExpr do
   defp pp_cons({:cons, _, h, {nil, _}}), do: pp_expr(h)
   defp pp_cons({:cons, _, h, {:var, _, _} = v}), do: pp_expr(h) <> " | " <> pp_expr(v)
   defp pp_cons({:cons, _, h, t}), do: pp_expr(h) <> ", " <> pp_cons(t)
+
+  defp pp_name({:remote, _, {:var, _, _} = var, {:atom, _, n}}),
+    do: pp_expr(var) <> "." <> to_string(n)
 
   defp pp_name({:remote, _, {:atom, _, m}, {:atom, _, n}}),
     do: ElixirFmt.parse_module(m) <> to_string(n)

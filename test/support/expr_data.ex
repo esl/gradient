@@ -28,7 +28,9 @@ defmodule Gradient.ExprData do
       {"char", {:char, 0, ?c}, "?c"},
       {"float", {:float, 0, 12.0}, "12.0"},
       {"integer", {:integer, 0, 1}, "1"},
-      {"erlang string", {:string, 0, 'ala ma kota'}, ~s('ala ma kota')}
+      {"erlang string", {:string, 0, 'ala ma kota'}, ~s('ala ma kota')},
+      {"remote name", {:remote, 7, {:atom, 7, Exception}, {:atom, 7, :normalize}},
+       "Exception.normalize"}
     ]
   end
 

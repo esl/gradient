@@ -240,6 +240,53 @@ defmodule Gradient.ElixirFmtTest do
   end
 
   @tag :skip
+  test "format call_intersect error" do
+    error =
+      {:type_error, :call_intersect, 7,
+       [
+         {:type, 0, :bounded_fun,
+          [
+            {:type, 0, :fun,
+             [
+               {:type, 0, :product,
+                [
+                  {:atom, 0, :error},
+                  {:type, 0, :any, []},
+                  {:user_type, [file: 'Elixir.Exception.erl', location: 0], :stacktrace, []}
+                ]},
+               {:user_type, [file: 'Elixir.Exception.erl', location: 0], :t, []}
+             ]},
+            []
+          ]},
+         {:type, 0, :bounded_fun,
+          [
+            {:type, 0, :fun,
+             [
+               {:type, 0, :product,
+                [
+                  {:user_type, [file: 'Elixir.Exception.erl', location: 0], :non_error_kind, []},
+                  {:var, 0, :payload},
+                  {:user_type, [file: 'Elixir.Exception.erl', location: 0], :stacktrace, []}
+                ]},
+               {:var, 0, :payload}
+             ]},
+            []
+          ]}
+       ], {:remote, 7, {:atom, 7, Exception}, {:atom, 7, :normalize}}}
+
+    res = ElixirFmt.format_error(error, [])
+
+    expected = ~s"""
+    The type of the function Exception.normalize, called on line 7 doesn't match the surrounding calling context.
+    It has the following type
+    \e[35m(:error, any(), stacktrace() -> t())\e[0m
+    \e[35m(non_error_kind(), payload, stacktrace() -> payload)\e[0m\n
+    """
+
+    assert expected == :erlang.iolist_to_binary(res)
+  end
+
+  @tag :skip
   test "format_expr_type_error/4" do
     opts = [forms: basic_erlang_forms()]
     expression = {:integer, 0, 12}
