@@ -69,6 +69,33 @@ defmodule Gradient.ElixirFmt do
     format_expr_type_error(expression, actual_type, expected_type, opts)
   end
 
+  def format_type_error(
+        {:spec_error, :wrong_spec_name, anno, name, arity},
+        opts
+      ) do
+    :io_lib.format(
+      "~sThe spec ~p/~p~s doesn't match the function name/arity~n",
+      [
+        format_location(anno, :brief, opts),
+        name,
+        arity,
+        format_location(anno, :verbose, opts)
+      ]
+    )
+  end
+
+  def format_type_error({:spec_error, :spec_after_spec, anno, name, arity}, opts) do
+    :io_lib.format(
+      "~sThe spec ~p/~p~s follows another spec when only one spec per function clause is allowed~n",
+      [
+        format_location(anno, :brief, opts),
+        name,
+        arity,
+        format_location(anno, :verbose, opts)
+      ]
+    )
+  end
+
   def format_type_error({:call_undef, anno, module, func, arity}, opts) do
     :io_lib.format(
       "~sCall to undefined function ~s~p/~p~s~n",
