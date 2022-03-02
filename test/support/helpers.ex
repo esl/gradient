@@ -3,6 +3,16 @@ defmodule Gradient.TestHelpers do
 
   @examples_path "test/examples/"
 
+  @spec load(String.t()) :: T.forms()
+  def load(beam_file) do
+    beam_file = String.to_charlist(@examples_path <> beam_file)
+
+    {:ok, {_, [abstract_code: {:raw_abstract_v1, ast}]}} =
+      :beam_lib.chunks(beam_file, [:abstract_code])
+
+    ast
+  end
+
   @spec load(String.t(), String.t()) :: {T.tokens(), T.forms()}
   def load(beam_file, ex_file) do
     beam_file = String.to_charlist(@examples_path <> beam_file)
