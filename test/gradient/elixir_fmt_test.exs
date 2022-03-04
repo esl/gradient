@@ -239,6 +239,27 @@ defmodule Gradient.ElixirFmtTest do
     end
   end
 
+  describe "spec" do
+    test "name doesn't match the function name" do
+      msg =
+        {:spec_error, :wrong_spec_name, 3, :convert, 1}
+        |> ElixirFmt.format_error([])
+        |> :erlang.iolist_to_binary()
+
+      assert "The spec convert/1 on line 3 doesn't match the function name/arity\n" = msg
+    end
+
+    test "follows another spec" do
+      msg =
+        {:spec_error, :spec_after_spec, 3, :convert, 1}
+        |> ElixirFmt.format_error([])
+        |> :erlang.iolist_to_binary()
+
+      assert "The spec convert/1 on line 3 follows another spec when only one spec per function clause is allowed\n" =
+               msg
+    end
+  end
+
   @tag :skip
   test "format_expr_type_error/4" do
     opts = [forms: basic_erlang_forms()]
