@@ -19,15 +19,16 @@ defmodule Gradient.ElixirChecker do
   Check if all specs are exactly before the function that they specify
   and if there is only one spec per function clause.
 
-  Correct specs location:
+  Correct spec locations:
     ```
     @spec convert(integer()) :: float()
     def convert(int) when is_integer(int), do: int / 1
+
     @spec convert(atom()) :: binary()
     def convert(atom) when is_atom(atom), do: to_string(atom)
     ```
 
-  Incorrect specs location:
+  Incorrect spec locations:
     - More than one spec above function clause.
     ```
     @spec convert(integer()) :: float()

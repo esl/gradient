@@ -255,7 +255,7 @@ defmodule Gradient.ElixirFmtTest do
         |> ElixirFmt.format_error([])
         |> :erlang.iolist_to_binary()
 
-      assert "The spec convert/1 on line 3 follows another spec when only one spec per function clause is allowed\n" =
+      assert "The spec convert/1 on line 3 follows another spec, but only one spec per function clause is allowed\n" =
                msg
     end
   end
