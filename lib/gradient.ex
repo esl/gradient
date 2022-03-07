@@ -20,7 +20,7 @@ defmodule Gradient do
   def type_check_file(file, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
 
-    with {:ok, forms} <- ElixirFileUtils.get_forms_from_beam(file) do
+    with {:ok, forms} <- ElixirFileUtils.get_forms(file) do
       forms =
         forms
         |> put_code_path(opts)
@@ -43,23 +43,23 @@ defmodule Gradient do
   end
 
   defp put_code_path(forms, opts) do
-    case Keyword.fetch(opts, :code_path) do
-      {:ok, path} ->
-        [{:attribute, 1, :file, {path, 1}} | tl(forms)]
+    case opts[:code_path] do
+      nil ->
+        case opts[:app_path] do
+          nil ->
+            forms
 
-      :error ->
-        case Keyword.fetch(opts, :app_path) do
-          {:ok, app_path} ->
+          app_path ->
             {:attribute, anno, :file, {path, line}} = hd(forms)
 
             [
               {:attribute, anno, :file, {String.to_charlist(app_path) ++ '/' ++ path, line}}
               | tl(forms)
             ]
-
-          :error ->
-            forms
         end
+
+      path ->
+        [{:attribute, 1, :file, {path, 1}} | tl(forms)]
     end
   end
 end

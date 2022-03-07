@@ -5,7 +5,7 @@ defmodule Gradient.ElixirFileUtils do
 
   alias Gradient.Types
 
-  @type path() :: :file.filename() | String.t()
+  @type path() :: :file.filename() | binary()
 
   @type abstract_forms() :: [:erl_parse.abstract_form() | :erl_parse.form_info()]
 
@@ -20,9 +20,6 @@ defmodule Gradient.ElixirFileUtils do
   """
   @spec get_forms_from_beam(path()) ::
           {:ok, abstract_forms()} | parsed_file_error()
-  def get_forms_from_beam(path) when is_binary(path),
-    do: get_forms_from_beam(String.to_charlist(path))
-
   def get_forms_from_beam(path) do
     case :beam_lib.chunks(path, [:abstract_code]) do
       {:ok, {_module, [{:abstract_code, {:raw_abstract_v1, forms}}]}} ->
@@ -39,6 +36,36 @@ defmodule Gradient.ElixirFileUtils do
 
       {:error, :beam_lib, reason} ->
         {:forms_error, reason}
+    end
+  end
+
+  @spec get_forms_from_ex(binary()) ::
+          {:ok, abstract_forms()} | parsed_file_error()
+  def get_forms_from_ex(path) do
+    # For compiling many files concurrently, see Kernel.ParallelCompiler.compile/2.
+    if File.exists?(path) do
+      [{_module, bin}] = Code.compile_file(path)
+      get_forms_from_beam(bin)
+    else
+      {:file_not_found, path}
+    end
+  end
+
+  def get_forms(path) do
+    case Path.extname(path) do
+      ".beam" ->
+        path
+        |> to_charlist()
+        |> get_forms_from_beam()
+
+      ".ex" ->
+        get_forms_from_ex(path)
+
+      _ ->
+        [path]
+        |> Module.concat()
+        |> :code.which()
+        |> get_forms_from_beam()
     end
   end
 

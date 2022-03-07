@@ -197,7 +197,7 @@ defmodule Gradient.ElixirFmt do
   def format_location(expression, fmt_type, opts \\ []) do
     case Keyword.get(opts, :fmt_location, :verbose) do
       ^fmt_type -> FmtLib.format_location(expression, fmt_type)
-      :verbose -> ""
+      _ -> ""
     end
   end
 
