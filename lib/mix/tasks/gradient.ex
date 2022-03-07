@@ -8,8 +8,11 @@ defmodule Mix.Tasks.Gradient do
     * `--no-compile` - do not compile even if needed
     * `--no-ex-check` - do not perform checks specyfic for Elixir
       (from ElixirChecker module)
-    * `--no-gradualizer-check` - do not perform Gradualizer checks
+    * `--no-gradualizer-check` - do not perform the Gradualizer checks
+    * `--no-specify` - do not specify missing lines in AST what can
+      result in less precise error messages
 
+    * `--no-deps` - do not import dependencies to the Gradualizer
     * `--stop_on_first_error` - stop type checking at the first error
     * `--infer` - infer type information from literals and other language
       constructs,

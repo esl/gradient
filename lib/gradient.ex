@@ -5,6 +5,9 @@ defmodule Gradient do
   Options:
   - `app_path` - Path to the app that contains file with code (for umbrella apps).
   - `code_path` - Path to a file with code (e.g. when beam was compiled without project).
+  - `no_gradualizer_check` - Skip Gradualizer checks if true.
+  - `no_ex_check` - Skip Elixir checks if true.
+  - `no_specify` - Skip AST specifying if true.
   """
 
   alias Gradient.ElixirFileUtils
@@ -21,12 +24,9 @@ defmodule Gradient do
     opts = Keyword.put(opts, :return_errors, true)
 
     with {:ok, forms} <- ElixirFileUtils.get_forms(file) do
-      forms =
-        forms
-        |> put_code_path(opts)
-        |> AstSpecifier.specify()
+      forms = maybe_specify_forms(forms, opts)
 
-      case ElixirChecker.check(forms, opts) ++ :gradualizer.type_check_forms(forms, opts) do
+      case maybe_gradient_check(forms, opts) ++ maybe_gradualizer_check(forms, opts) do
         [] ->
           :ok
 
@@ -39,6 +39,32 @@ defmodule Gradient do
       error ->
         Logger.error("Can't load file - #{inspect(error)}")
         :error
+    end
+  end
+
+  defp maybe_gradualizer_check(forms, opts) do
+    unless opts[:no_gradualizer_check] do
+      :gradualizer.type_check_forms(forms, opts)
+    else
+      []
+    end
+  end
+
+  defp maybe_gradient_check(forms, opts) do
+    unless opts[:no_ex_check] do
+      ElixirChecker.check(forms, opts)
+    else
+      []
+    end
+  end
+
+  defp maybe_specify_forms(forms, opts) do
+    unless opts[:no_specify] do
+      forms
+      |> put_code_path(opts)
+      |> AstSpecifier.specify()
+    else
+      forms
     end
   end
 
