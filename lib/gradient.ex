@@ -44,7 +44,13 @@ defmodule Gradient do
 
   defp maybe_gradualizer_check(forms, opts) do
     unless opts[:no_gradualizer_check] do
-      :gradualizer.type_check_forms(forms, opts)
+      try do
+        :gradualizer.type_check_forms(forms, opts)
+      catch
+        err ->
+          {:attribute, _, :file, {path, _}} = hd(forms)
+          [{path, err}]
+      end
     else
       []
     end

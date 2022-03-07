@@ -72,19 +72,22 @@ defmodule Mix.Tasks.Gradient do
 
     IO.puts("Typechecking files...")
 
-    res =
-      files
-      |> Stream.map(fn {app_path, paths} ->
-        Stream.map(paths, &Gradient.type_check_file(&1, [{:app_path, app_path} | options]))
-      end)
-      |> Stream.concat()
-      |> Enum.to_list()
+    files
+    |> Stream.map(fn {app_path, paths} ->
+      Stream.map(paths, &Gradient.type_check_file(&1, [{:app_path, app_path} | options]))
+    end)
+    |> Stream.concat()
+    |> execute(options)
+
+    :ok
+  end
+
+  defp execute(stream, opts) do
+    res = if opts[:crash_on_error], do: stream, else: Enum.to_list(stream)
 
     if Enum.all?(res, &(&1 == :ok)) do
       IO.puts("No problems found!")
     end
-
-    :ok
   end
 
   defp maybe_compile_project(options) do
@@ -121,6 +124,10 @@ defmodule Mix.Tasks.Gradient do
   defp prepare_option({:no_colors, _}, opts), do: prepare_color_option(opts, {:use_colors, false})
 
   defp prepare_option({:fmt_location, v}, opts), do: [{:fmt_location, String.to_atom(v)} | opts]
+
+  defp prepare_option({:no_fancy, _}, opts), do: [{:fancy, false} | opts]
+
+  defp prepare_option({:stop_on_first_error, _}, opts), do: [{:crash_on_error, true} | opts]
 
   defp prepare_option({k, v}, opts), do: [{k, v} | opts]
 
