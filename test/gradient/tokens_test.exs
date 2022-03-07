@@ -67,8 +67,7 @@ defmodule Gradient.TokensTest do
     end
 
     test "unless" do
-      {tokens, _ast} =
-        load("conditional/Elixir.Conditional.Unless.beam", "conditional/unless.ex")
+      {tokens, _ast} = load("conditional/Elixir.Conditional.Unless.beam", "conditional/unless.ex")
 
       tokens = Tokens.drop_tokens_to_line(tokens, 2)
       opts = [end_line: -1]

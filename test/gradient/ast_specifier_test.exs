@@ -1585,8 +1585,10 @@ defmodule Gradient.AstSpecifierTest do
 
     assert {:function, 3, :name, 0, [{:clause, 3, [], [], [{:atom, 4, :module_a}]}]} =
              List.last(AstSpecifier.run_mappers(astA, tokensA))
+
     assert {:function, 9, :name, 0, [{:clause, 9, [], [], [{:atom, 10, :module_b}]}]} =
              List.last(AstSpecifier.run_mappers(astB, tokensB))
+
     assert {:function, 14, :name, 0, [{:clause, 14, [], [], [{:atom, 15, :module}]}]} =
              List.last(AstSpecifier.run_mappers(ast, tokens))
   end
