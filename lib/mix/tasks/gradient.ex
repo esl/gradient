@@ -38,6 +38,7 @@ defmodule Mix.Tasks.Gradient do
     no_gradualizer_check: :boolean,
     no_specify: :boolean,
     # checker options
+    no_deps: :boolean,
     stop_on_first_error: :boolean,
     infer: :boolean,
     # formatter options
@@ -54,30 +55,27 @@ defmodule Mix.Tasks.Gradient do
 
   @impl Mix.Task
   def run(args) do
-    IO.inspect(args, label: "Args")
-    {parsed, paths, _invalid} = OptionParser.parse(args, strict: @options)
-    # Compile the project before the analysis
-    Mix.Tasks.Compile.run([])
+    {options, usr_paths, _invalid} = OptionParser.parse(args, strict: @options)
 
-    files = get_beams_paths()
-    # IO.puts("Found files:\n #{Enum.join(Enum.concat(Map.values(files)), "\n ")}")
+    options = Enum.reduce(options, [], &prepare_option/2)
 
     Application.ensure_all_started(:gradualizer)
-
-    :gradualizer_db.import_beam_files(get_deps_beam_paths())
+    # Compile the project before the analysis
+    maybe_compile_project(options)
+    # Load dependencies
+    maybe_load_deps(options)
+    # Get beam files
+    files = get_beams_paths(usr_paths)
 
     IO.puts("Typechecking files...")
 
     res =
       files
-      |> Enum.map(fn
-        {nil, paths} ->
-          Enum.map(paths, &Gradient.type_check_file/1)
-
-        {app_path, paths} ->
-          Enum.map(paths, &Gradient.type_check_file(&1, app_path: app_path))
+      |> Stream.map(fn {app_path, paths} ->
+        Stream.map(paths, &Gradient.type_check_file(&1, [{:app_path, app_path} | options]))
       end)
-      |> Enum.concat()
+      |> Stream.concat()
+      |> Enum.to_list()
 
     if Enum.all?(res, &(&1 == :ok)) do
       IO.puts("No problems found!")
@@ -86,7 +84,44 @@ defmodule Mix.Tasks.Gradient do
     :ok
   end
 
-  def get_beams_paths() do
+  defp maybe_compile_project(options) do
+    unless options[:no_compile] || false do
+      IO.puts("Compiling project...")
+      Mix.Tasks.Compile.run([])
+    end
+  end
+
+  defp maybe_load_deps(options) do
+    unless options[:no_deps] || false do
+      IO.puts("Loading deps...")
+
+      get_deps_beam_paths()
+      |> :gradualizer_db.import_beam_files()
+    end
+  end
+
+  defp prepare_color_option(opts, pair) do
+    Keyword.update(opts, :ex_colors, [pair], fn color_opts ->
+      [pair | color_opts]
+    end)
+  end
+
+  defp prepare_option({:expr_color, color}, opts),
+    do: prepare_color_option(opts, {:expression, String.to_atom(color)})
+
+  defp prepare_option({:type_color, color}, opts),
+    do: prepare_color_option(opts, {:type, String.to_atom(color)})
+
+  defp prepare_option({:underscore_color, color}, opts),
+    do: prepare_color_option(opts, {:underscored_line, String.to_atom(color)})
+
+  defp prepare_option({:no_colors, _}, opts), do: prepare_color_option(opts, {:use_colors, false})
+
+  defp prepare_option({:fmt_location, v}, opts), do: [{:fmt_location, String.to_atom(v)} | opts]
+
+  defp prepare_option({k, v}, opts), do: [{k, v} | opts]
+
+  defp get_beams_paths([]) do
     if Mix.Project.umbrella?() do
       get_umbrella_app_beams_paths()
     else
@@ -94,7 +129,11 @@ defmodule Mix.Tasks.Gradient do
     end
   end
 
-  def get_app_beams_paths() do
+  defp get_beams_paths(paths) do
+    %{nil => paths}
+  end
+
+  defp get_app_beams_paths() do
     %{
       nil =>
         (Mix.Project.app_path() <> "/ebin/**/*.beam")
@@ -103,7 +142,7 @@ defmodule Mix.Tasks.Gradient do
     }
   end
 
-  def get_umbrella_app_beams_paths() do
+  defp get_umbrella_app_beams_paths() do
     Mix.Project.apps_paths()
     |> Enum.map(fn {app_name, app_path} ->
       app_name = Atom.to_string(app_name)
@@ -118,7 +157,7 @@ defmodule Mix.Tasks.Gradient do
     |> Map.new()
   end
 
-  def get_deps_beam_paths() do
+  defp get_deps_beam_paths() do
     (Mix.Project.build_path() <> "/lib/*/**/*.beam")
     |> Path.wildcard()
     |> Enum.map(&String.to_charlist/1)
