@@ -208,6 +208,9 @@ defmodule Gradient.ElixirFmt do
     {:ok, expr_color} = Keyword.fetch(colors, :expression)
 
     fn expression ->
+      IO.inspect(expr_color, label: "expr_color")
+      IO.inspect(expression, label: "expression")
+      IO.inspect(use_colors, label: "use_colors")
       IO.ANSI.format([expr_color, fmt.(expression)], use_colors)
     end
   end

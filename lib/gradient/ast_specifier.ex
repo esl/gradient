@@ -354,6 +354,10 @@ defmodule Gradient.AstSpecifier do
       )
       when name_atom in [:"::", :":::"] do
     # unwrap string from binary for correct type annotation matching
+    val = case val do
+      [?" | _] -> val |> to_string() |> String.trim("\"") |> to_charlist()
+      _ -> val
+    end
     {:call, anno, name, [expr, val]}
     |> pass_tokens(tokens)
   end

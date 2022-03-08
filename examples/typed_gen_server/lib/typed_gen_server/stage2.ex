@@ -1,13 +1,13 @@
 defmodule TypedGenServer.Stage2.Server do
   use GenServer
-  use GradualizerEx.TypeAnnotation
+  use Gradient.TypeAnnotation
   alias Stage2.TypedServer
 
   ## Start IEx with:
   ##   iex -S mix run --no-start
   ##
   ## Then use the following to recheck the file on any change:
-  ##   recompile(); GradualizerEx.type_check_file(:code.which( TypedGenServer.Stage2.Server ), [:infer])
+  ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage2.Server ), [:infer])
 
   @opaque t :: pid()
 
@@ -79,7 +79,7 @@ defmodule Test.TypedGenServer.Stage2.Server do
   alias TypedGenServer.Stage2.Server
 
   ## Typecheck with:
-  ##   recompile(); GradualizerEx.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [:infer])
+  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [:infer])
 
   @spec test :: any()
   def test do

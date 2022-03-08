@@ -24,10 +24,9 @@ defmodule TypedGenServer.MixProject do
   defp deps do
     [
       {:gradient, path: "../../"},
-      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:gradualizer,
-       github: "erszcz/Gradualizer", ref: "typed-gen-server", manager: :rebar3, override: true},
-      {:gradualizer_ex, github: "erszcz/gradualizer-ex", branch: "rs/wip"}
+      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false}
+      #{:gradualizer,
+       #github: "erszcz/Gradualizer", ref: "typed-gen-server", manager: :rebar3, override: true}
     ]
   end
 

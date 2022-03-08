@@ -1,12 +1,12 @@
 defmodule TypedGenServer.Stage1.Server do
   use GenServer
-  use GradualizerEx.TypeAnnotation
+  use Gradient.TypeAnnotation
 
   ## Start IEx with:
   ##   iex -S mix run --no-start
   ##
   ## Then use the following to recheck the file on any change:
-  ##   recompile(); GradualizerEx.type_check_file(:code.which( TypedGenServer.Stage1.Server ), [:infer])
+  ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage1.Server ), [:infer])
 
   ## Try switching between the definitions and see what happens
   @type message :: Contract.Echo.req() | Contract.Hello.req()
