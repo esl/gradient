@@ -69,6 +69,39 @@ defmodule Gradient.ElixirFmt do
     format_expr_type_error(expression, actual_type, expected_type, opts)
   end
 
+  def format_type_error({:nonexhaustive, anno, example}, opts) do
+    formatted_example =
+      case example do
+        [x | xs] ->
+          :lists.foldl(
+            fn a, acc ->
+              [pp_expr(a, opts), "\n\t" | acc]
+            end,
+            [pp_expr(x, opts)],
+            xs
+          )
+          |> Enum.reverse()
+
+        x ->
+          pp_expr(x, opts)
+      end
+
+    :io_lib.format(
+      "~sNonexhaustive patterns~s~s",
+      [
+        format_location(anno, :brief, opts),
+        format_location(anno, :verbose, opts),
+        case :proplists.get_value(:fmt_location, opts, :verbose) do
+          :brief ->
+            :io_lib.format(": ~s\n", formatted_example)
+
+          :verbose ->
+            :io_lib.format("\nExample values which are not covered:~n\t~s~n", [formatted_example])
+        end
+      ]
+    )
+  end
+
   def format_type_error(
         {:spec_error, :wrong_spec_name, anno, name, arity},
         opts
