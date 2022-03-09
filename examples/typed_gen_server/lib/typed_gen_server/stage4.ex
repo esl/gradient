@@ -85,6 +85,7 @@ defmodule Test.TypedGenServer.Stage4.Server do
 
   ## Typecheck with:
   ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage4.Server ), [:infer])
+  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage4.Server ), [:infer, ex_check: false])
 
   @spec test :: any()
   def test do
