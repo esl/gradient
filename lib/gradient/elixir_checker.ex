@@ -52,7 +52,7 @@ defmodule Gradient.ElixirChecker do
     |> Stream.filter(&is_fun_or_spec?/1)
     |> Stream.map(&simplify_form/1)
     |> Stream.concat()
-    |> Stream.filter(&has_line/1)
+    |> Stream.filter(&is_not_generated?/1)
     |> Enum.sort(&(elem(&1, 2) < elem(&2, 2)))
     |> Enum.reduce({nil, []}, fn
       {:fun, fna, _} = fun, {{:spec, {n, a} = sna, anno}, errors} when fna != sna ->
@@ -70,8 +70,11 @@ defmodule Gradient.ElixirChecker do
     |> Enum.map(&{file, &1})
   end
 
-  # Filter out __info__ generated function
-  def has_line(form), do: :erl_anno.line(elem(form, 2)) > 1
+  # Filter out __info__ and other generated functions with the same name pattern
+  def is_not_generated?({_, {name, _}, _}) do
+    name_str = Atom.to_string(name)
+    not (String.starts_with?(name_str, "__") and String.ends_with?(name_str, "__"))
+  end
 
   def is_fun_or_spec?({:attribute, _, :spec, _}), do: true
   def is_fun_or_spec?({:function, _, _, _, _}), do: true
