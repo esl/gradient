@@ -89,7 +89,14 @@ defmodule Test.TypedGenServer.Stage4.Server do
   @spec test :: any()
   def test do
     {:ok, srv} = Server.start_link()
-    pid = self()
+
+    pid =
+      spawn(fn ->
+        receive do
+          :unlikely -> :ok
+        end
+      end)
+
     "payload" = Server.echo(srv, "payload")
     ## This won't typecheck, since Server.echo only accepts Server.t(), that is our Server pids
     # "payload" = Server.echo(pid, "payload")
