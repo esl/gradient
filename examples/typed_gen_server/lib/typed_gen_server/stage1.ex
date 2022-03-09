@@ -49,22 +49,20 @@ defmodule TypedGenServer.Stage1.Server do
     {:ok, state}
   end
 
-  # @impl true
-  def handle_call(m, from, state) do
-    {:noreply, handle(m, from, state)}
-  end
+  @type called(a) :: {:noreply, state()}
+                   | {:reply, a, state()}
 
-  @spec handle(message(), any, any) :: state()
+  # @impl true
+  @spec handle_call(message(), GenServer.from(), state())
+          :: called(Contract.Echo.res() | Contract.Hello.res())
   ## Try breaking the pattern match, e.g. by changing 'echo_req'
-  def handle({:echo_req, payload}, from, state) do
-    GenServer.reply(from, {:echo_res, payload})
-    state
+  def handle_call({:echo_req, payload}, _from, state) do
+    {:reply, {:echo_res, payload}, state}
   end
 
   ## Try commenting out the following clause
-  def handle({:hello, name}, from, state) do
+  def handle_call({:hello, name}, _from, state) do
     IO.puts("Hello, #{name}!")
-    GenServer.reply(from, :ok)
-    state
+    {:reply, :ok, state}
   end
 end
