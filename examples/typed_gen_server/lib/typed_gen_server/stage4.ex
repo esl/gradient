@@ -7,6 +7,9 @@ defmodule TypedGenServer.Stage4.Server do
   ## Start IEx with:
   ##   iex -S mix run --no-start
   ##
+  ## Start Gradient:
+  ##   Application.ensure_all_started(:gradient)
+  ##
   ## Then use the following to recheck the file on any change:
   ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage4.Server ), [:infer])
 
