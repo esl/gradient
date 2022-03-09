@@ -13,8 +13,8 @@ defmodule TypedGenServer.Stage2.Server do
 
   ## Try switching between the definitions and see what happens
   @type message :: Contract.Echo.req() | Contract.Hello.req()
-  #@type message :: Contract.Echo.req()
-  #@type message :: {:echo_req, String.t()} | {:hello, String.t()}
+  # @type message :: Contract.Echo.req()
+  # @type message :: {:echo_req, String.t()} | {:hello, String.t()}
 
   @type state :: map()
 
@@ -26,8 +26,8 @@ defmodule TypedGenServer.Stage2.Server do
   @spec echo(t(), String.t()) :: String.t()
   # @spec echo(t(), String.t()) :: {:echo_req, String.t()}
   def echo(pid, message) do
-    case annotate_type( GenServer.call(pid, {:echo_req, message}), Contract.Echo.res() ) do
-    #case call_echo(pid, message) do
+    case annotate_type(GenServer.call(pid, {:echo_req, message}), Contract.Echo.res()) do
+      # case call_echo(pid, message) do
       ## Try changing the pattern or the returned response
       {:echo_res, response} -> response
     end
@@ -62,8 +62,8 @@ defmodule TypedGenServer.Stage2.Server do
     ## This could register {:echo_req, payload} <-> {:echo_res, payload} mapping
     ## and response type at compile time to generate call_echo() automatically.
     ## Thanks Robert!
-    #TypedServer.reply( from, {:echo_res, payload}, Contract.Echo.res() )
-    GenServer.reply( from, {:echo_res, payload} )
+    # TypedServer.reply( from, {:echo_res, payload}, Contract.Echo.res() )
+    GenServer.reply(from, {:echo_res, payload})
     state
   end
 
@@ -87,6 +87,6 @@ defmodule Test.TypedGenServer.Stage2.Server do
     pid = self()
     "payload" = Server.echo(srv, "payload")
     ## This won't typecheck, since Server.echo only accepts Server.t(), that is our Server pids
-    #"payload" = Server.echo(pid, "payload")
+    # "payload" = Server.echo(pid, "payload")
   end
 end

@@ -10,8 +10,8 @@ defmodule TypedGenServer.Stage1.Server do
 
   ## Try switching between the definitions and see what happens
   @type message :: Contract.Echo.req() | Contract.Hello.req()
-  #@type message :: Contract.Echo.req()
-  #@type message :: {:echo_req, String.t()} | {:hello, String.t()}
+  # @type message :: Contract.Echo.req()
+  # @type message :: {:echo_req, String.t()} | {:hello, String.t()}
 
   @type state :: map()
 
@@ -22,17 +22,17 @@ defmodule TypedGenServer.Stage1.Server do
   @spec echo(pid(), String.t()) :: String.t()
   # @spec echo(pid(), String.t()) :: {:echo_req, String.t()}
   def echo(pid, message) do
-    case annotate_type( GenServer.call(pid, {:echo_req, message}), Contract.Echo.res() ) do
-    #case call_echo(pid, message) do
+    case annotate_type(GenServer.call(pid, {:echo_req, message}), Contract.Echo.res()) do
+      # case call_echo(pid, message) do
       ## Try changing the pattern or the returned response
       {:echo_res, response} -> response
     end
   end
 
-  #@spec call_echo(pid(), String.t()) :: Contract.Echo.res()
-  #defp call_echo(pid, message) do
+  # @spec call_echo(pid(), String.t()) :: Contract.Echo.res()
+  # defp call_echo(pid, message) do
   #  GenServer.call(pid, {:echo_req, message})
-  #end
+  # end
 
   @spec hello(pid(), String.t()) :: :ok
   def hello(pid, name) do

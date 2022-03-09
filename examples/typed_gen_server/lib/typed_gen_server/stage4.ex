@@ -27,7 +27,7 @@ defmodule TypedGenServer.Stage4.Server do
   @spec echo(t(), String.t()) :: String.t()
   # @spec echo(t(), String.t()) :: {:echo_req, String.t()}
   def echo(pid, message) do
-    #case annotate_type(GenServer.call(pid, {:echo_req, message}), Contract.Echo.res()) do
+    # case annotate_type(GenServer.call(pid, {:echo_req, message}), Contract.Echo.res()) do
     case call_echo_req(pid, message) do
       ## Try changing the pattern or the returned response
       {:echo_res, response} -> response
@@ -38,10 +38,10 @@ defmodule TypedGenServer.Stage4.Server do
   ## thanks to using TypedServer.reply/3 instead of GenServer.reply/2.
   ## We don't have to define it!
   ## TODO: use the correct type instead of any as the second param!
-  #@spec call_echo_req(t(), any) :: Contract.Echo.res()
-  #defp call_echo_req(pid, message) do
+  # @spec call_echo_req(t(), any) :: Contract.Echo.res()
+  # defp call_echo_req(pid, message) do
   #  GenServer.call(pid, {:echo_req, message})
-  #end
+  # end
 
   @spec hello(t(), String.t()) :: :ok
   def hello(pid, name) do
@@ -64,11 +64,11 @@ defmodule TypedGenServer.Stage4.Server do
     ## TypedServer.reply/3 registers a {:echo_req, payload} <-> Contract.Echo.res() mapping
     ## and generates call_echo_req() at compile time.
     ## Thanks for the idea, @rvirding!
-    TypedServer.reply( from, {:echo_res, payload}, Contract.Echo.res() )
+    TypedServer.reply(from, {:echo_res, payload}, Contract.Echo.res())
     ## This will not typecheck - awesome!
-    #TypedServer.reply( from, {:invalid_tag, payload}, Contract.Echo.res() )
+    # TypedServer.reply( from, {:invalid_tag, payload}, Contract.Echo.res() )
     ## And this is the well known untyped equivalent.
-    #GenServer.reply(from, {:echo_res, payload})
+    # GenServer.reply(from, {:echo_res, payload})
     state
   end
 
@@ -92,6 +92,6 @@ defmodule Test.TypedGenServer.Stage4.Server do
     pid = self()
     "payload" = Server.echo(srv, "payload")
     ## This won't typecheck, since Server.echo only accepts Server.t(), that is our Server pids
-    #"payload" = Server.echo(pid, "payload")
+    # "payload" = Server.echo(pid, "payload")
   end
 end

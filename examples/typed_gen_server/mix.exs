@@ -31,7 +31,7 @@ defmodule TypedGenServer.MixProject do
   defp dialyzer do
     [
       plt_add_deps: :app_tree,
-      #ignore_warnings: "dialyzer.ignore-warnings",
+      # ignore_warnings: "dialyzer.ignore-warnings",
       flags: ~w(
         error_handling
         race_conditions
@@ -40,5 +40,4 @@ defmodule TypedGenServer.MixProject do
       )a
     ]
   end
-
 end
