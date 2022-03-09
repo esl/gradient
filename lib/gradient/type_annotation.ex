@@ -8,7 +8,7 @@ defmodule Gradient.TypeAnnotation do
   defp annotate(type_op, expr, type) do
     erlang_type = elixir_type_to_erlang(type)
     # IO.inspect(erlang_type, label: "erlang type")
-    {type_op, [], [expr, Macro.to_string(erlang_type)]}
+    {type_op, [], [expr, erlang_type]}
     # |> IO.inspect(label: "annotation node")
   end
 
