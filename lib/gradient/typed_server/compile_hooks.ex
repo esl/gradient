@@ -17,10 +17,10 @@ defmodule Gradient.TypedServer.CompileHooks do
   end
 
   def __on_definition__(env, _kind, name, args, _guards, body) do
-    if name == :handle do
-      # IO.inspect({name, env}, limit: :infinity)
-      IO.inspect({env.module, Module.get_attribute(env.module, :spec)})
-    end
+    # if name == :handle do
+    #  # IO.inspect({name, env}, limit: :infinity)
+    #  #{env.module, Module.get_attribute(env.module, :spec)} |> IO.inspect()
+    # end
 
     request_handler = Module.get_attribute(env.module, :request_handler, :handle)
 
