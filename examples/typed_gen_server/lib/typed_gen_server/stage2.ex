@@ -1,5 +1,5 @@
 defmodule TypedGenServer.Stage2.Server do
-  use GenServer
+  # use GenServer
   use Gradient.TypeAnnotation
   alias Stage2.TypedServer
 
@@ -46,12 +46,12 @@ defmodule TypedGenServer.Stage2.Server do
     end
   end
 
-  @impl true
+  # @impl true
   def init(state) do
     {:ok, state}
   end
 
-  @impl true
+  # @impl true
   def handle_call(m, from, state) do
     {:noreply, handle(m, from, state)}
   end
