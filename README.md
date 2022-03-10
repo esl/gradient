@@ -35,9 +35,19 @@ Gradient comes with a Mix task that runs the typechecker on an Elixir project:
 mix gradient
 ```
 
-And presents errors in Elixir syntax:
+And presents errors in Elixir syntax.
 
-![Result after simple app analysis](examples/simple_app_result.png)
+Here is an example with some errors:
+
+![Result of app with errors](examples/failure.png)
+
+And here is an example of an application that has no issues:
+
+![Result of app without errors](examples/success.png)
+
+Also, did we mention the analysis process is lightning fast?
+
+![Speed of analyzing app with errors](examples/failure.gif)
 
 The `examples/` folder contains example applications showing how the produced error messages look like.
 
