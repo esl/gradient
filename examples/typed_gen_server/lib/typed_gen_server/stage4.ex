@@ -12,6 +12,7 @@ defmodule TypedGenServer.Stage4.Server do
   ##
   ## Then use the following to recheck the file on any change:
   ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage4.Server ), [:infer])
+  ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage4.Server ), [:infer, ex_check: false])
 
   @opaque t :: pid()
 

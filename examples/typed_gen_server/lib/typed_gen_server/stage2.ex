@@ -27,7 +27,6 @@ defmodule TypedGenServer.Stage2.Server do
   end
 
   @spec echo(t(), String.t()) :: String.t()
-  # @spec echo(t(), String.t()) :: {:echo_req, String.t()}
   def echo(pid, message) do
     case annotate_type(GenServer.call(pid, {:echo_req, message}), Contract.Echo.res()) do
       # case call_echo(pid, message) do
@@ -81,6 +80,9 @@ end
 defmodule Test.TypedGenServer.Stage2.Server do
   alias TypedGenServer.Stage2.Server
 
+  ## Run with:
+  ##   recompile(); Test.TypedGenServer.Stage2.Server.test()
+  ##
   ## Typecheck with:
   ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [:infer])
   ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [:infer, ex_check: false])

@@ -23,7 +23,6 @@ defmodule TypedGenServer.Stage1.Server do
   end
 
   @spec echo(pid(), String.t()) :: String.t()
-  # @spec echo(pid(), String.t()) :: {:echo_req, String.t()}
   def echo(pid, message) do
     case annotate_type(GenServer.call(pid, {:echo_req, message}), Contract.Echo.res()) do
       # case call_echo(pid, message) do
