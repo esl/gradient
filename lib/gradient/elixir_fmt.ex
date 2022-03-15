@@ -13,6 +13,8 @@ defmodule Gradient.ElixirFmt do
 
   - `ex_fmt_type_fun`: function to pretty print an type AST in Elixir `(abstract_type() -> iodata())`.
 
+  - `{fancy, boolean()}`: do not use fancy error messages, default: true
+
   - Gradualizer options, but some of them are overwritten by Gradient.
   """
   @behaviour Gradient.Fmt
@@ -244,13 +246,20 @@ defmodule Gradient.ElixirFmt do
   @spec try_highlight_in_context(Types.abstract_expr(), options()) ::
           {:ok, iodata()} | {:error, term()}
   def try_highlight_in_context(expression, opts) do
-    forms = Keyword.get(opts, :forms)
-
-    with :ok <- has_location?(expression),
-         {:ok, path} <- get_ex_file_path(forms),
+    with :ok <- print_fancy?(opts),
+         :ok <- has_location?(expression),
+         {:ok, path} <- get_ex_file_path(opts[:forms]),
          {:ok, code} <- File.read(path) do
       code_lines = String.split(code, ~r/\R/)
       {:ok, highlight_in_context(expression, code_lines, opts)}
+    end
+  end
+
+  def print_fancy?(opts) do
+    if Keyword.get(opts, :fancy, true) do
+      :ok
+    else
+      {:error, "The fancy mode is turn off"}
     end
   end
 

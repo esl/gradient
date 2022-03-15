@@ -16,7 +16,7 @@ defmodule Mix.Tasks.Gradient do
     * `--stop_on_first_error` - stop type checking at the first error
     * `--infer` - infer type information from literals and other language
       constructs,
-    * `--verbose` - show what Gradient is doing
+    * `--verbose` - show what Gradualizer is doing
     * `--no-fancy` - do not use fancy error messages
     * `--fmt-location none` - do not display location for easier comparison
     * `--fmt-location brief` - display location for machine processing 
