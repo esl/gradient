@@ -58,7 +58,7 @@ defmodule Mix.Tasks.Gradient do
 
   @impl Mix.Task
   def run(args) do
-    {options, usr_paths, _invalid} = OptionParser.parse(args, strict: @options)
+    {options, user_paths, _invalid} = OptionParser.parse(args, strict: @options)
 
     options = Enum.reduce(options, [], &prepare_option/2)
 
@@ -67,8 +67,8 @@ defmodule Mix.Tasks.Gradient do
     maybe_compile_project(options)
     # Load dependencies
     maybe_load_deps(options)
-    # Get beam files
-    files = get_beams_paths(usr_paths)
+    # Get paths to files
+    files = get_paths(user_paths)
 
     IO.puts("Typechecking files...")
 
@@ -131,7 +131,10 @@ defmodule Mix.Tasks.Gradient do
 
   defp prepare_option({k, v}, opts), do: [{k, v} | opts]
 
-  defp get_beams_paths([]) do
+  defp get_paths([]), do: get_beam_paths()
+  defp get_paths(paths), do: %{nil => get_paths_from_dir(paths)}
+
+  defp get_beam_paths() do
     if Mix.Project.umbrella?() do
       get_umbrella_app_beams_paths()
     else
@@ -139,8 +142,16 @@ defmodule Mix.Tasks.Gradient do
     end
   end
 
-  defp get_beams_paths(paths) do
-    %{nil => paths}
+  defp get_paths_from_dir(paths) do
+    paths
+    |> Enum.map(fn p ->
+      if File.dir?(p) do
+        Path.wildcard(Path.join([p, "*.ex"]))
+      else
+        [p]
+      end
+    end)
+    |> Enum.concat()
   end
 
   defp get_app_beams_paths() do
