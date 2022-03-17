@@ -9,7 +9,6 @@ defmodule Mix.Tasks.GradientTest do
   @s_wrong_ret_beam "Elixir.SWrongRet.beam"
   @s_wrong_ret_ex "s_wrong_ret.ex"
 
-  #@tag :skip
   test "--no-compile option" do
     info = "Compiling project..."
 
@@ -155,6 +154,13 @@ defmodule Mix.Tasks.GradientTest do
     # FIXME provide implementation
   end
 
+  test "--code-path option" do
+    ex_file = "wrong_ret.ex"
+    output = run_task(@type_path, ["--no-compile", "--code-path", ex_file, "--", @s_wrong_ret_beam])
+    assert not String.contains?(output, @s_wrong_ret_ex)
+    assert String.contains?(output, ex_file)
+  end
+
   def run_task(rel_path, args) do
     run_in_path(rel_path, fn ->
       capture_io(fn -> Mix.Tasks.Gradient.run(args) end)
@@ -167,14 +173,5 @@ defmodule Mix.Tasks.GradientTest do
     res = fun.()
     File.cd(cwd)
     res
-  end
-
-  def was_dir?(dir) do
-    if File.dir?(dir) do
-      :os.cmd(String.to_charlist("rm -Rf " <> dir))
-      true
-    else
-      false
-    end
   end
 end
