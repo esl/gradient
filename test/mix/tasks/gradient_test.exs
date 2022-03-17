@@ -9,13 +9,18 @@ defmodule Mix.Tasks.GradientTest do
   @s_wrong_ret_beam "Elixir.SWrongRet.beam"
   @s_wrong_ret_ex "s_wrong_ret.ex"
 
+  #@tag :skip
   test "--no-compile option" do
-    build_dir = Path.join(@type_path, "_build")
-    run_task(@type_path, [@s_wrong_ret_beam])
-    assert was_dir?(build_dir)
+    info = "Compiling project..."
 
-    run_task(@type_path, ["--no-compile", "--", @s_wrong_ret_beam])
-    assert not was_dir?(build_dir)
+    output = run_task(@type_path, [@s_wrong_ret_beam])
+    assert String.contains?(output, info)
+
+    dir = Path.join(@type_path, "_build")
+    :os.cmd(String.to_charlist("rm -Rf " <> dir))
+
+    output = run_task(@type_path, ["--no-compile", "--", @s_wrong_ret_beam])
+    assert not String.contains?(output, info)
   end
 
   test "path to the beam file" do
