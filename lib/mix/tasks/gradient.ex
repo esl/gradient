@@ -42,16 +42,15 @@ defmodule Mix.Tasks.Gradient do
     no_ex_check: :boolean,
     no_gradualizer_check: :boolean,
     no_specify: :boolean,
-    code_path: :string,
     # checker options
+    code_path: :string,
     no_deps: :boolean,
     stop_on_first_error: :boolean,
     infer: :boolean,
-    # formatter options
     verbose: :boolean,
+    # formatter options
     no_fancy: :boolean,
     fmt_location: :string,
-    quiet: :boolean,
     # colors options
     no_colors: :boolean,
     expr_color: :string,
