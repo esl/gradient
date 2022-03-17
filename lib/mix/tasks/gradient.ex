@@ -1,7 +1,8 @@
 defmodule Mix.Tasks.Gradient do
   @moduledoc ~s"""
-  This task compiles the mix project, collects files with dependencies, specify ast tree,
-  and run Elixir checks and Gradualizer.
+  This task compiles the mix project, collects files with dependencies, specifies Erlang AST,
+  and type checks the Elixir code. For type checking, Gradualizer is used, but Gradient provides
+  its own checker for Elixir-specific cases.
 
   ## Command-line options
 
@@ -29,9 +30,9 @@ defmodule Mix.Tasks.Gradient do
     * `--underscore-color ansicode` - set color for the underscored invalid code part
       in the fancy messages
 
-  Warning flags passed to this task are passed on to :gradualizer.
+  Warning! Flags passed to this task are passed on to Gradualizer.
   """
-  @shortdoc "Runs gradient with default or project-defined flags"
+  @shortdoc "Runs gradient with default or given options"
 
   use Mix.Task
 
