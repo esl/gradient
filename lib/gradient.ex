@@ -66,8 +66,6 @@ defmodule Gradient do
 
   defp maybe_specify_forms(forms, opts) do
     unless opts[:no_specify] do
-      IO.puts("Specifying froms...")
-
       forms
       |> put_code_path(opts)
       |> AstSpecifier.specify()

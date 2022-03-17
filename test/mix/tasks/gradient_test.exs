@@ -103,14 +103,16 @@ defmodule Mix.Tasks.GradientTest do
     assert not String.contains?(output, ex_spec_error_msg)
   end
 
+  @tag if(System.version() >= "1.13", do: :skip, else: :ok)
   test "--no-specify option" do
-    info = "Specifying froms..."
-
     output = run_task(@type_path, ["--no-compile", "--", @s_wrong_ret_beam])
-    assert String.contains?(output, info)
+    assert String.contains?(output, "on line 3")
+    assert String.contains?(output, "on line 6")
 
     output = run_task(@type_path, ["--no-compile", "--no-specify", "--", @s_wrong_ret_beam])
-    assert not String.contains?(output, info)
+    assert String.contains?(output, "on line 0")
+    assert not String.contains?(output, "on line 3")
+    assert not String.contains?(output, "on line 6")
   end
 
   test "--stop-on-first-error option" do
@@ -156,7 +158,10 @@ defmodule Mix.Tasks.GradientTest do
 
   test "--code-path option" do
     ex_file = "wrong_ret.ex"
-    output = run_task(@type_path, ["--no-compile", "--code-path", ex_file, "--", @s_wrong_ret_beam])
+
+    output =
+      run_task(@type_path, ["--no-compile", "--code-path", ex_file, "--", @s_wrong_ret_beam])
+
     assert not String.contains?(output, @s_wrong_ret_ex)
     assert String.contains?(output, ex_file)
   end
