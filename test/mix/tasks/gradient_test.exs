@@ -3,6 +3,8 @@ defmodule Mix.Tasks.GradientTest do
 
   import ExUnit.CaptureIO
 
+  @no_problems_msg "No problems found!"
+
   @examples_path "test/examples/"
   @type_path Path.join([@examples_path, "type"])
 
@@ -153,7 +155,13 @@ defmodule Mix.Tasks.GradientTest do
   end
 
   test "--infer option" do
-    # FIXME provide implementation
+    beam = "Elixir.ListInfer.beam"
+    output = run_task(@type_path, ["--no-compile", "--", beam])
+    assert String.contains?(output, @no_problems_msg)
+
+    output = run_task(@type_path, ["--no-compile", "--infer", "--", beam])
+    assert not String.contains?(output, @no_problems_msg)
+    assert String.contains?(output, "list_infer.ex: The variable on line 4")
   end
 
   test "--code-path option" do
