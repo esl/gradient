@@ -25,4 +25,8 @@ gradient-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 
+# Beam files compiled from examples
+test/examples/_build/
+
+# MacOS DS_Store
 .DS_Store
