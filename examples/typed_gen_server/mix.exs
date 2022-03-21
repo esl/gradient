@@ -26,15 +26,14 @@ defmodule TypedGenServer.MixProject do
       {:gradient, path: "../../"},
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
       {:gradualizer,
-       github: "erszcz/Gradualizer", ref: "typed-gen-server", manager: :rebar3, override: true},
-      {:gradualizer_ex, github: "erszcz/gradualizer-ex", branch: "rs/wip"}
+       github: "erszcz/Gradualizer", ref: "typed-gen-server", manager: :rebar3, override: true}
     ]
   end
 
   defp dialyzer do
     [
       plt_add_deps: :app_tree,
-      #ignore_warnings: "dialyzer.ignore-warnings",
+      # ignore_warnings: "dialyzer.ignore-warnings",
       flags: ~w(
         error_handling
         race_conditions
@@ -43,5 +42,4 @@ defmodule TypedGenServer.MixProject do
       )a
     ]
   end
-
 end
