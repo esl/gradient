@@ -32,7 +32,7 @@ defmodule Gradient.ElixirCheckerTest do
     ast = load("Elixir.SpecAfterSpec.beam")
 
     assert [
-             {_, {:spec_error, :spec_after_spec, 3, :convert_a, 1}}
+             {_, {:spec_error, :spec_after_spec, 3, :convert, 1}}
            ] = ElixirChecker.check(ast, [])
   end
 end

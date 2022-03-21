@@ -1,15 +1,19 @@
 ExUnit.start()
 
-defmodule TestHelper do
-  def compile_test_examples(examples_path) do
-    ex_blob = examples_path <> "/*.ex"
+defmodule ExamplesCompiler do
+  @build_path "test/examples/_build/"
 
-    for path <- Path.wildcard(ex_blob) do
-      System.cmd("elixirc", ["-o", examples_path, path])
+  def compile(pattern) do
+    case File.mkdir(@build_path) do
+      :ok ->
+        paths = Path.wildcard(pattern)
+        Kernel.ParallelCompiler.compile_to_path(paths, @build_path)
+        :ok
+
+      _ ->
+        :error
     end
   end
 end
 
-# TestHelper.compile_test_examples("test/examples")
-# TestHelper.compile_test_examples("test/examples/basic")
-# TestHelper.compile_test_examples("test/examples/conditional")
+ExamplesCompiler.compile("test/examples/**/*.ex")

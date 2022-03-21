@@ -1,4 +1,4 @@
-defmodule RecordEx do
+defmodule RecordType do
   require Record
   Record.defrecord(:user, name: "john", age: 25)
 

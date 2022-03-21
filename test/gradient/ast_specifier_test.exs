@@ -19,7 +19,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "integer" do
-      {tokens, ast} = load("basic/Elixir.Basic.Int.beam", "basic/int.ex")
+      {tokens, ast} = load("Elixir.Basic.Int.beam", "basic/int.ex")
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -29,7 +29,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "float" do
-      {tokens, ast} = load("basic/Elixir.Basic.Float.beam", "basic/float.ex")
+      {tokens, ast} = load("Elixir.Basic.Float.beam", "basic/float.ex")
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
       assert {:function, 2, :float, 0, [{:clause, 2, [], [], [{:float, 2, 0.12}]}]} = inline
@@ -38,7 +38,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "atom" do
-      {tokens, ast} = load("basic/Elixir.Basic.Atom.beam", "basic/atom.ex")
+      {tokens, ast} = load("Elixir.Basic.Atom.beam", "basic/atom.ex")
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -48,7 +48,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "char" do
-      {tokens, ast} = load("basic/Elixir.Basic.Char.beam", "basic/char.ex")
+      {tokens, ast} = load("Elixir.Basic.Char.beam", "basic/char.ex")
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -58,7 +58,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "charlist" do
-      {tokens, ast} = load("basic/Elixir.Basic.Charlist.beam", "basic/charlist.ex")
+      {tokens, ast} = load("Elixir.Basic.Charlist.beam", "basic/charlist.ex")
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -83,7 +83,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "string" do
-      {tokens, ast} = load("basic/Elixir.Basic.String.beam", "basic/string.ex")
+      {tokens, ast} = load("Elixir.Basic.String.beam", "basic/string.ex")
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -209,7 +209,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "binary" do
-      {tokens, ast} = load("basic/Elixir.Basic.Binary.beam", "basic/binary.ex")
+      {tokens, ast} = load("Elixir.Basic.Binary.beam", "basic/binary.ex")
 
       [complex2, complex, bin_block, bin | _] =
         AstSpecifier.run_mappers(ast, tokens)
@@ -279,7 +279,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "case conditional" do
-      {tokens, ast} = load("conditional/Elixir.Conditional.Case.beam", "conditional/case.ex")
+      {tokens, ast} = load("Elixir.Conditional.Case.beam", "conditional/case.ex")
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -309,7 +309,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "if conditional" do
-      {tokens, ast} = load("conditional/Elixir.Conditional.If.beam", "conditional/if.ex")
+      {tokens, ast} = load("Elixir.Conditional.If.beam", "conditional/if.ex")
 
       [block, inline, if_ | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -360,7 +360,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "unless conditional" do
-      {tokens, ast} = load("conditional/Elixir.Conditional.Unless.beam", "conditional/unless.ex")
+      {tokens, ast} = load("Elixir.Conditional.Unless.beam", "conditional/unless.ex")
 
       [block | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -385,7 +385,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "cond conditional" do
-      {tokens, ast} = load("conditional/Elixir.Conditional.Cond.beam", "conditional/cond.ex")
+      {tokens, ast} = load("Elixir.Conditional.Cond.beam", "conditional/cond.ex")
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -456,7 +456,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "with conditional" do
-      {tokens, ast} = load("conditional/Elixir.Conditional.With.beam", "conditional/with.ex")
+      {tokens, ast} = load("Elixir.Conditional.With.beam", "conditional/with.ex")
 
       [block | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -586,7 +586,7 @@ defmodule Gradient.AstSpecifierTest do
   end
 
   test "guards" do
-    {tokens, ast} = load("conditional/Elixir.Conditional.Guard.beam", "conditional/guards.ex")
+    {tokens, ast} = load("Elixir.Conditional.Guard.beam", "conditional/guards.ex")
 
     [guarded_case, guarded_fun | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -711,42 +711,42 @@ defmodule Gradient.AstSpecifierTest do
 
     [block | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
-    assert {:function, 11, :lc_complex, 0,
+    assert {:function, 10, :lc_complex, 0,
             [
-              {:clause, 11, [], [],
+              {:clause, 10, [], [],
                [
-                 {:call, 12, {:remote, 12, {:atom, 12, :lists}, {:atom, 12, :reverse}},
+                 {:call, 11, {:remote, 11, {:atom, 11, :lists}, {:atom, 11, :reverse}},
                   [
-                    {:call, 12, {:remote, 12, {:atom, 12, Enum}, {:atom, 12, :reduce}},
+                    {:call, 11, {:remote, 11, {:atom, 11, Enum}, {:atom, 11, :reduce}},
                      [
-                       {:map, 12,
+                       {:map, 11,
                         [
-                          {:map_field_assoc, 12, {:atom, 12, :__struct__}, {:atom, 12, Range}},
-                          {:map_field_assoc, 12, {:atom, 12, :first}, {:integer, 12, 0}},
-                          {:map_field_assoc, 12, {:atom, 12, :last}, {:integer, 12, 5}},
-                          {:map_field_assoc, 12, {:atom, 12, :step}, {:integer, 12, 1}}
+                          {:map_field_assoc, 11, {:atom, 11, :__struct__}, {:atom, 11, Range}},
+                          {:map_field_assoc, 11, {:atom, 11, :first}, {:integer, 11, 0}},
+                          {:map_field_assoc, 11, {:atom, 11, :last}, {:integer, 11, 5}},
+                          {:map_field_assoc, 11, {:atom, 11, :step}, {:integer, 11, 1}}
                         ]},
-                       {nil, 12},
-                       {:fun, 12,
+                       {nil, 11},
+                       {:fun, 11,
                         {:clauses,
                          [
-                           {:clause, 12, [{:var, 12, :_n@1}, {:var, 12, :_@1}], [],
+                           {:clause, 11, [{:var, 11, :_n@1}, {:var, 11, :_@1}], [],
                             [
-                              {:case, [generated: true, location: 12],
-                               {:op, 12, :==,
-                                {:op, 12, :rem, {:var, 12, :_n@1}, {:integer, 12, 3}},
-                                {:integer, 12, 0}},
+                              {:case, [generated: true, location: 11],
+                               {:op, 11, :==,
+                                {:op, 11, :rem, {:var, 11, :_n@1}, {:integer, 11, 3}},
+                                {:integer, 11, 0}},
                                [
-                                 {:clause, [generated: true, location: 12],
-                                  [{:atom, [generated: true, location: 12], true}], [],
+                                 {:clause, [generated: true, location: 11],
+                                  [{:atom, [generated: true, location: 11], true}], [],
                                   [
-                                    {:cons, 12,
-                                     {:op, 12, :*, {:var, 12, :_n@1}, {:var, 12, :_n@1}},
-                                     {:var, 12, :_@1}}
+                                    {:cons, 11,
+                                     {:op, 11, :*, {:var, 11, :_n@1}, {:var, 11, :_n@1}},
+                                     {:var, 11, :_@1}}
                                   ]},
-                                 {:clause, [generated: true, location: 12],
-                                  [{:atom, [generated: true, location: 12], false}], [],
-                                  [{:var, 12, :_@1}]}
+                                 {:clause, [generated: true, location: 11],
+                                  [{:atom, [generated: true, location: 11], false}], [],
+                                  [{:var, 11, :_@1}]}
                                ]}
                             ]}
                          ]}}
@@ -1044,7 +1044,7 @@ defmodule Gradient.AstSpecifierTest do
   end
 
   test "struct" do
-    {tokens, ast} = load("struct/Elixir.StructEx.beam", "struct/struct.ex")
+    {tokens, ast} = load("Elixir.StructEx.beam", "struct/struct.ex")
 
     [get2, get, update, empty, struct | _] =
       AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
@@ -1161,7 +1161,7 @@ defmodule Gradient.AstSpecifierTest do
   end
 
   test "record" do
-    {tokens, ast} = load("record/Elixir.RecordEx.beam", "record/record.ex")
+    {tokens, ast} = load("Elixir.RecordEx.beam", "record/record.ex")
 
     [update, init, empty, macro3, macro2, macro1 | _] =
       AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
@@ -1294,7 +1294,7 @@ defmodule Gradient.AstSpecifierTest do
   end
 
   test "typespec when" do
-    {tokens, ast} = load("/Elixir.TypespecWhen.beam", "/typespec_when.ex")
+    {tokens, ast} = load("Elixir.TypespecWhen.beam", "/typespec_when.ex")
 
     [spec | _] =
       AstSpecifier.run_mappers(ast, tokens)
@@ -1324,7 +1324,7 @@ defmodule Gradient.AstSpecifierTest do
   end
 
   test "typespec behavior" do
-    {tokens, ast} = load("/Elixir.TypespecBeh.beam", "/typespec_beh.ex")
+    {tokens, ast} = load("Elixir.TypespecBeh.beam", "/typespec_beh.ex")
 
     [callback1, callback2 | _] =
       AstSpecifier.run_mappers(ast, tokens)
