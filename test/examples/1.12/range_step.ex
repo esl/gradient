@@ -1,4 +1,4 @@
-defmodule RangeEx do
+defmodule RangeStep do
   def range do
     1..12
   end

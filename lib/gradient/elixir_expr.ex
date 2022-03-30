@@ -405,7 +405,7 @@ defmodule Gradient.ElixirExpr do
   defp bin_pp_value(val), do: pp_expr(val)
 
   defp bin_set_value("", value), do: value
-  defp bin_set_value(sufix, value), do: value <> "::" <> sufix
+  defp bin_set_value(sufix, value), do: "(" <> value <> ")::" <> sufix
 
   defp bin_set_size("", :default), do: ""
   defp bin_set_size("", {:integer, _, size}), do: Integer.to_string(size)

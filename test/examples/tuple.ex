@@ -1,4 +1,4 @@
-defmodule Tuple do
+defmodule TupleEx do
   def tuple do
     {:ok, 12}
   end

@@ -101,7 +101,7 @@ defmodule Gradient.AstSpecifierTest do
     end
 
     test "tuple" do
-      {tokens, ast} = load("Elixir.Tuple.beam", "tuple.ex")
+      {tokens, ast} = load("Elixir.TupleEx.beam", "tuple.ex")
 
       [tuple_in_str2, tuple_in_str, tuple_in_list, _list_in_tuple, tuple | _] =
         AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
@@ -625,8 +625,29 @@ defmodule Gradient.AstSpecifierTest do
             ]} = guarded_case
   end
 
+  @tag :ex_lt_1_12
   test "range" do
-    {tokens, ast} = load("Elixir.RangeEx.beam", "range.ex")
+    {tokens, ast} = load("Elixir.SimpleRange.beam", "1.11/simple_range.ex")
+
+    [range | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
+
+    assert {:function, 2, :range, 0,
+            [
+              {:clause, 2, [], [],
+               [
+                 {:map, 3,
+                  [
+                    {:map_field_assoc, 3, {:atom, 3, :__struct__}, {:atom, 3, Range}},
+                    {:map_field_assoc, 3, {:atom, 3, :first}, {:integer, 3, 1}},
+                    {:map_field_assoc, 3, {:atom, 3, :last}, {:integer, 3, 12}}
+                  ]}
+               ]}
+            ]} = range
+  end
+
+  @tag :ex_gt_1_11
+  test "step range" do
+    {tokens, ast} = load("Elixir.RangeStep.beam", "1.12/range_step.ex")
 
     [to_list, match_range, rev_range_step, range_step, range | _] =
       AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
@@ -711,6 +732,24 @@ defmodule Gradient.AstSpecifierTest do
 
     [block | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
+    range =
+      if System.version() >= "1.12" do
+        {:map, 11,
+         [
+           {:map_field_assoc, 11, {:atom, 11, :__struct__}, {:atom, 11, Range}},
+           {:map_field_assoc, 11, {:atom, 11, :first}, {:integer, 11, 0}},
+           {:map_field_assoc, 11, {:atom, 11, :last}, {:integer, 11, 5}},
+           {:map_field_assoc, 11, {:atom, 11, :step}, {:integer, 11, 1}}
+         ]}
+      else
+        {:map, 11,
+         [
+           {:map_field_assoc, 11, {:atom, 11, :__struct__}, {:atom, 11, Range}},
+           {:map_field_assoc, 11, {:atom, 11, :first}, {:integer, 11, 0}},
+           {:map_field_assoc, 11, {:atom, 11, :last}, {:integer, 11, 5}}
+         ]}
+      end
+
     assert {:function, 10, :lc_complex, 0,
             [
               {:clause, 10, [], [],
@@ -719,13 +758,7 @@ defmodule Gradient.AstSpecifierTest do
                   [
                     {:call, 11, {:remote, 11, {:atom, 11, Enum}, {:atom, 11, :reduce}},
                      [
-                       {:map, 11,
-                        [
-                          {:map_field_assoc, 11, {:atom, 11, :__struct__}, {:atom, 11, Range}},
-                          {:map_field_assoc, 11, {:atom, 11, :first}, {:integer, 11, 0}},
-                          {:map_field_assoc, 11, {:atom, 11, :last}, {:integer, 11, 5}},
-                          {:map_field_assoc, 11, {:atom, 11, :step}, {:integer, 11, 1}}
-                        ]},
+                       ^range,
                        {nil, 11},
                        {:fun, 11,
                         {:clauses,
@@ -1049,6 +1082,8 @@ defmodule Gradient.AstSpecifierTest do
     [get2, get, update, empty, struct | _] =
       AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
+    anno_line_17 = if(System.version() >= "1.12", do: [generated: true, location: 17], else: 17)
+
     assert {:function, 8, :update, 0,
             [
               {:clause, 8, [], [],
@@ -1070,18 +1105,17 @@ defmodule Gradient.AstSpecifierTest do
                         {:map, 17,
                          [
                            {:map_field_exact, 17, {:atom, [generated: true, location: 17], :x},
-                            {:var, [generated: true, location: 17], :_@1}}
+                            {:var, ^anno_line_17, :_@1}}
                          ]}
-                      ], [], [{:var, [generated: true, location: 17], :_@1}]},
-                     {:clause, [generated: true, location: 17],
-                      [{:var, [generated: true, location: 17], :_@1}],
+                      ], [], [{:var, ^anno_line_17, :_@1}]},
+                     {:clause, [generated: true, location: 17], [{:var, ^anno_line_17, :_@1}],
                       [
                         [
                           {:call, [generated: true, location: 17],
                            {:remote, [generated: true, location: 17],
                             {:atom, [generated: true, location: 17], :erlang},
                             {:atom, [generated: true, location: 17], :is_map}},
-                           [{:var, [generated: true, location: 17], :_@1}]}
+                           [{:var, ^anno_line_17, :_@1}]}
                         ]
                       ],
                       [
@@ -1091,16 +1125,15 @@ defmodule Gradient.AstSpecifierTest do
                             [
                               {:atom, 17, :badkey},
                               {:atom, 17, :x},
-                              {:var, [generated: true, location: 17], :_@1}
+                              {:var, ^anno_line_17, :_@1}
                             ]}
                          ]}
                       ]},
-                     {:clause, [generated: true, location: 17],
-                      [{:var, [generated: true, location: 17], :_@1}], [],
+                     {:clause, [generated: true, location: 17], [{:var, ^anno_line_17, :_@1}], [],
                       [
                         {:call, [generated: true, location: 17],
-                         {:remote, [generated: true, location: 17],
-                          {:var, [generated: true, location: 17], :_@1}, {:atom, 17, :x}}, []}
+                         {:remote, [generated: true, location: 17], {:var, ^anno_line_17, :_@1},
+                          {:atom, 17, :x}}, []}
                       ]}
                    ]}}
                ]}
