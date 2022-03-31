@@ -627,7 +627,7 @@ defmodule Gradient.AstSpecifierTest do
 
   @tag :ex_lt_1_12
   test "range" do
-    {tokens, ast} = load("Elixir.SimpleRange.beam", "1.11/simple_range.ex")
+    {tokens, ast} = load("Elixir.SimpleRange.beam", "simple_range.ex")
 
     [range | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
@@ -856,6 +856,7 @@ defmodule Gradient.AstSpecifierTest do
                                    {:bin_element, 7, {:string, 7, 'oops'}, :default, :default}
                                  ]}
                               ]}
+                             | _
                            ]}
                         ]},
                        {:clause, [generated: true, location: 4],
@@ -983,6 +984,7 @@ defmodule Gradient.AstSpecifierTest do
                               :default, :default}
                            ]}
                         ]}
+                       | _
                      ]}
                   ], [], [],
                   [
@@ -1005,6 +1007,7 @@ defmodule Gradient.AstSpecifierTest do
                           {:cons, 52, {:integer, 52, 49},
                            {:cons, 52, {:integer, 52, 50}, {nil, 52}}}
                         ]}
+                       | _
                      ]},
                     {:integer, 53, 1}
                   ], [], [], [{:op, 55, :-, {:integer, 55, 1}}]}

@@ -106,7 +106,7 @@ defmodule Gradient.ElixirExpr do
     "reraise " <> pp_expr(var) <> ", " <> pp_expr(var_stacktrace)
   end
 
-  def pp_expr({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :error}}, [arg]}) do
+  def pp_expr({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :error}}, [arg | _]}) do
     "raise " <> pp_raise_arg(arg)
   end
 

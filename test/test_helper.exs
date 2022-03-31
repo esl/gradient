@@ -28,8 +28,10 @@ defmodule ExamplesCompiler do
     case @version do
       1.11 ->
         [:ex_gt_1_11, :ex_lt_1_11]
+
       1.12 ->
         [:ex_lt_1_11, :ex_lt_1_12, :ex_gt_1_12, :ex_gt_1_13]
+
       1.13 ->
         [:ex_lt_1_11, :ex_lt_1_12, :ex_lt_1_13, :ex_gt_1_13]
     end
@@ -37,10 +39,12 @@ defmodule ExamplesCompiler do
 
   defp filter_too_new_files(paths) do
     case @version do
-      1.13 -> 
+      1.13 ->
         paths
+
       1.12 ->
         drop_versions(paths, ["1.13"])
+
       1.11 ->
         drop_versions(paths, ["1.12", "1.13"])
     end
@@ -54,4 +58,4 @@ end
 ExamplesCompiler.compile("test/examples/**/*.ex")
 exlcude = ExamplesCompiler.excluded_version_tags()
 
-ExUnit.start([exclude: exlcude])
+ExUnit.start(exclude: exlcude)
