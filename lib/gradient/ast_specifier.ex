@@ -5,43 +5,6 @@ defmodule Gradient.AstSpecifier do
   it to forms that cannot be produced from Elixir directly.
 
   FIXME Optimize tokens searching. Find out why some tokens are dropped 
-
-  NOTE Mapper implements:
-  - function [x]
-  - fun [x] 
-  - fun @spec [x]
-  - clause [x] 
-  - case [x]
-  - block [X] 
-  - pipe [x]
-  - call [x] (remote [X])
-  - match [x]
-  - op [x]
-  - integer [x]
-  - float [x]
-  - string [x]
-  - charlist [x]
-  - tuple [X]
-  - var [X]
-  - list [X] 
-  - keyword [X]
-  - binary [X] 
-  - map [X] 
-  - try [x] 
-  - receive [X] 
-  - record [X] elixir don't use it record_field, record_index, record_pattern, record
-  - named_fun [ ] is named_fun used by elixir? 
-
-  NOTE Elixir expressions to handle or test:
-  - list comprehension [X]
-  - binary [X]
-  - maps [X]
-  - struct [X]
-  - pipe [X] TODO decide how to search for line in reversed form order
-  - range [X] 
-  - receive [X] 
-  - record [X] 
-  - guards [X]
   """
 
   import Gradient.Tokens
