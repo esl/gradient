@@ -48,9 +48,30 @@ defmodule Gradient.AstData do
       ]}}
   end
 
-  @spec ast_data() :: [{Types.abstract_expr(), Types.tokens(), Types.options()}]
+  defp pipe_with_fun_converted_to_erl_equivalent do
+    {__ENV__.function,
+     {__ENV__.line,
+      elixir_to_ast do
+        :ok
+        |> elem(0)
+      end, __ENV__.line},
+     {:call, 56, {:remote, 56, {:atom, 56, :erlang}, {:atom, 56, :element}},
+      [{:integer, 56, 1}, {:atom, 55, :ok}]}}
+  end
+
+  defp example do
+    {__ENV__.function,
+     {__ENV__.line,
+      elixir_to_ast do
+        :ok
+      end, __ENV__.line}, _expected = {}}
+  end
+
+  @spec ast_data() :: [
+          {atom(), {Types.abstract_expr(), Types.tokens(), Types.options()}, tuple()}
+        ]
   def ast_data do
-    [pipe()]
+    [pipe(), pipe_with_fun_converted_to_erl_equivalent()]
     |> Enum.map(fn {{name, _}, {start_line, ast, end_line}, expected} ->
       tokens = Gradient.Tokens.drop_tokens_to_line(@tokens, start_line)
       {name, {ast, tokens, [line: start_line, end_line: end_line]}, expected}

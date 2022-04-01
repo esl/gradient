@@ -328,12 +328,9 @@ defmodule Gradient.AstSpecifier do
   def mapper({:call, anno, name, args}, tokens, opts) do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
-
     name = remote_mapper(name)
 
-    {opts, args} = call_with_pipe_op(tokens, args, opts)
-
-    {args, tokens} = context_mapper_fold(args, tokens, opts)
+    {args, tokens} = call_args_mapper(args, tokens, name, opts)
 
     {:call, anno, name, args}
     |> pass_tokens(tokens)
@@ -388,8 +385,7 @@ defmodule Gradient.AstSpecifier do
   end
 
   def mapper({type, anno, value}, tokens, opts)
-      when type in [:atom, :char, :float, :integer, :string, :bin] do
-    # TODO check what happened for :string
+      when type in @lineless_forms do
     {:ok, line} = Keyword.fetch(opts, :line)
     anno = :erl_anno.set_line(line, anno)
     anno = :erl_anno.set_generated(Keyword.get(opts, :generated, false), anno)
@@ -594,6 +590,29 @@ defmodule Gradient.AstSpecifier do
     end
   end
 
+  @doc """
+    Update location in call args with the support to the pipe operator.
+  """
+  @spec call_args_mapper([abstract_expr()], tokens(), abstract_expr(), options()) ::
+          {options, [abstract_expr]}
+  def call_args_mapper(args, tokens, name, opts) do
+    # Check whether the call is after |> operator. If true, the parent location is set to 0
+    # and the first arg location is cleared (if this arg is a lineless form).
+    # NOTE If the call is to function from :erlang module then the first arg is swapped
+    # with the second one because in Erlang the data is mostly in the second place.
+    with true <- is_pipe_op?(tokens, opts),
+         swapped? <- is_call_to_erlang?(name),
+         [fst_arg | tail_args] <- maybe_swap_args(swapped?, args),
+         true <- is_lineless?(fst_arg) do
+      {arg, tokens} = mapper(clear_location(fst_arg), tokens, Keyword.put(opts, :line, 0))
+      {args, tokens} = context_mapper_fold(tail_args, tokens, opts)
+      {maybe_swap_args(swapped?, [arg | args]), tokens}
+    else
+      _ ->
+        context_mapper_fold(args, tokens, opts)
+    end
+  end
+
   # Private Helpers
 
   @spec match_token_to_form(token(), form()) :: boolean()
@@ -790,32 +809,22 @@ defmodule Gradient.AstSpecifier do
     {form, tokens}
   end
 
-  @spec call_with_pipe_op(tokens(), [abstract_expr()], options()) :: {options, [abstract_expr]}
-  def call_with_pipe_op(tokens, args, opts) do
-    # Check whether the call is after |> operator. If true, the parent location is set to 0
-    # and the first arg location is cleared (if this arg is a lineless form).
-    # Clearing the location is required only for Elixir 1.13 or newer because from this version
-    # the missing locations are specified, unfortunately sometimes not precise enough.
-    {:ok, line} = Keyword.fetch(opts, :line)
-
-    case {List.first(drop_tokens_to_line(tokens, line)), is_first_arg_lineless?(args)} do
-      {{:arrow_op, _loc, :|>}, true} ->
-        {Keyword.put(opts, :line, 0), clear_first_arg_location(args)}
-
-      _ ->
-        {opts, args}
+  defp is_pipe_op?(tokens, opts) do
+    case List.first(drop_tokens_to_line(tokens, Keyword.fetch!(opts, :line))) do
+      {:arrow_op, _, :|>} -> true
+      _ -> false
     end
   end
 
-  def is_first_arg_lineless?([form | _]), do: is_lineless_form?(form)
-  def is_first_arg_lineless?([]), do: false
+  defp maybe_swap_args(true, [fst, snd | t]), do: [snd, fst | t]
+  defp maybe_swap_args(_, args), do: args
 
-  def is_lineless_form?(form) do
-    elem(form, 0) in @lineless_forms
+  defp is_call_to_erlang?({:remote, _, {:atom, _, :erlang}, _}), do: true
+  defp is_call_to_erlang?(_), do: false
+
+  defp is_lineless?(expr) do
+    elem(expr, 0) in @lineless_forms
   end
 
-  def clear_first_arg_location([form | t]), do: [clear_location(form) | t]
-  def clear_first_arg_location([]), do: []
-
-  def clear_location(form), do: put_elem(form, 1, :erl_anno.set_line(0, elem(form, 1)))
+  defp clear_location(form), do: put_elem(form, 1, :erl_anno.set_line(0, elem(form, 1)))
 end
