@@ -37,7 +37,7 @@ defmodule Gradient.AstSpecifier do
   - binary [X]
   - maps [X]
   - struct [X]
-  - pipe [ ] TODO decide how to search for line in reversed form order 
+  - pipe [X] TODO decide how to search for line in reversed form order
   - range [X] 
   - receive [X] 
   - record [X] 
@@ -55,6 +55,10 @@ defmodule Gradient.AstSpecifier do
   @type form :: Types.form()
   @type forms :: Types.forms()
   @type options :: Types.options()
+  @type abstract_expr :: Types.abstract_expr()
+
+  # Expressions that could have missing location
+  @lineless_forms [:atom, :char, :float, :integer, :string, :bin, :cons]
 
   # Api
 
@@ -363,6 +367,8 @@ defmodule Gradient.AstSpecifier do
     {:ok, _, anno, opts, _} = get_line(anno, opts)
 
     name = remote_mapper(name)
+
+    {opts, args} = call_with_pipe_op(tokens, args, opts)
 
     {args, tokens} = context_mapper_fold(args, tokens, opts)
 
@@ -820,4 +826,33 @@ defmodule Gradient.AstSpecifier do
   defp pass_tokens(form, tokens) do
     {form, tokens}
   end
+
+  @spec call_with_pipe_op(tokens(), [abstract_expr()], options()) :: {options, [abstract_expr]}
+  def call_with_pipe_op(tokens, args, opts) do
+    # Check whether the call is after |> operator. If true, the parent location is set to 0
+    # and the first arg location is cleared (if this arg is a lineless form).
+    # Clearing the location is required only for Elixir 1.13 or newer because from this version
+    # the missing locations are specified, unfortunately sometimes not precise enough.
+    {:ok, line} = Keyword.fetch(opts, :line)
+
+    case {List.first(drop_tokens_to_line(tokens, line)), is_first_arg_lineless?(args)} do
+      {{:arrow_op, _loc, :|>}, true} ->
+        {Keyword.put(opts, :line, 0), clear_first_arg_location(args)}
+
+      _ ->
+        {opts, args}
+    end
+  end
+
+  def is_first_arg_lineless?([form | _]), do: is_lineless_form?(form)
+  def is_first_arg_lineless?([]), do: false
+
+  def is_lineless_form?(form) do
+    elem(form, 0) in @lineless_forms
+  end
+
+  def clear_first_arg_location([form | t]), do: [clear_location(form) | t]
+  def clear_first_arg_location([]), do: []
+
+  def clear_location(form), do: put_elem(form, 1, :erl_anno.set_line(0, elem(form, 1)))
 end

@@ -566,13 +566,13 @@ defmodule Gradient.AstSpecifierTest do
                   [
                     {:call, 4, {:remote, 4, {:atom, 4, Enum}, {:atom, 4, :filter}},
                      [
-                       {:cons, 4, {:integer, 4, 1},
-                        {:cons, 4,
+                       {:cons, 3, {:integer, 3, 1},
+                        {:cons, 3,
                          {
                            :integer,
-                           4,
+                           3,
                            2
-                         }, {:cons, 4, {:integer, 4, 3}, {nil, 4}}}},
+                         }, {:cons, 3, {:integer, 3, 3}, {nil, 3}}}},
                        {:fun, 4,
                         {:clauses,
                          [
