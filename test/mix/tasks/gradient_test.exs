@@ -103,7 +103,7 @@ defmodule Mix.Tasks.GradientTest do
     assert not String.contains?(output, ex_spec_error_msg)
   end
 
-  @tag if(System.version() >= "1.13", do: :skip, else: :ok)
+  @tag :ex_lt_1_13
   test "--no-specify option" do
     output = run_task(test_opts([@s_wrong_ret_beam]))
     assert String.contains?(output, "on line 3")

@@ -106,7 +106,7 @@ defmodule Gradient.ElixirExpr do
     "reraise " <> pp_expr(var) <> ", " <> pp_expr(var_stacktrace)
   end
 
-  def pp_expr({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :error}}, [arg]}) do
+  def pp_expr({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :error}}, [arg | _]}) do
     "raise " <> pp_raise_arg(arg)
   end
 
@@ -405,7 +405,7 @@ defmodule Gradient.ElixirExpr do
   defp bin_pp_value(val), do: pp_expr(val)
 
   defp bin_set_value("", value), do: value
-  defp bin_set_value(sufix, value), do: value <> "::" <> sufix
+  defp bin_set_value(sufix, value), do: "(" <> value <> ")::" <> sufix
 
   defp bin_set_size("", :default), do: ""
   defp bin_set_size("", {:integer, _, size}), do: Integer.to_string(size)

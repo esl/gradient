@@ -56,7 +56,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "pixels = <<213, 45, 132, 64, 76, 32, 76, 0, 0, 234, 32, 15>>; for <<r::8, g::8, b::8 <- pixels >>, do: {r, g, b}" ==
+      assert "pixels = <<213, 45, 132, 64, 76, 32, 76, 0, 0, 234, 32, 15>>; for <<(r)::8, (g)::8, (b)::8 <- pixels >>, do: {r, g, b}" ==
                actual
     end
 
@@ -67,7 +67,7 @@ defmodule Gradient.ElixirExprTest do
         end
         |> ElixirExpr.pp_expr()
 
-      assert "for <<one, _rest::binary-size(3) <- <<1, 2, 3, 4>> >>, do: one" == actual
+      assert "for <<one, (_rest)::binary-size(3) <- <<1, 2, 3, 4>> >>, do: one" == actual
     end
 
     test "receive" do
@@ -328,8 +328,7 @@ defmodule Gradient.ElixirExprTest do
   end
 
   test "pp and format complex try expression" do
-    {_tokens, ast} =
-      Gradient.TestHelpers.load("Elixir.CallRemoteException.beam", "call_remote_exception.ex")
+    ast = Gradient.TestHelpers.load("Elixir.CallRemoteException.beam")
 
     {:function, _, :call, 2, [{:clause, _ann, _args, _guards, [try_expr]}]} =
       Enum.reverse(ast) |> List.first()
@@ -338,7 +337,58 @@ defmodule Gradient.ElixirExprTest do
 
     # FIXME `raise {:badkey, :stack, _gen}` is not correct
 
-    expected = ~s"""
+    expected_v1_11 = ~s"""
+    try do
+      :ok
+    catch
+      :error, %Plug.Conn.WrapperError{} = e ->
+        exception =
+          Exception.normalize(
+            :error,
+            case e do
+              %{reason: _} -> _
+              _ when :erlang.is_map(_) -> raise {:badkey, :reason, _}
+              _ -> _.reason()
+            end,
+            case e do
+              %{stack: _} -> _
+              _ when :erlang.is_map(_) -> raise {:badkey, :stack, _}
+              _ -> _.stack()
+            end
+          )
+
+        _ =
+          Sentry.capture_exception(exception, [
+            {:stacktrace,
+             case e do
+               %{stack: _} -> _
+               _ when :erlang.is_map(_) -> raise {:badkey, :stack, _}
+               _ -> _.stack()
+             end},
+            {:event_source, :plug}
+          ])
+
+        Plug.Conn.WrapperError.reraise(e)
+
+      :error, e ->
+        _ = Sentry.capture_exception(e, [{:stacktrace, __STACKTRACE__}, {:event_source, :plug}])
+        :erlang.raise(:error, e, __STACKTRACE__)
+
+      kind, reason ->
+        message =
+          <<"Uncaught ",
+            case kind do
+              _gen when :erlang.is_binary(_gen) -> _gen
+              _gen -> String.Chars.to_string(_gen)
+            end::binary, " - ", Kernel.inspect(reason)::binary>>
+
+        stack = __STACKTRACE__
+        _ = Sentry.capture_message(message, [{:stacktrace, stack}, {:event_source, :plug}])
+        :erlang.raise(kind, reason, stack)
+    end
+    """
+
+    expected_v1_12 = ~s"""
     try do
       :ok
     catch
@@ -388,6 +438,8 @@ defmodule Gradient.ElixirExprTest do
         :erlang.raise(kind, reason, stack)
     end
     """
+
+    expected = if(System.version() >= "1.12", do: expected_v1_12, else: expected_v1_11)
 
     assert expected == :erlang.iolist_to_binary(res) <> "\n"
   end

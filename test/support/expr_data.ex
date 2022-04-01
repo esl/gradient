@@ -140,7 +140,7 @@ defmodule Gradient.ExprData do
       bin_with_bin_var(),
       bin_with_pp_int_size(),
       bin_with_pp_and_bitstring_size(),
-      {"bin float", elixir_to_ast(<<4.3::float>>), "<<4.3::float>>"}
+      {"bin float", elixir_to_ast(<<4.3::float>>), "<<(4.3)::float>>"}
     ]
   end
 
@@ -150,7 +150,7 @@ defmodule Gradient.ExprData do
         <<a::8, _rest::binary>> = <<1, 2, 3, 4>>
       end
 
-    {"bin pattern matching with bin var", ast, "<<a::8, _rest::binary>> = <<1, 2, 3, 4>>"}
+    {"bin pattern matching with bin var", ast, "<<(a)::8, (_rest)::binary>> = <<1, 2, 3, 4>>"}
   end
 
   defp bin_joining_syntax do
@@ -160,7 +160,7 @@ defmodule Gradient.ExprData do
         "a" <> x
       end
 
-    {"binary <> joining", ast, ~s(x = "b"; <<"a", x::binary>>)}
+    {"binary <> joining", ast, ~s(x = "b"; <<"a", (x\)::binary>>)}
   end
 
   defp bin_with_bin_var do
@@ -170,7 +170,7 @@ defmodule Gradient.ExprData do
         <<"a", "b", x::binary>>
       end
 
-    {"binary with bin var", ast, ~s(x = "b"; <<"a", "b", x::binary>>)}
+    {"binary with bin var", ast, ~s(x = "b"; <<"a", "b", (x\)::binary>>)}
   end
 
   defp bin_with_pp_int_size do
@@ -179,7 +179,7 @@ defmodule Gradient.ExprData do
         <<a::16>> = <<"abcd">>
       end
 
-    {"binary with int size", ast, ~s(<<a::16>> = "abcd")}
+    {"binary with int size", ast, ~s(<<(a\)::16>> = "abcd")}
   end
 
   defp bin_with_pp_and_bitstring_size do
@@ -191,7 +191,7 @@ defmodule Gradient.ExprData do
       end
 
     expected =
-      "<<header::8, length::32, message::bitstring-size(144)>> = <<1, 2, 3, 4, 5, 101, 114, 97, 115, 101, 32, 116, 104, 101, 32, 101, 118, 105, 100, 101, 110, 99, 101>>"
+      "<<(header)::8, (length)::32, (message)::bitstring-size(144)>> = <<1, 2, 3, 4, 5, 101, 114, 97, 115, 101, 32, 116, 104, 101, 32, 101, 118, 105, 100, 101, 110, 99, 101>>"
 
     {"binary with patter matching and bitstring-size", ast, expected}
   end
