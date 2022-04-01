@@ -10,6 +10,16 @@ defmodule Gradient.AstSpecifierTest do
     {:ok, state}
   end
 
+  describe "specifying expression" do
+    for {name, args, expected} <- Gradient.AstData.ast_data() do
+      test "#{name}" do
+        {ast, tokens, opts} = unquote(Macro.escape(args))
+        expected = unquote(Macro.escape(expected))
+        assert expected == elem(AstSpecifier.mapper(ast, tokens, opts), 0)
+      end
+    end
+  end
+
   describe "run_mappers/2" do
     test "messy test on simple_app" do
       {tokens, ast} = example_data()
