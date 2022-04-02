@@ -1,4 +1,14 @@
 defmodule Gradient.AstData do
+  @moduledoc """
+  Stores the test cases data for expressions line specifying. To increase the flexibility
+  the data need normalization before equality assertion. Thus we check only the line change,
+  not the exact value and there is no need to update expected values when the file content
+  changes.
+
+  This way of testing is useful only for more complex expressions in which we can observe
+  some line change. For example, look at the pipe operator cases.
+  """
+
   require Gradient.Debug
   import Gradient.Debug, only: [elixir_to_ast: 1]
   import Gradient.TestHelpers
@@ -59,14 +69,6 @@ defmodule Gradient.AstData do
       [{:integer, 56, 1}, {:atom, 55, :ok}]}}
   end
 
-  defp example do
-    {__ENV__.function,
-     {__ENV__.line,
-      elixir_to_ast do
-        :ok
-      end, __ENV__.line}, _expected = {}}
-  end
-
   @spec ast_data() :: [
           {atom(), {Types.abstract_expr(), Types.tokens(), Types.options()}, tuple()}
         ]
@@ -76,5 +78,18 @@ defmodule Gradient.AstData do
       tokens = Gradient.Tokens.drop_tokens_to_line(@tokens, start_line)
       {name, {ast, tokens, [line: start_line, end_line: end_line]}, expected}
     end)
+  end
+
+  def normalize_expression(expression) do
+    {expression, _} =
+      :erl_parse.mapfold_anno(
+        fn anno, acc ->
+          {{:erl_anno.line(anno) - acc, :erl_anno.column(anno)}, acc}
+        end,
+        :erl_anno.line(elem(expression, 1)),
+        expression
+      )
+
+    expression
   end
 end

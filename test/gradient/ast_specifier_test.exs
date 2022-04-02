@@ -3,6 +3,7 @@ defmodule Gradient.AstSpecifierTest do
   doctest Gradient.AstSpecifier
 
   alias Gradient.AstSpecifier
+  alias Gradient.AstData
 
   import Gradient.TestHelpers
 
@@ -11,11 +12,14 @@ defmodule Gradient.AstSpecifierTest do
   end
 
   describe "specifying expression" do
-    for {name, args, expected} <- Gradient.AstData.ast_data() do
+    for {name, args, expected} <- AstData.ast_data() do
       test "#{name}" do
         {ast, tokens, opts} = unquote(Macro.escape(args))
-        expected = unquote(Macro.escape(expected))
-        assert expected == elem(AstSpecifier.mapper(ast, tokens, opts), 0)
+        expected = AstData.normalize_expression(unquote(Macro.escape(expected)))
+
+        actual = AstData.normalize_expression(elem(AstSpecifier.mapper(ast, tokens, opts), 0))
+
+        assert expected == actual
       end
     end
   end
