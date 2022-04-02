@@ -38,23 +38,23 @@ defmodule Gradient.AstData do
         "a"
         |> is_atom()
       end, __ENV__.line},
-     {:block, 11,
+     {:block, 22,
       [
-        {:call, 14, {:remote, 14, {:atom, 14, :erlang}, {:atom, 14, :is_atom}},
-         [{:integer, 13, 1}]},
-        {:call, 17, {:remote, 17, {:atom, 17, :erlang}, {:atom, 17, :is_atom}},
-         [{:cons, 16, {:integer, 16, 49}, {nil, 16}}]},
-        {:call, 20, {:remote, 20, {:atom, 20, :erlang}, {:atom, 20, :is_atom}},
-         [{:atom, 19, :ok}]},
-        {:call, 23, {:remote, 23, {:atom, 23, :erlang}, {:atom, 23, :is_atom}},
+        {:call, 24, {:remote, 24, {:atom, 24, :erlang}, {:atom, 24, :is_atom}},
+         [{:integer, 23, 1}]},
+        {:call, 27, {:remote, 27, {:atom, 27, :erlang}, {:atom, 27, :is_atom}},
+         [{:cons, 26, {:integer, 26, 49}, {nil, 26}}]},
+        {:call, 30, {:remote, 30, {:atom, 30, :erlang}, {:atom, 30, :is_atom}},
+         [{:atom, 29, :ok}]},
+        {:call, 33, {:remote, 33, {:atom, 33, :erlang}, {:atom, 33, :is_atom}},
          [
-           {:cons, 22, {:integer, 22, 1},
-            {:cons, 22, {:integer, 22, 2}, {:cons, 22, {:integer, 22, 3}, {nil, 22}}}}
+           {:cons, 32, {:integer, 32, 1},
+            {:cons, 32, {:integer, 32, 2}, {:cons, 32, {:integer, 32, 3}, {nil, 32}}}}
          ]},
-        {:call, 26, {:remote, 26, {:atom, 26, :erlang}, {:atom, 26, :is_atom}},
-         [{:tuple, 25, [{:integer, 25, 1}, {:integer, 25, 2}, {:integer, 25, 3}]}]},
-        {:call, 29, {:remote, 29, {:atom, 29, :erlang}, {:atom, 29, :is_atom}},
-         [{:bin, 28, [{:bin_element, 28, {:string, 28, 'a'}, :default, :default}]}]}
+        {:call, 36, {:remote, 36, {:atom, 36, :erlang}, {:atom, 36, :is_atom}},
+         [{:tuple, 35, [{:integer, 35, 1}, {:integer, 35, 2}, {:integer, 35, 3}]}]},
+        {:call, 39, {:remote, 39, {:atom, 39, :erlang}, {:atom, 39, :is_atom}},
+         [{:bin, 38, [{:bin_element, 38, {:string, 38, 'a'}, :default, :default}]}]}
       ]}}
   end
 
@@ -69,14 +69,84 @@ defmodule Gradient.AstData do
       [{:integer, 56, 1}, {:atom, 55, :ok}]}}
   end
 
+  defp complex_list_pipe do
+    {__ENV__.function,
+     {__ENV__.line,
+      elixir_to_ast do
+        [
+          {1, %{a: 1}},
+          {2, %{a: 2}}
+        ]
+        |> Enum.map(&elem(&1, 0))
+      end, __ENV__.line},
+     {:call, 80, {:remote, 80, {:atom, 80, Enum}, {:atom, 80, :map}},
+      [
+        {:cons, 76,
+         {:tuple, 77,
+          [
+            {:integer, 77, 1},
+            {:map, 77, [{:map_field_assoc, 77, {:atom, 77, :a}, {:integer, 77, 1}}]}
+          ]},
+         {:cons, 77,
+          {:tuple, 78,
+           [
+             {:integer, 78, 2},
+             {:map, 78, [{:map_field_assoc, 78, {:atom, 78, :a}, {:integer, 78, 2}}]}
+           ]}, {nil, 77}}},
+        {:fun, 80,
+         {:clauses,
+          [
+            {:clause, 80, [{:var, 0, :_@1}], [],
+             [
+               {:call, 80, {:remote, 80, {:atom, 80, :erlang}, {:atom, 80, :element}},
+                [{:integer, 80, 1}, {:var, 0, :_@1}]}
+             ]}
+          ]}}
+      ]}}
+  end
+
+  defp complex_tuple_pipe do
+    {__ENV__.function,
+     {__ENV__.line,
+      elixir_to_ast do
+        {
+          {1, %{a: 1}},
+          {2, %{a: 2}}
+        }
+        |> Tuple.to_list()
+      end, __ENV__.line},
+     {:call, 119, {:remote, 119, {:atom, 119, :erlang}, {:atom, 119, :tuple_to_list}},
+      [
+        {:tuple, 115,
+         [
+           {:tuple, 116,
+            [
+              {:integer, 116, 1},
+              {:map, 116, [{:map_field_assoc, 116, {:atom, 116, :a}, {:integer, 116, 1}}]}
+            ]},
+           {:tuple, 117,
+            [
+              {:integer, 117, 2},
+              {:map, 117, [{:map_field_assoc, 117, {:atom, 117, :a}, {:integer, 117, 2}}]}
+            ]}
+         ]}
+      ]}}
+  end
+
   @spec ast_data() :: [
-          {atom(), {Types.abstract_expr(), Types.tokens(), Types.options()}, tuple()}
+          {atom(), {Types.abstract_expr(), Types.tokens(), Types.options()},
+           Types.abstract_expr()}
         ]
   def ast_data do
-    [pipe(), pipe_with_fun_converted_to_erl_equivalent()]
+    [
+      pipe(),
+      pipe_with_fun_converted_to_erl_equivalent(),
+      complex_list_pipe(),
+      complex_tuple_pipe()
+    ]
     |> Enum.map(fn {{name, _}, {start_line, ast, end_line}, expected} ->
-      tokens = Gradient.Tokens.drop_tokens_to_line(@tokens, start_line)
-      {name, {ast, tokens, [line: start_line, end_line: end_line]}, expected}
+      tokens = Gradient.Tokens.drop_tokens_to_line(@tokens, start_line + 1)
+      {name, {ast, tokens, [line: start_line + 1, end_line: end_line]}, expected}
     end)
   end
 

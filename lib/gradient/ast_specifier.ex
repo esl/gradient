@@ -21,7 +21,7 @@ defmodule Gradient.AstSpecifier do
   @type abstract_expr :: Types.abstract_expr()
 
   # Expressions that could have missing location
-  @lineless_forms [:atom, :char, :float, :integer, :string, :bin, :cons]
+  @lineless_forms [:atom, :char, :float, :integer, :string, :bin, :cons, :tuple]
 
   # Api
 
@@ -523,8 +523,7 @@ defmodule Gradient.AstSpecifier do
   @spec map_element_mapper(tuple(), tokens(), options()) :: {tuple(), tokens()}
   def map_element_mapper({field, anno, key, value}, tokens, opts)
       when field in [:map_field_assoc, :map_field_exact] do
-    line = :erl_anno.line(anno)
-    opts = Keyword.put(opts, :line, line)
+    {:ok, _, anno, opts, _} = get_line(anno, opts)
 
     {key, tokens} = mapper(key, tokens, opts)
     {value, tokens} = mapper(value, tokens, opts)
@@ -826,5 +825,5 @@ defmodule Gradient.AstSpecifier do
     elem(expr, 0) in @lineless_forms
   end
 
-  defp clear_location(form), do: put_elem(form, 1, :erl_anno.set_line(0, elem(form, 1)))
+  defp clear_location(arg), do: :erl_parse.map_anno(&:erl_anno.set_line(0, &1), arg)
 end
