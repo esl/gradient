@@ -9,8 +9,6 @@ defmodule Gradient.AstSpecifier do
 
   import Gradient.Tokens
 
-  require Logger
-
   alias Gradient.Types
 
   @type token :: Types.token()
@@ -398,14 +396,7 @@ defmodule Gradient.AstSpecifier do
       when elem(skip, 0) in [
              :fun,
              :attribute,
-             :var,
-             nil,
-             :atom,
-             :char,
-             :float,
-             :integer,
-             :string,
-             :bin
+             :var
            ] do
     # NOTE fun - I skipped here checking &name/arity or &module.name/arity
     # skip forms that don't need analysis and do not display warning
@@ -413,7 +404,7 @@ defmodule Gradient.AstSpecifier do
   end
 
   def mapper(form, tokens, _opts) do
-    Logger.warn("Not found mapper for #{inspect(form)}")
+    IO.puts(IO.ANSI.format([:yellow, "Not found mapper for #{inspect(form)}"]))
     pass_tokens(form, tokens)
   end
 
@@ -512,7 +503,7 @@ defmodule Gradient.AstSpecifier do
         {[[g] | gs], ts}
 
       gs, {ags, ts} ->
-        Logger.error("Unsupported guards format #{inspect(gs)}")
+        IO.puts(IO.ANSI.format([:red, "Unsupported guards format #{inspect(gs)}"]))
         {gs ++ ags, ts}
     end)
   end
