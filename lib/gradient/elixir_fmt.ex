@@ -23,6 +23,7 @@ defmodule Gradient.ElixirFmt do
   alias Gradient.ElixirType
   alias Gradient.ElixirExpr
   alias Gradient.Types
+  alias Gradient.Anno
 
   @type colors_opts() :: [
           use_colors: boolean(),
@@ -311,54 +312,81 @@ defmodule Gradient.ElixirFmt do
     context
     |> Enum.with_index(1)
     |> filter_context(anno, 2)
-    |> underscore_line(anno, opts)
+    |> maybe_underscore_lines(anno, opts)
     |> Enum.join("\n")
   end
 
-  def filter_context(lines, loc, ctx_size \\ 1) do
-    line = :erl_anno.line(loc)
-    range = (line - ctx_size)..(line + ctx_size)
+  def filter_context(lines, anno, ctx_size \\ 1) do
+    line = Anno.line(anno)
+    end_line = Anno.end_line(anno)
+    range = (line - ctx_size)..(end_line + ctx_size)
 
     Enum.filter(lines, fn {_, number} -> number in range end)
   end
 
-  def end_location(anno) when is_list(anno) do
-    Keyword.get(anno, :end_location, :undefined)
-  end
-  def end_location(_anno)  do
-    :undefined
-  end
-
-  def underscore_line(lines, anno, opts) do
-    line = :erl_anno.line(anno)
-    column = :erl_anno.column(anno)
-    IO.inspect(column, label: "COLUMN")
-    endl = end_location(anno)
-    IO.inspect(endl, label: "END LOCATION")
+  def maybe_underscore_lines(lines, anno, opts) do
+    Anno.location(anno) |> IO.inspect(label: "START LOC")
+    Anno.end_location(anno) |> IO.inspect(label: "END LOC")
 
     Enum.map(lines, fn {str, n} ->
-      if(n == line) do
+      if need_underscore?(n, anno) do
         colors = get_colors_with_default(opts)
-        {:ok, use_colors} = Keyword.fetch(colors, :use_colors)
-        {:ok, color} = Keyword.fetch(colors, :underscored_line)
-        {bef, aft} = split_at_col(str, column)
-        indent = to_string(n) <> " " <> bef
-
-        [
-          indent,
-          [
-            IO.ANSI.underline(),
-            IO.ANSI.format_fragment([color, aft], use_colors),
-            IO.ANSI.reset()
-          ]
-        ]
+        underscore_line(str, n, anno, colors)
       else
-        to_string(n) <> " " <> str
+        [to_string(n), " ", str]
       end
     end)
   end
 
-  def split_at_col(str, col) when is_integer(col), do: String.split_at(str, col - 1)
+  def underscore_line(str, n, anno, colors) do
+    {start_line, start_col} = Anno.location(anno)
+    {end_line, end_col} = Anno.end_location(anno)
+
+    case n do
+      l when l == start_line and l == end_line ->
+        {prefix, str} = split_at_col(str, start_col)
+        {str, suffix} = split_at_col(str, end_col - start_col)
+        [prefix, make_underscore(str, colors), suffix]
+
+      ^start_line ->
+        {prefix, str} = split_at_col(str, start_col)
+        [prefix, make_underscore(str, colors)]
+
+      ^end_line ->
+        {str, suffix} = split_at_col(str, end_col)
+        [indent, str] = separate_indent(str)
+        [indent, make_underscore(str, colors), suffix]
+
+      _otherwise ->
+        separate_indent(str)
+    end
+    |> add_line_number(n)
+  end
+
+  def add_line_number(iolist, n), do: [to_string(n), " ", iolist]
+
+  def separate_indent(str) do
+    trim_str = String.trim(str)
+    indent = gen_indent(String.length(str) - String.length(trim_str))
+    [indent, trim_str]
+  end
+
+  def gen_indent(length), do: Stream.cycle(' ') |> Stream.take(length) |> Enum.to_list()
+
+  def make_underscore(text, colors) do
+    {:ok, use_colors} = Keyword.fetch(colors, :use_colors)
+    {:ok, color} = Keyword.fetch(colors, :underscored_line)
+
+    [
+      IO.ANSI.underline(),
+      IO.ANSI.format_fragment([color, text], use_colors),
+      IO.ANSI.reset()
+    ]
+  end
+
+  def need_underscore?(index, anno), do: index >= Anno.line(anno) && index <= Anno.end_line(anno)
+
+  def split_at_col(str, col) when is_integer(col), do: String.split_at(str, col)
   def split_at_col(str, _), do: {"", str}
 
   def get_ex_file_path([{:attribute, 1, :file, {path, 1}} | _]), do: {:ok, path}
