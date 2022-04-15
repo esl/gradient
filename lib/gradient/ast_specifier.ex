@@ -21,6 +21,8 @@ defmodule Gradient.AstSpecifier do
   # Expressions that could have missing location
   @lineless_forms [:atom, :char, :float, :integer, :string, :bin, :cons, :tuple]
 
+  @ensure_location [:var | @lineless_forms]
+
   # Api
 
   @doc """
@@ -255,7 +257,7 @@ defmodule Gradient.AstSpecifier do
     |> get_tuple(opts)
     |> case do
       {:tuple, tokens} ->
-        {anno, opts} = update_line_from_tokens(tokens, anno, opts)
+        {anno, opts} = update_loc_from_tokens(tokens, anno, opts)
         # drop a token that begins tuple
         tokens = drop_tokens_while(tokens, fn t -> elem(t, 0) in [:"{"] end)
 
@@ -323,15 +325,36 @@ defmodule Gradient.AstSpecifier do
     |> pass_tokens(tokens)
   end
 
-  def mapper({:call, anno, name, args}, tokens, opts) do
+  def mapper({:call, anno, name, args} = c, tokens, opts) do
     # anno has correct line
-    {:ok, _, anno, opts, _} = get_line(anno, opts)
+    {:ok, _, _, opts, _} = get_line(anno, opts)
     name = remote_mapper(name)
+
+    {{:call, anno, _, _}, _tokens} = specify_line(c, tokens, opts)
+
+    anno =
+      if is_integer(anno) do
+        anno
+      else
+        set_end_location(anno, get_closing_paren_loc(tokens))
+      end
 
     {args, tokens} = call_args_mapper(args, tokens, name, opts)
 
     {:call, anno, name, args}
     |> pass_tokens(tokens)
+  end
+
+  def set_end_location(anno, :undefined), do: anno
+  # def set_end_location(anno, location) when is_integer(anno) do
+  # [location: anno, end_location: location]
+  # end
+  def set_end_location(anno, location) when is_tuple(anno) do
+    [location: anno, end_location: location]
+  end
+
+  def set_end_location(anno, location) do
+    Keyword.put(anno, :end_location, location)
   end
 
   def mapper({:op, anno, op, left, right}, tokens, opts) do
@@ -383,7 +406,7 @@ defmodule Gradient.AstSpecifier do
   end
 
   def mapper({type, anno, value}, tokens, opts)
-      when type in @lineless_forms do
+      when type in @ensure_location do
     {:ok, line} = Keyword.fetch(opts, :line)
     anno = :erl_anno.set_line(line, anno)
     anno = :erl_anno.set_generated(Keyword.get(opts, :generated, false), anno)
@@ -395,8 +418,7 @@ defmodule Gradient.AstSpecifier do
   def mapper(skip, tokens, _opts)
       when elem(skip, 0) in [
              :fun,
-             :attribute,
-             :var
+             :attribute
            ] do
     # NOTE fun - I skipped here checking &name/arity or &module.name/arity
     # skip forms that don't need analysis and do not display warning
@@ -543,7 +565,7 @@ defmodule Gradient.AstSpecifier do
   def cons_mapper({:cons, anno, value, tail}, tokens, opts) do
     {:ok, _, anno0, opts0, _} = get_line(anno, opts)
 
-    {anno, opts} = update_line_from_tokens(tokens, anno0, opts0)
+    {anno, opts} = update_loc_from_tokens(tokens, anno0, opts0)
     # drop a token that begins list
     tokens = drop_tokens_while(tokens, fn t -> elem(t, 0) in [:"["] end)
 
@@ -662,59 +684,90 @@ defmodule Gradient.AstSpecifier do
     l2 <= l1
   end
 
+  defp match_token_to_form({:identifier, {l1, _, _}, t_name}, {:var, l2, raw_name}) do
+    l2 == l1 && String.contains?(to_string(raw_name), <<to_string(t_name)::binary, "@">>)
+  end
+
+  defp match_token_to_form({:paren_identifier, {l1, _, _}, name1}, {:call, l2, name2, _}) do
+    :erl_anno.line(l2) == l1 && match_remote_names(name1, name2)
+  end
+
   defp match_token_to_form(_, _) do
     false
   end
 
+  def match_remote_names(name, {:remote, _, _, {:atom, _, name}}), do: true
+  def match_remote_names(name, {:atom, _, name}), do: true
+  def match_remote_names(name, name), do: true
+  def match_remote_names(_, _), do: false
+
+  defp literal_loc({line, col_start, _}, literal) do
+    col_end = col_start + length(to_charlist(literal))
+    [location: {line, col_start}, end_location: {line, col_end}]
+  end
+
   @spec take_loc_from_token(token(), form()) :: form()
-  defp take_loc_from_token({:int, {line, _, _}, _}, {:integer, _, value}) do
-    {:integer, line, value}
+  defp take_loc_from_token({:int, loc, _}, {:integer, _, value}) do
+    {:integer, literal_loc(loc, value), value}
   end
 
-  defp take_loc_from_token({:char, {line, _, _}, _}, {:integer, _, value}) do
-    {:integer, line, value}
+  defp take_loc_from_token({:char, loc, _}, {:integer, _, value}) do
+    {:integer, literal_loc(loc, value), value}
   end
 
-  defp take_loc_from_token({:flt, {line, _, _}, _}, {:float, _, value}) do
-    {:float, line, value}
+  defp take_loc_from_token({:flt, loc, _}, {:float, _, value}) do
+    {:float, literal_loc(loc, value), value}
   end
 
-  defp take_loc_from_token({:atom, {line, _, _}, _}, {:atom, _, value}) do
-    {:atom, line, value}
+  defp take_loc_from_token({:atom, loc, _}, {:atom, _, value}) do
+    {:atom, literal_loc(loc, value), value}
   end
 
-  defp take_loc_from_token({:alias, {line, _, _}, _}, {:atom, _, value}) do
-    {:atom, line, value}
+  defp take_loc_from_token({:alias, loc, _}, {:atom, _, value}) do
+    {:atom, literal_loc(loc, value), value}
   end
 
-  defp take_loc_from_token({:kw_identifier, {line, _, _}, _}, {:atom, _, value}) do
-    {:atom, line, value}
+  defp take_loc_from_token({:kw_identifier, loc, _}, {:atom, _, value}) do
+    {:atom, literal_loc(loc, value), value}
   end
 
-  defp take_loc_from_token({:list_string, {l1, _, _}, _}, {:cons, _, _, _} = charlist) do
-    charlist_set_loc(charlist, l1)
+  defp take_loc_from_token({:list_string, loc, v}, {:cons, _, _, _} = charlist) do
+    charlist_set_loc(charlist, literal_loc(loc, v))
   end
 
   defp take_loc_from_token(
-         {:bin_string, {l1, _, _}, _},
+         {:bin_string, loc, _},
          {:bin, _, [{:bin_element, _, {:string, _, v2}, :default, :default}]}
        ) do
-    {:bin, l1, [{:bin_element, l1, {:string, l1, v2}, :default, :default}]}
+    loc = literal_loc(loc, v2)
+    {:bin, loc, [{:bin_element, loc, {:string, loc, v2}, :default, :default}]}
   end
 
   defp take_loc_from_token({:str, _, _}, {:string, loc, v2}) do
+    # FIXME missing col
     {:string, loc, v2}
   end
 
-  defp take_loc_from_token({true, {line, _, _}}, {:atom, _, true}) do
-    {:atom, line, true}
+  defp take_loc_from_token({true, loc}, {:atom, _, true}) do
+    {:atom, literal_loc(loc, true), true}
   end
 
-  defp take_loc_from_token({false, {line, _, _}}, {:atom, _, false}) do
-    {:atom, line, false}
+  defp take_loc_from_token({false, loc}, {:atom, _, false}) do
+    {:atom, literal_loc(loc, true), false}
   end
 
-  defp take_loc_from_token(_, _), do: nil
+  defp take_loc_from_token({:identifier, loc, name}, {:var, _, raw_name}) do
+    {:var, literal_loc(loc, name), raw_name}
+  end
+
+  defp take_loc_from_token({:paren_identifier, {line, col, _}, _}, {:call, anno, name, args}) do
+    {:call, :erl_anno.set_location({line, col}, anno), name, args}
+  end
+
+  defp take_loc_from_token(t, e) do
+    IO.puts(IO.ANSI.format([:red, "Cannot take loc from token - #{inspect(t)}, #{inspect(e)}"]))
+    nil
+  end
 
   def cons_to_charlist({nil, _}), do: []
 
@@ -728,12 +781,12 @@ defmodule Gradient.AstSpecifier do
 
   def charlist_set_loc({nil, _}, loc), do: {nil, loc}
 
-  def update_line_from_tokens([token | _], anno, opts) do
-    line = get_line_from_token(token)
-    {:erl_anno.set_line(line, anno), Keyword.put(opts, :line, line)}
+  def update_loc_from_tokens([token | _], anno, opts) do
+    {line, col} = get_loc_from_token(token)
+    {:erl_anno.set_location({line, col}, anno), Keyword.put(opts, :line, line)}
   end
 
-  def update_line_from_tokens(_, anno, opts) do
+  def update_loc_from_tokens(_, anno, opts) do
     {anno, opts}
   end
 
@@ -763,7 +816,7 @@ defmodule Gradient.AstSpecifier do
   end
 
   defp set_form_end_line(opts, form, forms) do
-    if elem(form, 0) not in [:bin, :cons] do
+    if elem(form, 0) not in [:bin] do
       set_form_end_line_(opts, form, forms)
     else
       opts

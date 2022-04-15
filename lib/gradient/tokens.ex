@@ -118,6 +118,12 @@ defmodule Gradient.Tokens do
   end
 
   @doc """
+  Get location from token.
+  """
+  @spec get_loc_from_token(T.token()) :: {integer(), integer()}
+  def get_loc_from_token(token), do: {elem(elem(token, 1), 0), elem(elem(token, 1), 1)}
+
+  @doc """
   Get line from token.
   """
   @spec get_line_from_token(T.token()) :: integer()
@@ -159,7 +165,52 @@ defmodule Gradient.Tokens do
     |> Enum.concat()
   end
 
+  @spec select_tokens_in_paren(T.tokens(), T.line()) :: T.tokens()
+  def select_tokens_in_paren(tokens, line) do
+    tokens
+    |> drop_tokens_to_line(line)
+    |> find_opening_paren()
+    |> find_closing_paren()
+  end
+
+  def get_closing_paren_loc(tokens, line \\ 0) do
+    case select_tokens_in_paren(tokens, line) do
+      [] ->
+        :undefined
+
+      list ->
+        {line, col, _} = elem(List.last(list), 1)
+        {line, col}
+    end
+  end
+
   # Private
+
+  defp find_opening_paren(tokens) do
+    drop_tokens_while(tokens, fn
+      {:"(", _} -> false
+      _ -> true
+    end)
+  end
+
+  defp find_closing_paren(tokens, init \\ 0)
+  defp find_closing_paren([], _), do: []
+
+  defp find_closing_paren(tokens, init) do
+    Enum.reduce_while(tokens, {[], init}, fn
+      {:")", _} = t, {ts, 1} -> {:halt, [t | ts]}
+      {:")", _} = t, {ts, open} when open > 1 -> {:cont, {[t | ts], open - 1}}
+      {:"(", _} = t, {ts, open} -> {:cont, {[t | ts], open + 1}}
+      t, {ts, open} -> {:cont, {[t | ts], open}}
+    end)
+    |> case do
+      {_, _open} ->
+        raise "Cannot find closing paren in given tokens"
+
+      list ->
+        list
+    end
+  end
 
   defp flatten_token(token) do
     case token do

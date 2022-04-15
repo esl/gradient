@@ -306,12 +306,12 @@ defmodule Gradient.ElixirFmt do
 
   @spec highlight_in_context(tuple(), [String.t()], options()) :: iodata()
   def highlight_in_context(expression, context, opts) do
-    line = elem(expression, 1)
+    anno = elem(expression, 1)
 
     context
     |> Enum.with_index(1)
-    |> filter_context(line, 2)
-    |> underscore_line(line, opts)
+    |> filter_context(anno, 2)
+    |> underscore_line(anno, opts)
     |> Enum.join("\n")
   end
 
@@ -322,24 +322,44 @@ defmodule Gradient.ElixirFmt do
     Enum.filter(lines, fn {_, number} -> number in range end)
   end
 
-  def underscore_line(lines, line, opts) do
+  def end_location(anno) when is_list(anno) do
+    Keyword.get(anno, :end_location, :undefined)
+  end
+  def end_location(_anno)  do
+    :undefined
+  end
+
+  def underscore_line(lines, anno, opts) do
+    line = :erl_anno.line(anno)
+    column = :erl_anno.column(anno)
+    IO.inspect(column, label: "COLUMN")
+    endl = end_location(anno)
+    IO.inspect(endl, label: "END LOCATION")
+
     Enum.map(lines, fn {str, n} ->
       if(n == line) do
         colors = get_colors_with_default(opts)
         {:ok, use_colors} = Keyword.fetch(colors, :use_colors)
         {:ok, color} = Keyword.fetch(colors, :underscored_line)
-        line_str = to_string(n) <> " " <> str
+        {bef, aft} = split_at_col(str, column)
+        indent = to_string(n) <> " " <> bef
 
         [
-          IO.ANSI.underline(),
-          IO.ANSI.format_fragment([color, line_str], use_colors),
-          IO.ANSI.reset()
+          indent,
+          [
+            IO.ANSI.underline(),
+            IO.ANSI.format_fragment([color, aft], use_colors),
+            IO.ANSI.reset()
+          ]
         ]
       else
         to_string(n) <> " " <> str
       end
     end)
   end
+
+  def split_at_col(str, col) when is_integer(col), do: String.split_at(str, col - 1)
+  def split_at_col(str, _), do: {"", str}
 
   def get_ex_file_path([{:attribute, 1, :file, {path, 1}} | _]), do: {:ok, path}
   def get_ex_file_path(_), do: {:error, :not_found}
