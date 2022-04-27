@@ -63,12 +63,12 @@ defmodule Mix.Tasks.Gradient do
     {options, user_paths, _invalid} = OptionParser.parse(args, strict: @options)
 
     options = Enum.reduce(options, [], &prepare_option/2)
-
+    # Load dependencies
+    maybe_load_deps(options)
+    # Start Gradualizer application
     Application.ensure_all_started(:gradualizer)
     # Compile the project before the analysis
     maybe_compile_project(options)
-    # Load dependencies
-    maybe_load_deps(options)
     # Get paths to files
     files = get_paths(user_paths)
 
@@ -100,11 +100,10 @@ defmodule Mix.Tasks.Gradient do
   end
 
   defp maybe_load_deps(options) do
-    unless options[:no_deps] || false do
+    if options[:no_deps] || false do
+      Application.put_env(:gradualizer, :options, autoimport: false)
+    else
       IO.puts("Loading deps...")
-
-      get_deps_beam_paths()
-      |> :gradualizer_db.import_beam_files()
     end
   end
 
@@ -178,11 +177,5 @@ defmodule Mix.Tasks.Gradient do
       {app_path, paths}
     end)
     |> Map.new()
-  end
-
-  defp get_deps_beam_paths() do
-    (Mix.Project.build_path() <> "/lib/*/**/*.beam")
-    |> Path.wildcard()
-    |> Enum.map(&String.to_charlist/1)
   end
 end
