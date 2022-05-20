@@ -119,9 +119,9 @@ defmodule Gradient.ElixirFmt do
     )
   end
 
-  def format_type_error({:spec_error, :spec_after_spec, anno, name, arity}, opts) do
+  def format_type_error({:spec_error, :mixed_specs, anno, name, arity}, opts) do
     :io_lib.format(
-      "~sThe spec ~p/~p~s follows another spec, but only one spec per function clause is allowed~n",
+      "~sThe spec ~p/~p~s follows a spec with different name/arity~n",
       [
         format_location(anno, :brief, opts),
         name,
