@@ -1,0 +1,3 @@
+%{
+  "gradualizer": {:git, "https://github.com/josefs/Gradualizer.git", "9e629ade733780113973fe672a51d9650ed0cd86", [ref: "9e629ad"]},
+}
