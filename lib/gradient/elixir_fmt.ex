@@ -308,6 +308,7 @@ defmodule Gradient.ElixirFmt do
   @spec highlight_in_context(tuple(), [String.t()], options()) :: iodata()
   def highlight_in_context(expression, context, opts) do
     anno = elem(expression, 1)
+    IO.inspect(expression)
 
     context
     |> Enum.with_index(1)

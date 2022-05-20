@@ -21,7 +21,7 @@ defmodule Gradient.ElixirFmtTest do
     res = ElixirFmt.try_highlight_in_context(expression, opts)
 
     expected =
-      {:ok, "29   def bool_id(x) do\n30     _x = 13\n\e[4m\e[31m31     12\e[0m\n32   end\n33 "}
+      {:ok, "29   def bool_id(x) do\n30     _x = 13\n31\e[4m\e[31m     12\e[0m\n32   end\n33 "}
 
     assert res == expected
   end
