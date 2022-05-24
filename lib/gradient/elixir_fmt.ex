@@ -254,7 +254,7 @@ defmodule Gradient.ElixirFmt do
     {:ok, type_color} = Keyword.fetch(colors, :type)
 
     fn type ->
-      IO.ANSI.format([type_color, fmt.(type)], use_colors)
+      [IO.ANSI.format([type_color, fmt.(type)], use_colors)]
     end
   end
 
