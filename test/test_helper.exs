@@ -1,5 +1,6 @@
 defmodule ExamplesCompiler do
   @build_path "test/examples/_build/"
+  @erl_build_path "test/examples/erlang/_build/"
 
   @version_step 0.01
 
@@ -18,6 +19,20 @@ defmodule ExamplesCompiler do
 
         Kernel.ParallelCompiler.compile_to_path(paths, @build_path)
         :ok
+
+      _ ->
+        :error
+    end
+  end
+
+  def erl_compile(pattern) do
+    case File.mkdir(@erl_build_path) do
+      :ok ->
+        pattern
+        |> Path.wildcard()
+        |> Enum.each(fn p ->
+          :compile.file(to_charlist(p), [:debug_info, {:outdir, to_charlist(@erl_build_path)}])
+        end)
 
       _ ->
         :error
@@ -57,5 +72,7 @@ end
 
 ExamplesCompiler.compile("test/examples/**/*.ex")
 exlcude = ExamplesCompiler.excluded_version_tags()
+
+ExamplesCompiler.erl_compile("test/examples/erlang/**/*.erl")
 
 ExUnit.start(exclude: exlcude)
