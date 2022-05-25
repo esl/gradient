@@ -29,6 +29,13 @@ defmodule Gradient.TestHelpers do
     {tokens, ast}
   end
 
+  def load_tokens(path) do
+    with {:ok, code} <- File.read(path),
+         {:ok, tokens} <- :elixir.string_to_tokens(String.to_charlist(code), 1, 1, path, []) do
+      tokens
+    end
+  end
+
   @spec example_data() :: {T.tokens(), T.forms()}
   def example_data() do
     beam_path = Path.join(@examples_build_path, "Elixir.SimpleApp.beam") |> String.to_charlist()

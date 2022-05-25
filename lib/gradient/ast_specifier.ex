@@ -5,43 +5,6 @@ defmodule Gradient.AstSpecifier do
   it to forms that cannot be produced from Elixir directly.
 
   FIXME Optimize tokens searching. Find out why some tokens are dropped 
-
-  NOTE Mapper implements:
-  - function [x]
-  - fun [x] 
-  - fun @spec [x]
-  - clause [x] 
-  - case [x]
-  - block [X] 
-  - pipe [x]
-  - call [x] (remote [X])
-  - match [x]
-  - op [x]
-  - integer [x]
-  - float [x]
-  - string [x]
-  - charlist [x]
-  - tuple [X]
-  - var [X]
-  - list [X] 
-  - keyword [X]
-  - binary [X] 
-  - map [X] 
-  - try [x] 
-  - receive [X] 
-  - record [X] elixir don't use it record_field, record_index, record_pattern, record
-  - named_fun [ ] is named_fun used by elixir? 
-
-  NOTE Elixir expressions to handle or test:
-  - list comprehension [X]
-  - binary [X]
-  - maps [X]
-  - struct [X]
-  - pipe [ ] TODO decide how to search for line in reversed form order 
-  - range [X] 
-  - receive [X] 
-  - record [X] 
-  - guards [X]
   """
 
   import Gradient.Tokens
@@ -55,6 +18,10 @@ defmodule Gradient.AstSpecifier do
   @type form :: Types.form()
   @type forms :: Types.forms()
   @type options :: Types.options()
+  @type abstract_expr :: Types.abstract_expr()
+
+  # Expressions that could have missing location
+  @lineless_forms [:atom, :char, :float, :integer, :string, :bin, :cons, :tuple]
 
   # Api
 
@@ -361,10 +328,9 @@ defmodule Gradient.AstSpecifier do
   def mapper({:call, anno, name, args}, tokens, opts) do
     # anno has correct line
     {:ok, _, anno, opts, _} = get_line(anno, opts)
-
     name = remote_mapper(name)
 
-    {args, tokens} = context_mapper_fold(args, tokens, opts)
+    {args, tokens} = call_args_mapper(args, tokens, name, opts)
 
     {:call, anno, name, args}
     |> pass_tokens(tokens)
@@ -419,8 +385,7 @@ defmodule Gradient.AstSpecifier do
   end
 
   def mapper({type, anno, value}, tokens, opts)
-      when type in [:atom, :char, :float, :integer, :string, :bin] do
-    # TODO check what happened for :string
+      when type in @lineless_forms do
     {:ok, line} = Keyword.fetch(opts, :line)
     anno = :erl_anno.set_line(line, anno)
     anno = :erl_anno.set_generated(Keyword.get(opts, :generated, false), anno)
@@ -558,8 +523,7 @@ defmodule Gradient.AstSpecifier do
   @spec map_element_mapper(tuple(), tokens(), options()) :: {tuple(), tokens()}
   def map_element_mapper({field, anno, key, value}, tokens, opts)
       when field in [:map_field_assoc, :map_field_exact] do
-    line = :erl_anno.line(anno)
-    opts = Keyword.put(opts, :line, line)
+    {:ok, _, anno, opts, _} = get_line(anno, opts)
 
     {key, tokens} = mapper(key, tokens, opts)
     {value, tokens} = mapper(value, tokens, opts)
@@ -622,6 +586,29 @@ defmodule Gradient.AstSpecifier do
       end
     else
       {form, tokens}
+    end
+  end
+
+  @doc """
+  Update location in call args with the support to the pipe operator.
+  """
+  @spec call_args_mapper([abstract_expr()], tokens(), abstract_expr(), options()) ::
+          {options, [abstract_expr]}
+  def call_args_mapper(args, tokens, name, opts) do
+    # Check whether the call is after |> operator. If true, the parent location is set to 0
+    # and the first arg location is cleared (if this arg is a lineless form).
+    # NOTE If the call is to function from :erlang module then the first arg is swapped
+    # with the second one because in Erlang the data is mostly in the second place.
+    with true <- is_pipe_op?(tokens, opts),
+         swapped? <- is_call_to_erlang?(name),
+         [fst_arg | tail_args] <- maybe_swap_args(swapped?, args),
+         true <- is_lineless?(fst_arg) do
+      {arg, tokens} = mapper(clear_location(fst_arg), tokens, Keyword.put(opts, :line, 0))
+      {args, tokens} = context_mapper_fold(tail_args, tokens, opts)
+      {maybe_swap_args(swapped?, [arg | args]), tokens}
+    else
+      _ ->
+        context_mapper_fold(args, tokens, opts)
     end
   end
 
@@ -820,4 +807,23 @@ defmodule Gradient.AstSpecifier do
   defp pass_tokens(form, tokens) do
     {form, tokens}
   end
+
+  defp is_pipe_op?(tokens, opts) do
+    case List.first(drop_tokens_to_line(tokens, Keyword.fetch!(opts, :line))) do
+      {:arrow_op, _, :|>} -> true
+      _ -> false
+    end
+  end
+
+  defp maybe_swap_args(true, [fst, snd | t]), do: [snd, fst | t]
+  defp maybe_swap_args(_, args), do: args
+
+  defp is_call_to_erlang?({:remote, _, {:atom, _, :erlang}, _}), do: true
+  defp is_call_to_erlang?(_), do: false
+
+  defp is_lineless?(expr) do
+    elem(expr, 0) in @lineless_forms
+  end
+
+  defp clear_location(arg), do: :erl_parse.map_anno(&:erl_anno.set_line(0, &1), arg)
 end

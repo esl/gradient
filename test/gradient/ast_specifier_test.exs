@@ -3,11 +3,25 @@ defmodule Gradient.AstSpecifierTest do
   doctest Gradient.AstSpecifier
 
   alias Gradient.AstSpecifier
+  alias Gradient.AstData
 
   import Gradient.TestHelpers
 
   setup_all state do
     {:ok, state}
+  end
+
+  describe "specifying expression" do
+    for {name, args, expected} <- AstData.ast_data() do
+      test "#{name}" do
+        {ast, tokens, opts} = unquote(Macro.escape(args))
+        expected = AstData.normalize_expression(unquote(Macro.escape(expected)))
+
+        actual = AstData.normalize_expression(elem(AstSpecifier.mapper(ast, tokens, opts), 0))
+
+        assert expected == actual
+      end
+    end
   end
 
   describe "run_mappers/2" do
@@ -566,13 +580,13 @@ defmodule Gradient.AstSpecifierTest do
                   [
                     {:call, 4, {:remote, 4, {:atom, 4, Enum}, {:atom, 4, :filter}},
                      [
-                       {:cons, 4, {:integer, 4, 1},
-                        {:cons, 4,
+                       {:cons, 3, {:integer, 3, 1},
+                        {:cons, 3,
                          {
                            :integer,
-                           4,
+                           3,
                            2
-                         }, {:cons, 4, {:integer, 4, 3}, {nil, 4}}}},
+                         }, {:cons, 3, {:integer, 3, 3}, {nil, 3}}}},
                        {:fun, 4,
                         {:clauses,
                          [
