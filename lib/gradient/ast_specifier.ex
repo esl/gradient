@@ -590,7 +590,7 @@ defmodule Gradient.AstSpecifier do
   end
 
   @doc """
-    Update location in call args with the support to the pipe operator.
+  Update location in call args with the support to the pipe operator.
   """
   @spec call_args_mapper([abstract_expr()], tokens(), abstract_expr(), options()) ::
           {options, [abstract_expr]}
