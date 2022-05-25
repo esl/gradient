@@ -37,7 +37,7 @@ defmodule Gradient.AstSpecifierTest do
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
-      assert {:function, 2, :int, 0, [{:clause, 2, [], [], [{:integer, 2, 1}]}]} = inline
+      assert {:function, 2, :int, 0, [{:clause, 2, [], [], [{:integer, [location: {2, 16}, end_location: {2, 17}], 1}]}]} = inline
 
       assert {:function, 4, :int_block, 0, [{:clause, 4, [], [], [{:integer, 5, 2}]}]} = block
     end
@@ -46,7 +46,7 @@ defmodule Gradient.AstSpecifierTest do
       {tokens, ast} = load("Elixir.Basic.Float.beam", "basic/float.ex")
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
-      assert {:function, 2, :float, 0, [{:clause, 2, [], [], [{:float, 2, 0.12}]}]} = inline
+      assert {:function, 2, :float, 0, [{:clause, 2, [], [], [{:float, [location: {2, 18}, end_location: {2, 22}], 0.12}]}]} = inline
 
       assert {:function, 4, :float_block, 0, [{:clause, 4, [], [], [{:float, 5, 0.12}]}]} = block
     end
@@ -56,9 +56,9 @@ defmodule Gradient.AstSpecifierTest do
 
       [block, inline | _] = AstSpecifier.run_mappers(ast, tokens) |> Enum.reverse()
 
-      assert {:function, 2, :atom, 0, [{:clause, 2, [], [], [{:atom, 2, :ok}]}]} = inline
+      assert {:function, 2, :atom, 0, [{:clause, 2, [], [], [{:atom, [location: {2, 17}, end_location: {2, 19}], :ok}]}]} = inline
 
-      assert {:function, 4, :atom_block, 0, [{:clause, 4, [], [], [{:atom, 5, :ok}]}]} = block
+      assert {:function, 4, :atom_block, 0, [{:clause, 4, [], [], [{:atom, [location: {5, 5}, end_location: {5, 7}], :ok}]}]} = block
     end
 
     test "char" do
@@ -516,10 +516,10 @@ defmodule Gradient.AstSpecifierTest do
     {tokens, _} = example_data()
     opts = [end_line: -1]
 
-    assert {{:integer, 21, 12}, tokens} =
+    assert {{:integer, [location: {21, 9}, end_location: {21, 11}], 12}, tokens} =
              AstSpecifier.specify_line({:integer, 21, 12}, tokens, opts)
 
-    assert {{:integer, 22, 12}, _tokens} =
+    assert {{:integer, [location: {22, 5}, end_location: {22, 7}], 12}, _tokens} =
              AstSpecifier.specify_line({:integer, 20, 12}, tokens, opts)
   end
 
@@ -1043,8 +1043,8 @@ defmodule Gradient.AstSpecifierTest do
                [
                  {:map, 7,
                   [
-                    {:map_field_assoc, 7, {:atom, 7, :a}, {:integer, 7, 12}},
-                    {:map_field_assoc, 7, {:atom, 7, :b}, {:call, 7, {:atom, 7, :empty_map}, []}}
+                    {:map_field_assoc, 7, {:atom, {:atom, [location: {7, 7}, end_location: {7, 8}], :a}, :a}, {:integer, {:atom, [location: {7, 10}, end_location: {7, 12}], :a}, 12}},
+                    {:map_field_assoc, 7, {:atom, [location: {7, 14}, end_location: {7, 15}], :b}, {:call, [location: {7, 17}, end_location: {7, 27}], {:atom, 7, :empty_map}, []}}
                   ]}
                ]}
             ]} = test_map
@@ -1633,13 +1633,13 @@ defmodule Gradient.AstSpecifierTest do
     {tokensB, astB} = load("Elixir.NestedModules.ModuleB.beam", "nested_modules.ex")
     {tokens, ast} = load("Elixir.NestedModules.beam", "nested_modules.ex")
 
-    assert {:function, 3, :name, 0, [{:clause, 3, [], [], [{:atom, 4, :module_a}]}]} =
+    assert {:function, 3, :name, 0, [{:clause, 3, [], [], [{:atom, [location: {4, 7}, end_location: {4, 15}], :module_a}]}]} =
              List.last(AstSpecifier.run_mappers(astA, tokensA))
 
-    assert {:function, 9, :name, 0, [{:clause, 9, [], [], [{:atom, 10, :module_b}]}]} =
+    assert {:function, 9, :name, 0, [{:clause, 9, [], [], [{:atom, [location: {10, 7}, end_location: {10, 15}], :module_b}]}]} =
              List.last(AstSpecifier.run_mappers(astB, tokensB))
 
-    assert {:function, 14, :name, 0, [{:clause, 14, [], [], [{:atom, 15, :module}]}]} =
+    assert {:function, 14, :name, 0, [{:clause, 14, [], [], [{:atom, [location: {15, 5}, end_location: {15, 11}], :module}]}]} =
              List.last(AstSpecifier.run_mappers(ast, tokens))
   end
 

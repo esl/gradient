@@ -15,8 +15,6 @@ defmodule Gradient do
   alias Gradient.AstSpecifier
   alias Gradient.ElixirChecker
 
-  require Logger
-
   @type options() :: [{:app_path, String.t()}, {:code_path, String.t()}]
 
   @spec type_check_file(String.t(), options()) :: :ok | :error
@@ -44,7 +42,7 @@ defmodule Gradient do
           _ -> :ok
         end
       error ->
-        Logger.error("Can't load file - #{inspect(error)}")
+        IO.puts(IO.ANSI.format([:red, "Can't load file - #{inspect(error)}"]))
         :error
     end
   end
