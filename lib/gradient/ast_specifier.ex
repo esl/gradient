@@ -507,12 +507,12 @@ defmodule Gradient.AstSpecifier do
 
   def guards_mapper(guards, tokens, opts) do
     List.foldl(guards, {[], tokens}, fn
-      [guard], {gs, tokens} ->
-        {g, ts} = mapper(guard, tokens, opts)
-        {[[g] | gs], ts}
-
       gs, {ags, ts} ->
-        Logger.error("Unsupported guards format #{inspect(gs)}")
+        {gs, _} = List.foldl(gs, {[], ts}, fn
+          g, {conjunction, ts} ->
+            {g, ts} = mapper(g, ts, opts)
+            {[g | conjunction], ts}
+        end)
         {[gs | ags], ts}
     end)
   end
