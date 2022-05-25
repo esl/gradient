@@ -513,7 +513,7 @@ defmodule Gradient.AstSpecifier do
 
       gs, {ags, ts} ->
         Logger.error("Unsupported guards format #{inspect(gs)}")
-        {gs ++ ags, ts}
+        {[gs | ags], ts}
     end)
   end
 
