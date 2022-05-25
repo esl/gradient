@@ -103,6 +103,7 @@ defmodule Mix.Tasks.Gradient do
     if options[:no_deps] || false do
       Application.put_env(:gradualizer, :options, autoimport: false)
     else
+      :ok = :code.add_paths(get_compile_paths())
       IO.puts("Loading deps...")
     end
   end
@@ -170,12 +171,26 @@ defmodule Mix.Tasks.Gradient do
       app_name = Atom.to_string(app_name)
 
       paths =
-        (Mix.Project.build_path() <> "/lib/" <> app_name <> "/ebin/**/*.beam")
+        (compile_path(app_name) <> "/**/*.beam")
         |> Path.wildcard()
         |> Enum.map(&String.to_charlist/1)
 
       {app_path, paths}
     end)
     |> Map.new()
+  end
+
+  @spec get_compile_paths() :: [charlist()]
+  defp get_compile_paths() do
+    if Mix.Project.umbrella?() do
+      Mix.Project.apps_paths()
+      |> Enum.map(fn {app_name, _} -> to_charlist(compile_path(app_name)) end)
+    else
+      [to_charlist(Mix.Project.compile_path())]
+    end
+  end
+
+  defp compile_path(app_name) do
+    Mix.Project.build_path() <> "/lib/" <> to_string(app_name) <> "/ebin"
   end
 end
