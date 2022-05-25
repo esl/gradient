@@ -23,7 +23,8 @@ defmodule Gradient do
   def type_check_file(file, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
 
-    with {:ok, forms} <- ElixirFileUtils.get_forms(file) do
+    with {:ok, forms} <- ElixirFileUtils.get_forms(file),
+         {:elixir, _} <- wrap_language_name(forms) do
       forms = maybe_specify_forms(forms, opts)
 
       case maybe_gradient_check(forms, opts) ++ maybe_gradualizer_check(forms, opts) do
@@ -36,6 +37,12 @@ defmodule Gradient do
           :error
       end
     else
+      {:erlang, forms} ->
+        opts = Keyword.put(opts, :return_errors, false)
+        case maybe_gradualizer_check(forms, opts) do
+          :nok -> :error
+          _ -> :ok
+        end
       error ->
         Logger.error("Can't load file - #{inspect(error)}")
         :error
@@ -71,6 +78,14 @@ defmodule Gradient do
       |> AstSpecifier.specify()
     else
       forms
+    end
+  end
+
+  defp wrap_language_name([{:attribute, _, :file, {file_name, _}} | _] = forms) do
+    if :string.str(file_name, '.erl') > 0 do
+      {:erlang, forms}
+    else
+      {:elixir, forms}
     end
   end
 
