@@ -59,15 +59,16 @@ defmodule Gradient.ElixirChecker do
         # Spec name doesn't match the function name
         {fun, [{:spec_error, :wrong_spec_name, anno, n, a} | errors]}
 
-      {:spec, {n, a}, anno} = s1, {{:spec, _, _}, errors} ->
-        # Only one spec per function clause is allowed
-        {s1, [{:spec_error, :spec_after_spec, anno, n, a} | errors]}
+      {:spec, {n, a}, anno} = s1, {{:spec, {n2, a2}, _}, errors} when n != n2 or a != a2 ->
+        # Specs with diffrent name/arity are mixed
+        {s1, [{:spec_error, :mixed_specs, anno, n, a} | errors]}
 
       x, {_, errors} ->
         {x, errors}
     end)
     |> elem(1)
     |> Enum.map(&{file, &1})
+    |> Enum.reverse()
   end
 
   # Filter out __info__ and other generated functions with the same name pattern

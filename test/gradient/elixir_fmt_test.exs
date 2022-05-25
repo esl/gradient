@@ -251,11 +251,11 @@ defmodule Gradient.ElixirFmtTest do
 
     test "follows another spec" do
       msg =
-        {:spec_error, :spec_after_spec, 3, :convert, 1}
+        {:spec_error, :mixed_specs, 3, :encode, 1}
         |> ElixirFmt.format_error([])
         |> :erlang.iolist_to_binary()
 
-      assert "The spec convert/1 on line 3 follows another spec, but only one spec per function clause is allowed\n" =
+      assert "The spec encode/1 on line 3 follows a spec with different name/arity\n" =
                msg
     end
   end

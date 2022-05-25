@@ -93,8 +93,8 @@ defmodule Mix.Tasks.GradientTest do
   end
 
   test "--no-ex-check option" do
-    beam = Path.join(@build_path, "Elixir.SpecAfterSpec.beam")
-    ex_spec_error_msg = "The spec convert/1 on line"
+    beam = Path.join(@build_path, "Elixir.SpecMixed.beam")
+    ex_spec_error_msg = "The spec encode/1 on line"
 
     output = run_task(test_opts([beam]))
     assert String.contains?(output, ex_spec_error_msg)

@@ -23,16 +23,17 @@ defmodule Gradient.ElixirCheckerTest do
     ast = load("Elixir.SpecWrongName.beam")
 
     assert [
-             {_, {:spec_error, :wrong_spec_name, 11, :last_two, 1}},
-             {_, {:spec_error, :wrong_spec_name, 5, :convert, 1}}
+             {_, {:spec_error, :wrong_spec_name, 5, :convert, 1}},
+             {_, {:spec_error, :wrong_spec_name, 11, :last_two, 1}}
            ] = ElixirChecker.check(ast, [])
   end
 
-  test "more than one spec per function clause is not allowed" do
-    ast = load("Elixir.SpecAfterSpec.beam")
+  test "mixing specs names is not allowed" do
+    ast = load("Elixir.SpecMixed.beam")
 
     assert [
-             {_, {:spec_error, :spec_after_spec, 3, :convert, 1}}
+             {_, {:spec_error, :mixed_specs, 3, :encode, 1}},
+             {_, {:spec_error, :wrong_spec_name, 3, :encode, 1}}
            ] = ElixirChecker.check(ast, [])
   end
 end
