@@ -255,8 +255,7 @@ defmodule Gradient.ElixirFmtTest do
         |> ElixirFmt.format_error([])
         |> :erlang.iolist_to_binary()
 
-      assert "The spec encode/1 on line 3 follows a spec with different name/arity\n" =
-               msg
+      assert "The spec encode/1 on line 3 follows a spec with different name/arity\n" = msg
     end
   end
 
