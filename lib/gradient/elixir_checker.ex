@@ -55,6 +55,10 @@ defmodule Gradient.ElixirChecker do
     |> Stream.filter(&is_not_generated?/1)
     |> Enum.sort(&(elem(&1, 2) < elem(&2, 2)))
     |> Enum.reduce({nil, []}, fn
+      {:fun, {n, :def}, _}, {{:spec, {sn, _}, _}, _} = acc when n == sn ->
+        # skip clauses generated for default arguments
+        acc
+
       {:fun, fna, _} = fun, {{:spec, {n, a} = sna, anno}, errors} when fna != sna ->
         # Spec name doesn't match the function name
         {fun, [{:spec_error, :wrong_spec_name, anno, n, a} | errors]}
@@ -87,7 +91,21 @@ defmodule Gradient.ElixirChecker do
     Stream.map(types, &{:spec, {name, arity}, elem(&1, 1)})
   end
 
-  def simplify_form({:function, _, name, arity, clauses}) do
-    Stream.map(clauses, &{:fun, {name, arity}, elem(&1, 1)})
+  def simplify_form({:function, anno, name, arity, clauses}) do
+    Stream.map(clauses, &default_args_clause(anno, name, arity, &1))
+  end
+
+  def default_args_clause(anno, name, arity, clause) do
+    with {:clause, ^anno, vars, [], [{:call, ^anno, {:atom, ^anno, ^name}, _}]} <- clause,
+         true <- all_vars_generated(vars) do
+      {:fun, {name, :def}, anno}
+    else
+      _ ->
+        {:fun, {name, arity}, elem(clause, 1)}
+    end
+  end
+
+  def all_vars_generated(vars) do
+    Enum.all?(vars, fn {:var, anno, _} -> :erl_anno.generated(anno) end)
   end
 end
