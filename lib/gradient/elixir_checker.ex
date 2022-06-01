@@ -97,7 +97,7 @@ defmodule Gradient.ElixirChecker do
 
   def default_args_clause(anno, name, arity, clause) do
     with {:clause, ^anno, vars, [], [{:call, ^anno, {:atom, ^anno, ^name}, _}]} <- clause,
-         true <- all_vars_generated(vars) do
+         true <- all_vars_generated?(vars) do
       {:fun, {name, :def}, anno}
     else
       _ ->
@@ -105,7 +105,7 @@ defmodule Gradient.ElixirChecker do
     end
   end
 
-  def all_vars_generated(vars) do
+  def all_vars_generated?(vars) do
     Enum.all?(vars, fn {:var, anno, _} -> :erl_anno.generated(anno) end)
   end
 end
