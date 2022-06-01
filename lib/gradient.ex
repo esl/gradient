@@ -39,10 +39,12 @@ defmodule Gradient do
     else
       {:erlang, forms} ->
         opts = Keyword.put(opts, :return_errors, false)
+
         case maybe_gradualizer_check(forms, opts) do
           :nok -> :error
           _ -> :ok
         end
+
       error ->
         Logger.error("Can't load file - #{inspect(error)}")
         :error

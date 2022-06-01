@@ -508,11 +508,13 @@ defmodule Gradient.AstSpecifier do
   def guards_mapper(guards, tokens, opts) do
     List.foldl(guards, {[], tokens}, fn
       gs, {ags, ts} ->
-        {gs, _} = List.foldl(gs, {[], ts}, fn
-          g, {conjunction, ts} ->
-            {g, ts} = mapper(g, ts, opts)
-            {[g | conjunction], ts}
-        end)
+        {gs, _} =
+          List.foldl(gs, {[], ts}, fn
+            g, {conjunction, ts} ->
+              {g, ts} = mapper(g, ts, opts)
+              {[g | conjunction], ts}
+          end)
+
         {[gs | ags], ts}
     end)
   end

@@ -19,6 +19,19 @@ defmodule Gradient.ElixirCheckerTest do
     assert [] = ElixirChecker.check(ast, ex_check: true)
   end
 
+  test "specs over default args are correct" do
+    ast = load("Elixir.SpecDefaultArgs.beam")
+
+    assert [] = ElixirChecker.check(ast, ex_check: true)
+  end
+
+  test "spec arity doesn't match the function arity" do
+    ast = load("Elixir.SpecWrongArgsArity.beam")
+
+    assert [{_, {:spec_error, :wrong_spec_name, 2, :foo, 3}}] =
+             ElixirChecker.check(ast, ex_check: true)
+  end
+
   test "spec name doesn't match the function name" do
     ast = load("Elixir.SpecWrongName.beam")
 
