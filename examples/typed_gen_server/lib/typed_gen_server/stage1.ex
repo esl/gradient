@@ -16,7 +16,7 @@ defmodule TypedGenServer.Stage1.Server do
   # @type message :: Contract.Echo.req()
   # @type message :: {:echo_req, String.t()} | {:hello, String.t()}
 
-  @type state :: map()
+  @type state() :: %{}
 
   def start_link() do
     GenServer.start_link(__MODULE__, %{})
@@ -52,15 +52,20 @@ defmodule TypedGenServer.Stage1.Server do
                    | {:reply, a, state()}
 
   # @impl true
-  @spec handle_call(message(), GenServer.from(), state())
-          :: called(Contract.Echo.res() | Contract.Hello.res())
+  @spec handle_call(message(), GenServer.from(), state()) ::
+          called(Contract.Echo.res() | Contract.Hello.res())
+  def handle_call(message, _from, state) do
+    handle(message, state)
+  end
+
+  @spec handle(message(), state()) :: called(Contract.Echo.res() | Contract.Hello.res())
   ## Try breaking the pattern match, e.g. by changing 'echo_req'
-  def handle_call({:echo_req, payload}, _from, state) do
+  def handle({:echo_req, payload}, state) do
     {:reply, {:echo_res, payload}, state}
   end
 
   ## Try commenting out the following clause
-  def handle_call({:hello, name}, _from, state) do
+  def handle({:hello, name}, state) do
     IO.puts("Hello, #{name}!")
     {:reply, :ok, state}
   end
