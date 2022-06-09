@@ -19,7 +19,7 @@ defmodule TypedGenServer.Stage2.Server do
   # @type message :: Contract.Echo.req()
   # @type message :: {:echo_req, String.t()} | {:hello, String.t()}
 
-  @type state :: map()
+  @type state :: %{}
 
   @spec start_link() :: {:ok, t()} | :ignore | {:error, {:already_started, t()} | any()}
   def start_link() do
@@ -53,27 +53,26 @@ defmodule TypedGenServer.Stage2.Server do
     {:ok, state}
   end
 
+  @type called(a) :: {:noreply, state()}
+                   | {:reply, a, state()}
+
   # @impl true
-  def handle_call(m, from, state) do
-    {:noreply, handle(m, from, state)}
+  @spec handle_call(message(), GenServer.from(), state()) ::
+          called(Contract.Echo.res() | Contract.Hello.res())
+  def handle_call(message, _from, state) do
+    handle(message, state)
   end
 
-  @spec handle(message(), any, any) :: state()
+  @spec handle(message(), state()) :: called(Contract.Echo.res() | Contract.Hello.res())
   ## Try breaking the pattern match, e.g. by changing 'echo_req'
-  def handle({:echo_req, payload}, from, state) do
-    ## This could register {:echo_req, payload} <-> {:echo_res, payload} mapping
-    ## and response type at compile time to generate call_echo() automatically.
-    ## Thanks Robert!
-    # TypedServer.reply( from, {:echo_res, payload}, Contract.Echo.res() )
-    GenServer.reply(from, {:echo_res, payload})
-    state
+  def handle({:echo_req, payload}, state) do
+    {:reply, {:echo_res, payload}, state}
   end
 
   ## Try commenting out the following clause
-  def handle({:hello, name}, from, state) do
+  def handle({:hello, name}, state) do
     IO.puts("Hello, #{name}!")
-    GenServer.reply(from, :ok)
-    state
+    {:reply, :ok, state}
   end
 end
 
