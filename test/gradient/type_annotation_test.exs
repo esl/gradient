@@ -8,24 +8,32 @@ defmodule Gradient.TypeAnnotationTest do
 
   test "no annotation leads to check failure" do
     path = "test/examples/_build/Elixir.Annotations.ShouldFail.NoAnno.beam"
-    io_data = capture_io(fn ->
-      assert :error = Gradient.type_check_file(path, @no_color)
-    end)
+
+    io_data =
+      capture_io(fn ->
+        assert :error = Gradient.type_check_file(path, @no_color)
+      end)
+
     assert String.contains?(io_data, "expected to have type nonempty_list")
   end
 
   test "invalid annotation leads to check failure" do
     path = "test/examples/_build/Elixir.Annotations.ShouldFail.BadAnno.beam"
-    io_data = capture_io(fn ->
-      assert :error = Gradient.type_check_file(path, @no_color)
-    end)
+
+    io_data =
+      capture_io(fn ->
+        assert :error = Gradient.type_check_file(path, @no_color)
+      end)
+
     assert String.contains?(io_data, "expected to have type float")
   end
 
   test "valid annotation ensures successful check" do
     path = "test/examples/_build/Elixir.Annotations.ShouldPass.beam"
-    io_data = capture_io(fn ->
-      assert :ok = Gradient.type_check_file(path)
-    end)
+
+    io_data =
+      capture_io(fn ->
+        assert :ok = Gradient.type_check_file(path)
+      end)
   end
 end

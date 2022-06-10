@@ -21,7 +21,6 @@ defmodule Gradient.TypeAnnotation do
           erlang_args = for a <- args, do: to_erlang_ast(a)
           {:call, 0, {:atom, 0, name}, erlang_args}
 
-
         a when is_atom(a) ->
           {:atom, 0, a}
       end
