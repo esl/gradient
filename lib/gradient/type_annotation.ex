@@ -1,30 +1,46 @@
 defmodule Gradient.TypeAnnotation do
-  defmacro annotate_type(expr, type),
-    do: annotate(:"::", expr, type)
+  defmodule Type do
+    def to_erlang(type) do
+      type
+      |> to_erlang_ast()
+      |> :erl_pp.expr()
+      # See Gradient.AstSpecifier.mapper(:'::'()) for the reason why to_string() is sufficient.
+      |> to_string()
+    end
 
-  defmacro assert_type(expr, type),
-    do: annotate(:":::", expr, type)
+    defp to_erlang_ast(type) do
+      case type do
+        {{:., _, [{:__aliases__, _, path}, name]}, _, args} ->
+          ## TODO: this is unsafe, but OTOH there's no guarantee that a remote/invalid module
+          ## will be available to load locally or its name already loaded at check time...
+          erlang_mod = "Elixir.#{Enum.join(path, ".")}" |> String.to_atom()
+          erlang_args = for a <- args, do: to_erlang_ast(a)
+          {:call, 0, {:remote, 0, {:atom, 0, erlang_mod}, {:atom, 0, name}}, erlang_args}
 
-  defp annotate(type_op, expr, type) do
-    erlang_type = elixir_type_to_erlang(type)
-    # IO.inspect(erlang_type, label: "erlang type")
-    {type_op, [], [expr, erlang_type]}
-    # |> IO.inspect(label: "annotation node")
+        {name, _, args} ->
+          erlang_args = for a <- args, do: to_erlang_ast(a)
+          {:call, 0, {:atom, 0, name}, erlang_args}
+
+
+        a when is_atom(a) ->
+          {:atom, 0, a}
+      end
+    end
   end
 
-  defp elixir_type_to_erlang(type) do
-    case type do
-      {{:., _, [{:__aliases__, _, path}, name]}, _, [] = _args} ->
-        # unquote({:{}, [], [:string, 0, '\'Elixir.Fake\':t()']})
-        # {:string, 0, Macro.escape("'Elixir.#{Enum.join(path, ".")}':#{name}()" |> to_charlist())}
-        "'Elixir.#{Enum.join(path, ".")}':#{name}()"
+  defmacro annotate_type(expr, type) do
+    erlang_type = Type.to_erlang(type)
 
-      _ when is_atom(type) ->
-        Atom.to_string(type)
+    quote do
+      unquote(:"::")(unquote(expr), unquote(erlang_type))
+    end
+  end
 
-      other ->
-        # unquote({:{}, [], [:string, 0, '\'Elixir.Fake\':t()']})
-        other
+  defmacro assert_type(expr, type) do
+    erlang_type = Type.to_erlang(type)
+
+    quote do
+      unquote(:":::")(unquote(expr), unquote(erlang_type))
     end
   end
 
