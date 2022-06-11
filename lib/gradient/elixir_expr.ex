@@ -495,7 +495,5 @@ defmodule Gradient.ElixirExpr do
   defp pp_name({:remote, _, {:atom, _, m}, {:atom, _, n}}),
     do: ElixirFmt.parse_module(m) <> to_string(n)
 
-  defp pp_name({:atom, _, :":::"}), do: "__assert_type__"
-  defp pp_name({:atom, _, :"::"}), do: "__annotate_type__"
   defp pp_name({:atom, _, n}), do: to_string(n)
 end
