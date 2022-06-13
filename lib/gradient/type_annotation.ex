@@ -13,7 +13,7 @@ defmodule Gradient.TypeAnnotation do
         {{:., _, [{:__aliases__, _, path}, name]}, _, args} ->
           ## TODO: this is unsafe, but OTOH there's no guarantee that a remote/invalid module
           ## will be available to load locally or its name already loaded at check time...
-          erlang_mod = "Elixir.#{Enum.join(path, ".")}" |> String.to_atom()
+          erlang_mod = Module.concat([Elixir | path])
           erlang_args = for a <- args, do: to_erlang_ast(a)
           {:call, 0, {:remote, 0, {:atom, 0, erlang_mod}, {:atom, 0, name}}, erlang_args}
 

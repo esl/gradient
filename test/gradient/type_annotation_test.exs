@@ -28,12 +28,11 @@ defmodule Gradient.TypeAnnotationTest do
     assert String.contains?(io_data, "expected to have type float")
   end
 
-  test "valid annotation ensures successful check" do
+  test "valid annotations ensure a successful check" do
     path = "test/examples/_build/Elixir.Annotations.ShouldPass.beam"
 
-    io_data =
-      capture_io(fn ->
-        assert :ok = Gradient.type_check_file(path)
-      end)
+    capture_io(fn ->
+      assert :ok = Gradient.type_check_file(path)
+    end)
   end
 end
