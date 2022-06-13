@@ -106,6 +106,9 @@ defmodule Gradient.ElixirChecker do
   end
 
   def all_vars_generated?(vars) do
-    Enum.all?(vars, fn {:var, anno, _} -> :erl_anno.generated(anno) end)
+    Enum.all?(vars, fn
+      {:var, anno, _} -> :erl_anno.generated(anno)
+      _ -> false
+    end)
   end
 end
