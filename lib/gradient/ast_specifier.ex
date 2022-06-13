@@ -320,7 +320,8 @@ defmodule Gradient.AstSpecifier do
         _opts
       )
       when name_atom in [:"::", :":::"] do
-    # unwrap string from binary for correct type annotation matching
+    # unwrap string from binary for correct type annotation matching.
+    # see Gradient.TypeAnnotation.Type.to_erlang/1 for a use case.
     {:call, anno, name, [expr, val]}
     |> pass_tokens(tokens)
   end

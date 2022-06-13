@@ -68,7 +68,14 @@ defmodule Gradient.ElixirFmt do
   @impl Gradient.Fmt
   def format_type_error({:type_error, expression, actual_type, expected_type}, opts)
       when is_tuple(expression) do
-    format_expr_type_error(expression, actual_type, expected_type, opts)
+    case expression do
+      {:call, _, {:atom, _, assert_or_annotate}, [inner_expr, _]}
+      when assert_or_annotate in [:"::", :":::"] ->
+        format_expr_type_error(inner_expr, actual_type, expected_type, opts)
+
+      _ ->
+        format_expr_type_error(expression, actual_type, expected_type, opts)
+    end
   end
 
   def format_type_error({:nonexhaustive, anno, example}, opts) do
