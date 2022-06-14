@@ -19,13 +19,18 @@ defmodule Gradient do
 
   @type options() :: [{:app_path, String.t()}, {:code_path, String.t()}]
 
+  @type env() :: %{tokens_present: boolean(), macro_lines: [integer()]}
+
   @spec type_check_file(String.t(), options()) :: :ok | :error
   def type_check_file(file, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
 
     with {:ok, forms} <- ElixirFileUtils.get_forms(file),
          {:elixir, _} <- wrap_language_name(forms) do
-      forms = maybe_specify_forms(forms, opts)
+      forms = update_code_path(forms, opts)
+      tokens = maybe_use_tokens(forms, opts)
+      forms = maybe_specify_forms(forms, tokens, opts)
+      opts = [{:env, build_env(tokens)} | opts]
 
       case maybe_gradient_check(forms, opts) ++ maybe_gradualizer_check(forms, opts) do
         [] ->
@@ -51,6 +56,18 @@ defmodule Gradient do
     end
   end
 
+  def build_env(tokens) do
+    %{tokens_present: tokens != [], macro_lines: Gradient.Tokens.find_macro_lines(tokens)}
+  end
+
+  defp maybe_use_tokens(forms, opts) do
+    unless opts[:no_tokens] do
+      Gradient.ElixirFileUtils.load_tokens(forms)
+    else
+      []
+    end
+  end
+
   defp maybe_gradualizer_check(forms, opts) do
     unless opts[:no_gradualizer_check] do
       try do
@@ -73,11 +90,9 @@ defmodule Gradient do
     end
   end
 
-  defp maybe_specify_forms(forms, opts) do
+  defp maybe_specify_forms(forms, tokens, opts) do
     unless opts[:no_specify] do
-      forms
-      |> put_code_path(opts)
-      |> AstSpecifier.specify()
+      AstSpecifier.run_mappers(forms, tokens)
     else
       forms
     end
@@ -91,7 +106,7 @@ defmodule Gradient do
     end
   end
 
-  defp put_code_path(forms, opts) do
+  defp update_code_path(forms, opts) do
     case opts[:code_path] do
       nil ->
         case opts[:app_path] do
