@@ -60,6 +60,22 @@ defmodule Gradient.Tokens do
     end
   end
 
+  def find_macro_lines([
+        {:identifier, {l, _, _}, :use},
+        {:alias, {l, _, _}, _},
+        {:eol, {l, _, _}} | t
+      ]) do
+    [l | find_macro_lines(t)]
+  end
+
+  def find_macro_lines([_ | t]) do
+    find_macro_lines(t)
+  end
+
+  def find_macro_lines([]) do
+    []
+  end
+
   @doc """
   Drop tokens to the first tuple occurrence. Returns type of the encountered 
   list and the following tokens.
