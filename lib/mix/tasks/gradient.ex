@@ -12,6 +12,7 @@ defmodule Mix.Tasks.Gradient do
     * `--no-gradualizer-check` - do not perform the Gradualizer checks
     * `--no-specify` - do not specify missing lines in AST what can
       result in less precise error messages
+    * `--no-tokens` - do not use tokens to increase the precision of typechecking
     * `--code-path` -  provide a path to the .ex file containing code for analyzed .beam
 
     * `--no-deps` - do not import dependencies to the Gradualizer
@@ -43,6 +44,7 @@ defmodule Mix.Tasks.Gradient do
     no_gradualizer_check: :boolean,
     no_specify: :boolean,
     # checker options
+    no_tokens: :boolean,
     code_path: :string,
     no_deps: :boolean,
     stop_on_first_error: :boolean,
