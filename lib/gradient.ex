@@ -1,13 +1,6 @@
 defmodule Gradient do
   @moduledoc """
   Documentation for `Gradient`.
-
-  Options:
-  - `app_path` - Path to the app that contains file with code (for umbrella apps).
-  - `code_path` - Path to a file with code (e.g. when beam was compiled without project).
-  - `no_gradualizer_check` - Skip Gradualizer checks if true.
-  - `no_ex_check` - Skip Elixir checks if true.
-  - `no_specify` - Skip AST specifying if true.
   """
 
   alias Gradient.ElixirFileUtils
@@ -17,7 +10,20 @@ defmodule Gradient do
 
   require Logger
 
-  @type options() :: [{:app_path, String.t()}, {:code_path, String.t()}]
+  @typedoc """
+  - `app_path` - Path to the app that contains file with code (for umbrella apps).
+  - `code_path` - Path to a file with code (e.g. when beam was compiled without project).
+  - `no_gradualizer_check` - Skip Gradualizer checks if true.
+  - `no_ex_check` - Skip Elixir checks if true.
+  - `no_specify` - Skip AST specifying if true.
+  """
+  @type options() :: [
+    app_path: String.t(),
+    code_path: String.t(),
+    no_gradualizer_check: boolean(),
+    no_ex_check: boolean(),
+    no_specify: boolean()
+  ]
 
   @spec type_check_file(String.t(), options()) :: :ok | :error
   def type_check_file(file, opts \\ []) do
