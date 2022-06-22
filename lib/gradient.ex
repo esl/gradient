@@ -25,11 +25,14 @@ defmodule Gradient do
     no_specify: boolean()
   ]
 
+  @doc """
+  Type-checks file in `path` with provided `opts`, and prints the result.
+  """
   @spec type_check_file(String.t(), options()) :: :ok | :error
-  def type_check_file(file, opts \\ []) do
+  def type_check_file(path, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
 
-    with {:ok, forms} <- ElixirFileUtils.get_forms(file),
+    with {:ok, forms} <- ElixirFileUtils.get_forms(path),
          {:elixir, _} <- wrap_language_name(forms) do
       forms = maybe_specify_forms(forms, opts)
 
