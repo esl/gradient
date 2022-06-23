@@ -104,8 +104,12 @@ defmodule Mix.Tasks.Gradient do
           IO.ANSI.reset()
         ])
 
-        System.halt(1)
+        system_halt_fn().(1)
     end
+  end
+
+  defp system_halt_fn do
+    Application.get_env(:gradient, :__system_halt__, &System.halt/1)
   end
 
   defp maybe_compile_project(options) do
