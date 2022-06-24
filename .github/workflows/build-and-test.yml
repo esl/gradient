@@ -21,6 +21,8 @@ jobs:
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
+      - name: "Ensure code is formatted"
+        run: "mix format --check-formatted"
       - name: "Get and compile deps"
         run: "mix deps.get && mix deps.compile"
       - name: "Build"
