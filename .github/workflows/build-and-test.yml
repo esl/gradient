@@ -13,8 +13,13 @@ jobs:
     name: Erlang ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
       matrix:
-        otp: ['23.3.4.7', '24.1']
+        otp: ['23.3.4.15', '24.3.4.2', '25.0.2']
         elixir: ['1.11.4', '1.12.3', '1.13.4']
+        exclude:
+          - otp: '25.0.2'
+            elixir: '1.11.4'
+          - otp: '25.0.2'
+            elixir: '1.12.3'
     steps:
       - uses: actions/checkout@v2
       - uses: erlef/setup-beam@v1
