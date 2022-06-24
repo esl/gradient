@@ -10,6 +10,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
     name: Erlang ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
       matrix:
