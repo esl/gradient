@@ -154,7 +154,20 @@ defmodule Gradient.AstData do
     {expression, _} =
       :erl_parse.mapfold_anno(
         fn anno, acc ->
-          {{:erl_anno.line(anno) - acc, :erl_anno.column(anno)}, acc}
+          line =
+            case :erl_anno.line(anno) - acc do
+              line when is_integer(line) and line >= 0 ->
+                line
+            end
+
+          column =
+            case :erl_anno.column(anno) do
+              column when is_integer(column) and column > 0 ->
+                column
+            end
+
+          location = {line, column}
+          {location, acc}
         end,
         :erl_anno.line(elem(expression, 1)),
         expression
