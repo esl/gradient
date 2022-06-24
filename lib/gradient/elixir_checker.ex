@@ -6,6 +6,8 @@ defmodule Gradient.ElixirChecker do
   - {`ex_check`, boolean()}: whether to use checks specific only to Elixir.
   """
 
+  @type simplified_form :: {:spec | :fun, {atom(), integer()}, :erl_anno.anno()}
+
   @spec check([:erl_parse.abstract_form()], keyword()) :: [{:file.filename(), any()}]
   def check(forms, opts) do
     if Keyword.get(opts, :ex_check, true) do
@@ -85,8 +87,10 @@ defmodule Gradient.ElixirChecker do
   def is_fun_or_spec?({:function, _, _, _, _}), do: true
   def is_fun_or_spec?(_), do: false
 
-  @spec simplify_form(:erl_parse.abstract_form()) ::
-          Enumerable.t({:spec | :fun, {atom(), integer()}, :erl_anno.anno()})
+  @doc """
+  Returns a stream of simplified forms in the format defined by type `simplified_form/1`
+  """
+  @spec simplify_form(:erl_parse.abstract_form()) :: Enumerable.t()
   def simplify_form({:attribute, _, :spec, {{name, arity}, types}}) do
     Stream.map(types, &{:spec, {name, arity}, elem(&1, 1)})
   end
