@@ -26,6 +26,6 @@ jobs:
       - name: "Get and compile deps"
         run: "mix deps.get && mix deps.compile"
       - name: "Build"
-        run: "mix compile"
+        run: "mix compile --warnings-as-errors"
       - name: "Test"
         run: "mix test"
