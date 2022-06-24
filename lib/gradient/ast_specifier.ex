@@ -19,6 +19,7 @@ defmodule Gradient.AstSpecifier do
   @type forms :: Types.forms()
   @type options :: Types.options()
   @type abstract_expr :: Types.abstract_expr()
+  @type mapper_fn :: (form(), tokens(), options() -> {form(), tokens()})
 
   # Expressions that could have missing location
   @lineless_forms [:atom, :char, :float, :integer, :string, :bin, :cons, :tuple]
@@ -59,7 +60,7 @@ defmodule Gradient.AstSpecifier do
   @doc """
   Map over the forms using mapper and attach a context i.e. end line. 
   """
-  @spec context_mapper_map(forms(), tokens(), options()) :: forms()
+  @spec context_mapper_map(forms(), tokens(), options(), mapper_fn()) :: forms()
   def context_mapper_map(forms, tokens, opts, mapper \\ &mapper/3)
   def context_mapper_map([], _, _, _), do: []
 
@@ -72,7 +73,7 @@ defmodule Gradient.AstSpecifier do
   @doc """
   Fold over the forms using mapper and attach a context i.e. end line.
   """
-  @spec context_mapper_fold(forms(), tokens(), options()) :: {forms(), tokens()}
+  @spec context_mapper_fold(forms(), tokens(), options(), mapper_fn()) :: {forms(), tokens()}
   def context_mapper_fold(forms, tokens, opts, mapper \\ &mapper/3)
   def context_mapper_fold([], tokens, _, _), do: {[], tokens}
 
