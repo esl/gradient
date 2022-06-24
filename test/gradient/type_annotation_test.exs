@@ -1,7 +1,6 @@
 defmodule Gradient.TypeAnnotationTest do
   use ExUnit.Case
 
-  import Gradient.TestHelpers
   import ExUnit.CaptureIO
 
   @no_color [ex_colors: [use_colors: false]]

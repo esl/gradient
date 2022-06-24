@@ -2,8 +2,6 @@ defmodule ExamplesCompiler do
   @build_path "test/examples/_build/"
   @erl_build_path "test/examples/erlang/_build/"
 
-  @version_step 0.01
-
   @version (case System.version() do
               v when v >= "1.13" -> 1.13
               v when v >= "1.12" -> 1.12
