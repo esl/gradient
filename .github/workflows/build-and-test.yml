@@ -14,14 +14,15 @@ jobs:
     strategy:
       matrix:
         otp: ['23.3.4.7', '24.1']
-        elixir: ['1.11.4', '1.12.3', '1.13.3']
+        elixir: ['1.11.4', '1.12.3', '1.13.4']
     steps:
       - uses: actions/checkout@v2
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
-      - name: "Ensure code is formatted"
+      - if: ${{ matrix.elixir == '1.13.4' }}
+        name: "Ensure code is formatted"
         run: "mix format --check-formatted"
       - name: "Get and compile deps"
         run: "mix deps.get && mix deps.compile"
