@@ -159,11 +159,13 @@ defmodule Gradient.AstData do
 
           location =
             case {line, column} do
-              {l, c} when is_integer(l) and l >= 0 and is_integer(c) and c > 0 ->
+              {l, c}
+              when is_integer(l) and l >= 0 and
+                     is_integer(c) and c > 0 ->
                 {l, c}
 
-              other ->
-                raise "Could not normalize expression with anno: #{inspect(anno)} and acc #{inspect(acc)}, got: #{inspect(other)}, expression: #{inspect(expression)}"
+              _ ->
+                anno
             end
 
           {location, acc}
