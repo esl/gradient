@@ -5,6 +5,7 @@ defmodule Gradient do
 
   alias Gradient.ElixirFileUtils
   alias Gradient.ElixirFmt
+  alias Gradient.Error
   alias Gradient.AstSpecifier
   alias Gradient.ElixirChecker
 
@@ -22,13 +23,16 @@ defmodule Gradient do
           code_path: String.t(),
           no_gradualizer_check: boolean(),
           no_ex_check: boolean(),
-          no_specify: boolean()
+          no_specify: boolean(),
+          ignores: [Error.ignore()]
         ]
+
+  @type error() :: :gradualizer_check_nok | :cannot_load_file | tuple()
 
   @doc """
   Type-checks file in `path` with provided `opts`, and prints the result.
   """
-  @spec type_check_file(String.t(), options()) :: :ok | :error
+  @spec type_check_file(charlist() | String.t(), options()) :: :ok | {:error, [error(), ...]}
   def type_check_file(path, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
 
@@ -42,21 +46,28 @@ defmodule Gradient do
 
         errors ->
           opts = Keyword.put(opts, :forms, forms)
-          ElixirFmt.print_errors(errors, opts)
-          :error
+
+          case Error.reject_ignored_errors(errors, opts) do
+            [] ->
+              :ok
+
+            [_ | _] = filtered_errors ->
+              ElixirFmt.print_errors(filtered_errors, opts)
+              {:error, filtered_errors}
+          end
       end
     else
       {:erlang, forms} ->
         opts = Keyword.put(opts, :return_errors, false)
 
         case maybe_gradualizer_check(forms, opts) do
-          :nok -> :error
+          :nok -> {:error, [:gradualizer_check_nok]}
           _ -> :ok
         end
 
       error ->
         Logger.error("Can't load file - #{inspect(error)}")
-        :error
+        {:error, [:cannot_load_file]}
     end
   end
 
