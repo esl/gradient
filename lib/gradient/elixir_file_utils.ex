@@ -62,10 +62,18 @@ defmodule Gradient.ElixirFileUtils do
         get_forms_from_ex(path)
 
       _ ->
-        [path]
-        |> Module.concat()
-        |> :code.which()
-        |> get_forms_from_beam()
+        which =
+          [path]
+          |> Module.concat()
+          |> :code.which()
+
+        case which do
+          filename when is_list(filename) ->
+            get_forms_from_beam(filename)
+
+          other ->
+            raise "Could not get forms for path #{inspect(path)}, got #{inspect(other)}"
+        end
     end
   end
 
