@@ -48,8 +48,18 @@ defmodule Gradient.Debug do
   """
   @spec erlang_ast(module()) :: {:ok, [erlang_form()]}
   def erlang_ast(mod) do
-    {:ok, _forms} =
-      get_beam_path_as_charlist(mod) |> Gradient.ElixirFileUtils.get_forms_from_beam()
+    result =
+      mod
+      |> get_beam_path_as_charlist()
+      |> Gradient.ElixirFileUtils.get_forms_from_beam()
+
+    case result do
+      {:ok, _forms} = ok ->
+        ok
+
+      error ->
+        raise "Could not get erlang forms for module #{inspect(mod)}, error:\n #{inspect(error)}"
+    end
   end
 
   @doc ~S"""
