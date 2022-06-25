@@ -65,8 +65,8 @@ defmodule Gradient.AstData do
         :ok
         |> elem(0)
       end, __ENV__.line},
-     {:call, 56, {:remote, 56, {:atom, 56, :erlang}, {:atom, 56, :element}},
-      [{:integer, 56, 1}, {:atom, 55, :ok}]}}
+     {:call, 66, {:remote, 66, {:atom, 66, :erlang}, {:atom, 66, :element}},
+      [{:integer, 66, 1}, {:atom, 65, :ok}]}}
   end
 
   defp complex_list_pipe do
@@ -115,22 +115,29 @@ defmodule Gradient.AstData do
         }
         |> Tuple.to_list()
       end, __ENV__.line},
-     {:call, 119, {:remote, 119, {:atom, 119, :erlang}, {:atom, 119, :tuple_to_list}},
-      [
-        {:tuple, 115,
-         [
-           {:tuple, 116,
-            [
-              {:integer, 116, 1},
-              {:map, 116, [{:map_field_assoc, 116, {:atom, 116, :a}, {:integer, 116, 1}}]}
-            ]},
-           {:tuple, 117,
-            [
-              {:integer, 117, 2},
-              {:map, 117, [{:map_field_assoc, 117, {:atom, 117, :a}, {:integer, 117, 2}}]}
-            ]}
-         ]}
-      ]}}
+     {
+       :call,
+       116,
+       {:remote, 116, {:atom, 116, :erlang}, {:atom, 116, :tuple_to_list}},
+       [
+         {
+           :tuple,
+           112,
+           [
+             {:tuple, 113,
+              [
+                {:integer, 113, 1},
+                {:map, 113, [{:map_field_assoc, 113, {:atom, 113, :a}, {:integer, 113, 1}}]}
+              ]},
+             {:tuple, 114,
+              [
+                {:integer, 114, 2},
+                {:map, 114, [{:map_field_assoc, 114, {:atom, 114, :a}, {:integer, 114, 2}}]}
+              ]}
+           ]
+         }
+       ]
+     }}
   end
 
   @spec ast_data() :: [
