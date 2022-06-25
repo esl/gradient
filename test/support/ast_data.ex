@@ -154,19 +154,18 @@ defmodule Gradient.AstData do
     {expression, _} =
       :erl_parse.mapfold_anno(
         fn anno, acc ->
-          line =
-            case :erl_anno.line(anno) - acc do
-              line when is_integer(line) and line >= 0 ->
-                line
+          line = :erl_anno.line(anno) - acc
+          column = :erl_anno.column(anno)
+
+          location =
+            case {line, column} do
+              {l, c} when is_integer(l) and l >= 0 and is_integer(c) and c > 0 ->
+                {l, c}
+
+              other ->
+                raise "Could not normalize expression with anno: #{inspect(anno)} and acc #{inspect(acc)}, got: #{inspect(other)}, expression: #{inspect(expression)}"
             end
 
-          column =
-            case :erl_anno.column(anno) do
-              column when is_integer(column) and column > 0 ->
-                column
-            end
-
-          location = {line, column}
           {location, acc}
         end,
         :erl_anno.line(elem(expression, 1)),
