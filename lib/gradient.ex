@@ -18,12 +18,12 @@ defmodule Gradient do
   - `no_specify` - Skip AST specifying if true.
   """
   @type options() :: [
-    app_path: String.t(),
-    code_path: String.t(),
-    no_gradualizer_check: boolean(),
-    no_ex_check: boolean(),
-    no_specify: boolean()
-  ]
+          app_path: String.t(),
+          code_path: String.t(),
+          no_gradualizer_check: boolean(),
+          no_ex_check: boolean(),
+          no_specify: boolean()
+        ]
 
   @doc """
   Type-checks file in `path` with provided `opts`, and prints the result.
