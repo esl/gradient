@@ -10,6 +10,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
     name: Erlang ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
       matrix:
@@ -32,6 +34,6 @@ jobs:
       - name: "Get and compile deps"
         run: "mix deps.get && mix deps.compile"
       - name: "Build"
-        run: "mix compile"
+        run: "mix compile --warnings-as-errors"
       - name: "Test"
         run: "mix test"
