@@ -87,9 +87,29 @@ defmodule Mix.Tasks.Gradient do
   defp execute(stream, opts) do
     res = if opts[:crash_on_error], do: stream, else: Enum.to_list(stream)
 
-    if Enum.all?(res, &(&1 == :ok)) do
-      IO.puts("No problems found!")
+    case Enum.count(res, &(&1 != :ok)) do
+      0 ->
+        IO.puts([
+          IO.ANSI.bright(),
+          IO.ANSI.green(),
+          "No errors found!",
+          IO.ANSI.reset()
+        ])
+
+      count ->
+        IO.puts([
+          IO.ANSI.bright(),
+          IO.ANSI.red(),
+          "Total errors: #{count}",
+          IO.ANSI.reset()
+        ])
+
+        system_halt_fn().(1)
     end
+  end
+
+  defp system_halt_fn do
+    Application.get_env(:gradient, :__system_halt__, &System.halt/1)
   end
 
   defp maybe_compile_project(options) do
