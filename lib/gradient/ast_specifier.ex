@@ -658,7 +658,8 @@ defmodule Gradient.AstSpecifier do
   defp match_token_to_form(
          {:bin_string, {l1, _, _}, [v1]},
          {:bin, l2, [{:bin_element, _, {:string, _, v2}, :default, :default}]}
-       ) when is_binary(v1) do
+       )
+       when is_binary(v1) do
     # string
     l2 <= l1 && :binary.bin_to_list(v1) == v2
   end
