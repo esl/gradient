@@ -2,7 +2,6 @@ defmodule GradientTest do
   use ExUnit.Case
   doctest Gradient
 
-  import Gradient.TestHelpers
   import ExUnit.CaptureIO
 
   test "typecheck erlang beam" do
