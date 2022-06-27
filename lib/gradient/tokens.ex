@@ -120,7 +120,7 @@ defmodule Gradient.Tokens do
   @doc """
   Get line from token.
   """
-  @spec get_line_from_token(T.token()) :: integer()
+  @spec get_line_from_token(T.token()) :: :erl_anno.line()
   def get_line_from_token(token), do: elem(elem(token, 1), 0)
 
   def get_line_from_form(form) do
