@@ -11,7 +11,9 @@ defmodule Annotations.ShouldPass do
     case s do
       a when is_atom(a) -> to_string(a)
       s -> s
-    end |> assert_type(String.t()) |> String.split(" ")
+    end
+    |> assert_type(String.t())
+    |> String.split(" ")
   end
 end
 
