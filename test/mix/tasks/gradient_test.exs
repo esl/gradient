@@ -215,7 +215,13 @@ defmodule Mix.Tasks.GradientTest do
     assert_receive {:system_halt, 1}
   end
 
-  def run_task(args), do: capture_io(fn -> Mix.Tasks.Gradient.run(args) end)
+  def run_task(args) do
+    capture_io(fn ->
+      capture_io(:stderr, fn ->
+        Mix.Tasks.Gradient.run(args)
+      end)
+    end)
+  end
 
   def test_opts(opts), do: ["--no-comile", "--no-deps"] ++ opts
 end

@@ -37,3 +37,6 @@ jobs:
         run: "mix compile --warnings-as-errors"
       - name: "Test"
         run: "mix test"
+      - if: ${{ matrix.elixir == '1.13.4' }}
+        name: "Gradient"
+        run: "mix gradient --fmt-location brief"

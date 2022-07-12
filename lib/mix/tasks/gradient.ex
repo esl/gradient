@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Gradient do
     * `--verbose` - show what Gradualizer is doing
     * `--no-fancy` - do not use fancy error messages
     * `--fmt-location none` - do not display location for easier comparison
-    * `--fmt-location brief` - display location for machine processing 
+    * `--fmt-location brief` - display location for machine processing
     * `--fmt-location verbose` - display location for human readers (default)
 
     * `--no-colors` - do not use colors in printed messages
@@ -30,7 +30,10 @@ defmodule Mix.Tasks.Gradient do
     * `--underscore-color ansicode` - set color for the underscored invalid code part
       in the fancy messages
 
-  Warning! Flags passed to this task are passed on to Gradualizer.
+  _Warning!_ Flags passed to this task are passed on to Gradualizer.
+
+  To ignore errors, define a `.gradient_ignore.exs` in the project root folder.
+  Check `Gradient.Error` `ignore()` type for more details.
   """
   @shortdoc "Runs gradient with default or given options"
 
@@ -62,6 +65,8 @@ defmodule Mix.Tasks.Gradient do
   def run(args) do
     {options, user_paths, _invalid} = OptionParser.parse(args, strict: @options)
 
+    ignores = fetch_ignores()
+
     options = Enum.reduce(options, [], &prepare_option/2)
     # Load dependencies
     maybe_load_deps(options)
@@ -76,7 +81,13 @@ defmodule Mix.Tasks.Gradient do
 
     files
     |> Stream.map(fn {app_path, paths} ->
-      Stream.map(paths, &Gradient.type_check_file(&1, [{:app_path, app_path} | options]))
+      Stream.map(
+        paths,
+        &Gradient.type_check_file(
+          &1,
+          [{:app_path, app_path}, {:ignores, ignores} | options]
+        )
+      )
     end)
     |> Stream.concat()
     |> execute(options)
@@ -207,6 +218,23 @@ defmodule Mix.Tasks.Gradient do
       |> Enum.map(fn {app_name, _} -> to_charlist(compile_path(app_name)) end)
     else
       [to_charlist(Mix.Project.compile_path())]
+    end
+  end
+
+  @spec fetch_ignores() :: [term()]
+  defp fetch_ignores() do
+    case File.read(".gradient_ignore.exs") do
+      {:ok, content} ->
+        case Code.eval_string(content) do
+          {[_ | _] = ignores, _binding} ->
+            ignores
+
+          _ ->
+            []
+        end
+
+      {:error, _} ->
+        []
     end
   end
 
