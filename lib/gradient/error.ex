@@ -105,7 +105,7 @@ defmodule Gradient.Error do
     {"lib/ecto/changeset.ex:55", {:spec_error, :mixed_specs}},
 
     # Ignores an error kind in all files
-    {:spec_error, :mixed_specs},
+    {:spec_error, :mixed_specs}
   ]
   ```
 
