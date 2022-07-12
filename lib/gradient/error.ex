@@ -297,7 +297,10 @@ defmodule Gradient.Error do
     {:undef, :record_field}
   end
 
-  def kind(_other), do: :unknown
+  def kind(other) do
+    Logger.debug("Could not determine kind of error: #{inspect(other)}")
+    :unknown
+  end
 
   @doc """
   Returns the line of given `error`, or `nil`,
@@ -337,12 +340,16 @@ defmodule Gradient.Error do
 
   def line({:type_error, expression, _actual, _expected})
       when is_tuple(expression) do
-    gradualizer_line(expression)
+    IO.inspect(expression, label: :expr)
+    gradualizer_line(expression) |> IO.inspect(label: :res)
   end
 
   def line({:undef, _, anno, _}), do: gradualizer_line(anno)
 
-  def line(_), do: nil
+  def line(other) do
+    Logger.debug("Gradient could not determine line of error: #{inspect(other)}")
+    nil
+  end
 
   defp gradualizer_line(anno_or_expr) do
     anno_or_expr
