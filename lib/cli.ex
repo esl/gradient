@@ -29,6 +29,9 @@ defmodule Gradient.CLI do
     * `--underscore-color ansicode` - set color for the underscored invalid code part
       in the fancy messages
 
+    # --path_add - add path to the `/ebin` directory for dependencies
+    # --module - add name of the module to check in specific file
+
   Warning! Flags passed to this task are passed on to Gradualizer.
   """
 
@@ -86,7 +89,10 @@ defmodule Gradient.CLI do
   end
 
   defp execute(stream, opts) do
-    res = if opts[:crash_on_error], do: stream, else: Enum.to_list(stream)
+    res =
+      if opts[:crash_on_error],
+        do: stream,
+        else: Enum.to_list(stream)
 
     case Enum.count(res, &(&1 != :ok)) do
       0 ->
@@ -163,8 +169,8 @@ defmodule Gradient.CLI do
     paths
     |> Enum.map(fn p ->
       if File.dir?(p) do
-        expanded_path = Path.expand(p) |> IO.inspect(label: :EXPANDE_PATH)
-        Path.wildcard(Path.join([expanded_path, "/**/*.ex"])) |> IO.inspect(label: :WILD_PATH)
+        expanded_path = Path.expand(p)
+        Path.wildcard(Path.join([expanded_path, "/**/*.ex"]))
       else
         [p]
       end
@@ -173,24 +179,17 @@ defmodule Gradient.CLI do
   end
 
   defp module_flag_absent_or_provided_with_file_path?(options, user_paths) do
-    module_flag = Keyword.get(options, :module, nil) |> IO.inspect(label: :KEYWORD_GET)
+    module_flag = Keyword.get(options, :module, nil)
 
     cond do
-      is_nil(module_flag) && Enum.count(user_paths) == 1 &&
-          String.ends_with?(List.first(user_paths), ".ex") ->
-        IO.inspect("MODULE_absent, one path and ends with .ex")
-        false
-
       is_binary(module_flag) && Enum.count(user_paths) == 1 &&
           String.ends_with?(List.first(user_paths), ".ex") ->
-        IO.inspect("MODULE_PRESENT, one path and ends with .ex")
         true
 
       is_nil(module_flag) ->
         true
 
       true ->
-        IO.inspect("DEFAULT false")
         false
     end
   end

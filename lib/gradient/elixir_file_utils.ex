@@ -21,8 +21,6 @@ defmodule Gradient.ElixirFileUtils do
   @spec get_forms_from_beam(path()) ::
           {:ok, abstract_forms()} | parsed_file_error()
   def get_forms_from_beam(path) do
-    # IO.inspect(path, label: :PATH_IN_GET_FORMS_FROM_BEAM)
-
     case :beam_lib.chunks(path, [:abstract_code]) do
       {:ok, {_module, [{:abstract_code, {:raw_abstract_v1, forms}}]}} ->
         {:ok, forms}
@@ -46,8 +44,6 @@ defmodule Gradient.ElixirFileUtils do
   def get_forms_from_ex(path, module \\ "all_modules") do
     # For compiling many files concurrently, see Kernel.ParallelCompiler.compile/2.
     if File.exists?(path) do
-      # IO.inspect(path, label: :FILEEXISTS)
-
       forms =
         path
         |> Code.require_file()
@@ -66,16 +62,6 @@ defmodule Gradient.ElixirFileUtils do
             [forms | acc]
           end
         end)
-
-      # |> IO.inspect(label: :REQUIRE_FILE)
-      # change to reduce
-      # |> maybe_filter_required_modules(module)
-      # [{module_name, binary}, {}]
-      # |> Enum.map(fn {_module, bin} ->
-      # {:ok, forms} = get_forms_from_beam(bin)
-      # IO.inspect(forms, label: :FORMS_FROM_BEAM)
-      # forms
-      # end)
 
       {:ok, forms}
     else

@@ -33,31 +33,25 @@ defmodule Gradient do
     opts = Keyword.put(opts, :return_errors, true)
     module = Keyword.get(opts, :module, "all_modules")
 
-    IO.inspect(path, label: :PATH)
-
     with {:ok, forms} <- ElixirFileUtils.get_forms(path, module),
          {:ok, first_forms} <- get_first_forms(forms),
          {:elixir, _} <- wrap_language_name(first_forms) do
       forms
-      |> Enum.map(fn module_forms ->
+      |> Enum.flat_map(fn module_forms ->
         single_module_forms = maybe_specify_forms(module_forms, opts)
 
         case maybe_gradient_check(single_module_forms, opts) ++
                maybe_gradualizer_check(single_module_forms, opts) do
           [] ->
-            :ok
+            [:ok]
 
           errors ->
             opts = Keyword.put(opts, :forms, forms)
             ElixirFmt.print_errors(errors, opts)
-            :error
+            [:error]
         end
       end)
-      |> Enum.any?(&(&1 == :error))
-      |> case do
-        true -> :error
-        false -> :ok
-      end
+      |> IO.inspect(label: :FLAT_MAP_RESULT)
     else
       {:erlang, forms} ->
         opts = Keyword.put(opts, :return_errors, false)
