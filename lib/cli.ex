@@ -1,8 +1,7 @@
-defmodule Mix.Tasks.Gradient do
-  @moduledoc ~s"""
-  This task compiles the mix project, collects files with dependencies, specifies Erlang AST,
-  and type checks the Elixir code. For type checking, Gradualizer is used, but Gradient provides
-  its own checker for Elixir-specific cases.
+defmodule Gradient.CLI do
+  @moduledoc """
+  Gradient CLI module responsible for
+  accepting shell params and starting gradualizer.
 
   ## Command-line options
 
@@ -32,9 +31,6 @@ defmodule Mix.Tasks.Gradient do
 
   Warning! Flags passed to this task are passed on to Gradualizer.
   """
-  @shortdoc "Runs gradient with default or given options"
-
-  use Mix.Task
 
   @options [
     # skip phases options
@@ -55,33 +51,38 @@ defmodule Mix.Tasks.Gradient do
     no_colors: :boolean,
     expr_color: :string,
     type_color: :string,
-    underscore_color: :string
+    underscore_color: :string,
+    # path and compiler options
+    path_add: :string,
+    module: :string
   ]
 
-  @impl Mix.Task
-  def run(args) do
+  def main(args) do
     {options, user_paths, _invalid} = OptionParser.parse(args, strict: @options)
 
     options = Enum.reduce(options, [], &prepare_option/2)
-    # Load dependencies
-    maybe_load_deps(options)
-    # Start Gradualizer application
-    Application.ensure_all_started(:gradualizer)
-    # Compile the project before the analysis
-    maybe_compile_project(options)
-    # Get paths to files
-    files = get_paths(user_paths)
 
-    IO.puts("Typechecking files...")
+    if module_flag_absent_or_provided_with_file_path?(options, user_paths) do
+      maybe_path_add(options)
+      # Start Gradualizer application
+      Application.ensure_all_started(:gradualizer)
 
-    files
-    |> Stream.map(fn {app_path, paths} ->
-      Stream.map(paths, &Gradient.type_check_file(&1, [{:app_path, app_path} | options]))
-    end)
-    |> Stream.concat()
-    |> execute(options)
+      # # Get paths to files
+      files = get_paths(user_paths, options)
 
-    :ok
+      IO.puts("Typechecking files...")
+
+      files
+      |> Stream.map(fn {app_path, paths} ->
+        Stream.map(paths, &Gradient.type_check_file(&1, [{:app_path, app_path} | options]))
+      end)
+      |> Stream.concat()
+      |> execute(options)
+
+      :ok
+    else
+      IO.puts("Flag --module has to be used with path to single *.ex file.")
+    end
   end
 
   defp execute(stream, opts) do
@@ -112,20 +113,19 @@ defmodule Mix.Tasks.Gradient do
     Application.get_env(:gradient, :__system_halt__, &System.halt/1)
   end
 
-  defp maybe_compile_project(options) do
-    unless options[:no_compile] || false do
-      IO.puts("Compiling project...")
-      Mix.Tasks.Compile.run([])
+  defp maybe_path_add(options) do
+    if options[:path_add] do
+      options[:path_add]
+      |> String.split(",")
+      |> Enum.map(fn path ->
+        path
+        |> Path.expand()
+        |> to_charlist()
+      end)
+      |> :code.add_paths()
     end
-  end
 
-  defp maybe_load_deps(options) do
-    if options[:no_deps] || false do
-      Application.put_env(:gradualizer, :options, autoimport: false)
-    else
-      :ok = :code.add_paths(get_compile_paths())
-      IO.puts("Loading deps...")
-    end
+    # end
   end
 
   defp prepare_color_option(opts, pair) do
@@ -153,22 +153,18 @@ defmodule Mix.Tasks.Gradient do
 
   defp prepare_option({k, v}, opts), do: [{k, v} | opts]
 
-  defp get_paths([]), do: get_beam_paths()
-  defp get_paths(paths), do: %{nil => get_paths_from_dir(paths)}
-
-  defp get_beam_paths() do
-    if Mix.Project.umbrella?() do
-      get_umbrella_app_beams_paths()
-    else
-      get_app_beams_paths()
-    end
+  defp get_paths([], _options) do
+    %{nil => get_paths_from_dir([File.cwd!()])}
   end
+
+  defp get_paths(paths, _options), do: %{nil => get_paths_from_dir(paths)}
 
   defp get_paths_from_dir(paths) do
     paths
     |> Enum.map(fn p ->
       if File.dir?(p) do
-        Path.wildcard(Path.join([p, "*.ex"]))
+        expanded_path = Path.expand(p) |> IO.inspect(label: :EXPANDE_PATH)
+        Path.wildcard(Path.join([expanded_path, "/**/*.ex"])) |> IO.inspect(label: :WILD_PATH)
       else
         [p]
       end
@@ -176,41 +172,26 @@ defmodule Mix.Tasks.Gradient do
     |> Enum.concat()
   end
 
-  defp get_app_beams_paths() do
-    %{
-      nil =>
-        (Mix.Project.app_path() <> "/ebin/**/*.beam")
-        |> Path.wildcard()
-        |> Enum.map(&String.to_charlist/1)
-    }
-  end
+  defp module_flag_absent_or_provided_with_file_path?(options, user_paths) do
+    module_flag = Keyword.get(options, :module, nil) |> IO.inspect(label: :KEYWORD_GET)
 
-  defp get_umbrella_app_beams_paths() do
-    Mix.Project.apps_paths()
-    |> Enum.map(fn {app_name, app_path} ->
-      app_name = Atom.to_string(app_name)
+    cond do
+      is_nil(module_flag) && Enum.count(user_paths) == 1 &&
+          String.ends_with?(List.first(user_paths), ".ex") ->
+        IO.inspect("MODULE_absent, one path and ends with .ex")
+        false
 
-      paths =
-        (compile_path(app_name) <> "/**/*.beam")
-        |> Path.wildcard()
-        |> Enum.map(&String.to_charlist/1)
+      is_binary(module_flag) && Enum.count(user_paths) == 1 &&
+          String.ends_with?(List.first(user_paths), ".ex") ->
+        IO.inspect("MODULE_PRESENT, one path and ends with .ex")
+        true
 
-      {app_path, paths}
-    end)
-    |> Map.new()
-  end
+      is_nil(module_flag) ->
+        true
 
-  @spec get_compile_paths() :: [charlist()]
-  defp get_compile_paths() do
-    if Mix.Project.umbrella?() do
-      Mix.Project.apps_paths()
-      |> Enum.map(fn {app_name, _} -> to_charlist(compile_path(app_name)) end)
-    else
-      [to_charlist(Mix.Project.compile_path())]
+      true ->
+        IO.inspect("DEFAULT false")
+        false
     end
-  end
-
-  defp compile_path(app_name) do
-    Mix.Project.build_path() <> "/lib/" <> to_string(app_name) <> "/ebin"
   end
 end

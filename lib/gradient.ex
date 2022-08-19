@@ -31,19 +31,32 @@ defmodule Gradient do
   @spec type_check_file(String.t(), options()) :: :ok | :error
   def type_check_file(path, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
+    module = Keyword.get(opts, :module, "all_modules")
 
-    with {:ok, forms} <- ElixirFileUtils.get_forms(path),
-         {:elixir, _} <- wrap_language_name(forms) do
-      forms = maybe_specify_forms(forms, opts)
+    IO.inspect(path, label: :PATH)
 
-      case maybe_gradient_check(forms, opts) ++ maybe_gradualizer_check(forms, opts) do
-        [] ->
-          :ok
+    with {:ok, forms} <- ElixirFileUtils.get_forms(path, module),
+         {:ok, first_forms} <- get_first_forms(forms),
+         {:elixir, _} <- wrap_language_name(first_forms) do
+      forms
+      |> Enum.map(fn module_forms ->
+        single_module_forms = maybe_specify_forms(module_forms, opts)
 
-        errors ->
-          opts = Keyword.put(opts, :forms, forms)
-          ElixirFmt.print_errors(errors, opts)
-          :error
+        case maybe_gradient_check(single_module_forms, opts) ++
+               maybe_gradualizer_check(single_module_forms, opts) do
+          [] ->
+            :ok
+
+          errors ->
+            opts = Keyword.put(opts, :forms, forms)
+            ElixirFmt.print_errors(errors, opts)
+            :error
+        end
+      end)
+      |> Enum.any?(&(&1 == :error))
+      |> case do
+        true -> :error
+        false -> :ok
       end
     else
       {:erlang, forms} ->
@@ -53,6 +66,10 @@ defmodule Gradient do
           :nok -> :error
           _ -> :ok
         end
+
+      {:error, :module_not_found} ->
+        Logger.error("Can't find module specified by '--module' flag.")
+        :error
 
       error ->
         Logger.error("Can't load file - #{inspect(error)}")
@@ -118,6 +135,15 @@ defmodule Gradient do
 
       path ->
         [{:attribute, 1, :file, {path, 1}} | tl(forms)]
+    end
+  end
+
+  defp get_first_forms(forms) do
+    forms
+    |> List.first()
+    |> case do
+      nil -> {:error, :module_not_found}
+      forms -> {:ok, forms}
     end
   end
 end
