@@ -20,11 +20,17 @@ defmodule GradientTest do
     # typecheck file with errors
     path = "test/examples/_build/Elixir.WrongRet.beam"
     ex_path = "test/examples/type/wrong_ret.ex"
-    io_data = capture_io(fn -> assert :error = Gradient.type_check_file(path) end)
+
+    io_data =
+      capture_io(fn ->
+        errors = Gradient.type_check_file(path)
+        assert Enum.count(errors) == 23
+      end)
+
     assert String.contains?(io_data, ex_path)
     # typecheck correct file
     capture_io(fn ->
-      assert :ok = Gradient.type_check_file("test/examples/_build/Elixir.Basic.beam")
+      assert [:ok] = Gradient.type_check_file("test/examples/_build/Elixir.Basic.beam")
     end)
   end
 end

@@ -208,10 +208,10 @@ defmodule Mix.Tasks.GradientTest do
   end
 
   test "counts errors" do
-    assert run_task([@s_wrong_ret_beam]) =~ "Total errors: 1"
+    assert run_task([@s_wrong_ret_beam]) =~ "Total errors: 2"
     assert_receive {:system_halt, 1}
 
-    assert run_task([@s_wrong_ret_beam, @s_wrong_ret_ex]) =~ "Total errors: 2"
+    assert run_task([@s_wrong_ret_beam, @s_wrong_ret_ex]) =~ "Total errors: 4"
     assert_receive {:system_halt, 1}
   end
 

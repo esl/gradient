@@ -11,7 +11,7 @@ defmodule Gradient.CLI do
     * `--no-gradualizer-check` - do not perform the Gradualizer checks
     * `--no-specify` - do not specify missing lines in AST what can
       result in less precise error messages
-    * `--code-path` -  provide a path to the .ex file containing code for analyzed .beam
+    * `--source-path` -  provide a path to the .ex file containing code for analyzed .beam
 
     * `--no-deps` - do not import dependencies to the Gradualizer
     * `--stop_on_first_error` - stop type checking at the first error
@@ -29,8 +29,8 @@ defmodule Gradient.CLI do
     * `--underscore-color ansicode` - set color for the underscored invalid code part
       in the fancy messages
 
-    # --path_add - add path to the `/ebin` directory for dependencies
-    # --module - add name of the module to check in specific file
+    # --path-add - append a list of comma-delimited paths to the Erlang code path
+    # --module - add name of the specific module to check in a source file
 
   Warning! Flags passed to this task are passed on to Gradualizer.
   """
@@ -70,7 +70,7 @@ defmodule Gradient.CLI do
       # Start Gradualizer application
       Application.ensure_all_started(:gradualizer)
 
-      # # Get paths to files
+      # Get paths to files
       files = get_paths(user_paths, options)
 
       IO.puts("Typechecking files...")
@@ -84,7 +84,7 @@ defmodule Gradient.CLI do
 
       :ok
     else
-      IO.puts("Flag --module has to be used with path to single *.ex file.")
+      IO.puts("Use --module when pointing at a single *.ex file.")
     end
   end
 
@@ -130,8 +130,6 @@ defmodule Gradient.CLI do
       end)
       |> :code.add_paths()
     end
-
-    # end
   end
 
   defp prepare_color_option(opts, pair) do
@@ -156,6 +154,8 @@ defmodule Gradient.CLI do
   defp prepare_option({:no_fancy, _}, opts), do: [{:fancy, false} | opts]
 
   defp prepare_option({:stop_on_first_error, _}, opts), do: [{:crash_on_error, true} | opts]
+
+  defp prepare_option({:source_path, path}, opts), do: [{:code_path, path} | opts]
 
   defp prepare_option({k, v}, opts), do: [{k, v} | opts]
 

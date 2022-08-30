@@ -46,7 +46,7 @@ defmodule Gradient.ElixirFileUtils do
     if File.exists?(path) do
       forms =
         path
-        |> Code.require_file()
+        |> Code.compile_file()
         |> Enum.reduce([], fn {required_module_name, binary}, acc ->
           if module != "all_modules" do
             string_module_name = Atom.to_string(required_module_name)

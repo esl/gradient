@@ -63,6 +63,7 @@ defmodule Mix.Tasks.Gradient do
     {options, user_paths, _invalid} = OptionParser.parse(args, strict: @options)
 
     options = Enum.reduce(options, [], &prepare_option/2)
+
     # Load dependencies
     maybe_load_deps(options)
     # Start Gradualizer application
@@ -85,7 +86,10 @@ defmodule Mix.Tasks.Gradient do
   end
 
   defp execute(stream, opts) do
-    res = if opts[:crash_on_error], do: stream, else: Enum.to_list(stream)
+    res =
+      if opts[:crash_on_error],
+        do: stream,
+        else: Enum.to_list(stream) |> List.flatten()
 
     case Enum.count(res, &(&1 != :ok)) do
       0 ->

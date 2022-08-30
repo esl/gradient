@@ -33,10 +33,10 @@ defmodule Gradient do
     opts = Keyword.put(opts, :return_errors, true)
     module = Keyword.get(opts, :module, "all_modules")
 
-    with {:ok, forms} <- ElixirFileUtils.get_forms(path, module),
-         {:ok, first_forms} <- get_first_forms(forms),
-         {:elixir, _} <- wrap_language_name(first_forms) do
-      forms
+    with {:ok, asts} <- ElixirFileUtils.get_forms(path, module),
+         {:ok, first_ast} <- get_first_forms(asts),
+         {:elixir, _} <- wrap_language_name(first_ast) do
+      asts
       |> Enum.flat_map(fn module_forms ->
         single_module_forms = maybe_specify_forms(module_forms, opts)
 
@@ -46,12 +46,12 @@ defmodule Gradient do
             [:ok]
 
           errors ->
-            opts = Keyword.put(opts, :forms, forms)
+            opts = Keyword.put(opts, :forms, single_module_forms)
             ElixirFmt.print_errors(errors, opts)
-            [:error]
+
+            List.duplicate(:error, Enum.count(errors))
         end
       end)
-      |> IO.inspect(label: :FLAT_MAP_RESULT)
     else
       {:erlang, forms} ->
         opts = Keyword.put(opts, :return_errors, false)
