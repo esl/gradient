@@ -89,17 +89,26 @@ defmodule Gradient.CLI do
   end
 
   defp execute(stream, opts) do
-    res =
-      if opts[:crash_on_error],
-        do: stream,
-        else: Enum.to_list(stream)
+    crash_on_error? = Keyword.get(opts, :crash_on_error, false)
 
-    res
-    |> Enum.reduce(0, fn
-      :ok, acc -> acc
-      :error, acc -> acc + 1
-      {:error, errors}, acc -> errors |> Enum.count() |> Kernel.+(acc)
-      _, acc -> acc + 1
+    stream
+    |> Enum.to_list()
+    |> List.flatten()
+    |> Enum.reduce_while(0, fn
+      stream_result, acc ->
+        if not crash_on_error? do
+          stream_result
+          |> case do
+            :ok ->
+              {:cont, acc}
+
+            {:error, errors} ->
+              total_errors = errors |> Enum.count() |> Kernel.+(acc)
+              {:cont, total_errors}
+          end
+        else
+          {:halt, 1}
+        end
     end)
     |> case do
       0 ->

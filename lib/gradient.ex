@@ -28,7 +28,7 @@ defmodule Gradient do
   @doc """
   Type-checks file in `path` with provided `opts`, and prints the result.
   """
-  @spec type_check_file(String.t(), options()) :: :ok | :error | {:error, list(tuple())}
+  @spec type_check_file(String.t(), options()) :: :ok | {:error, list()}
   def type_check_file(path, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
     module = Keyword.get(opts, :module, "all_modules")
@@ -54,24 +54,29 @@ defmodule Gradient do
       end)
     else
       {:erlang, forms} ->
-        opts = Keyword.put(opts, :return_errors, false)
-
         case maybe_gradualizer_check(forms, opts) do
-          :nok -> :error
-          _ -> :ok
+          [] ->
+            :ok
+
+          errors ->
+            opts = Keyword.put(opts, :forms, forms)
+            ElixirFmt.print_errors(errors, opts)
+            {:error, errors}
         end
 
       {:error, :module_not_found} ->
         Logger.error("Can't find module specified by '--module' flag.")
-        :error
+        {:error, [{:module_not_found, module}]}
 
       error ->
         Logger.error("Can't load file - #{inspect(error)}")
-        :error
+        {:error, [error]}
     end
   end
 
   defp maybe_gradualizer_check(forms, opts) do
+    opts = Keyword.put(opts, :return_errors, true)
+
     unless opts[:no_gradualizer_check] do
       try do
         :gradualizer.type_check_forms(forms, opts)
