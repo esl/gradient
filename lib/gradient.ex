@@ -12,14 +12,14 @@ defmodule Gradient do
 
   @typedoc """
   - `app_path` - Path to the app that contains file with code (for umbrella apps).
-  - `code_path` - Path to a file with code (e.g. when beam was compiled without project).
+  - `source_path` - Path to a file with code (e.g. when beam was compiled without project).
   - `no_gradualizer_check` - Skip Gradualizer checks if true.
   - `no_ex_check` - Skip Elixir checks if true.
   - `no_specify` - Skip AST specifying if true.
   """
   @type options() :: [
           app_path: String.t(),
-          code_path: String.t(),
+          source_path: String.t(),
           no_gradualizer_check: boolean(),
           no_ex_check: boolean(),
           no_specify: boolean()
@@ -28,7 +28,7 @@ defmodule Gradient do
   @doc """
   Type-checks file in `path` with provided `opts`, and prints the result.
   """
-  @spec type_check_file(String.t(), options()) :: :ok | :error
+  @spec type_check_file(String.t(), options()) :: :ok | :error | {:error, list(tuple())}
   def type_check_file(path, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
     module = Keyword.get(opts, :module, "all_modules")
@@ -37,19 +37,19 @@ defmodule Gradient do
          {:ok, first_ast} <- get_first_forms(asts),
          {:elixir, _} <- wrap_language_name(first_ast) do
       asts
-      |> Enum.flat_map(fn module_forms ->
+      |> Enum.map(fn module_forms ->
         single_module_forms = maybe_specify_forms(module_forms, opts)
 
         case maybe_gradient_check(single_module_forms, opts) ++
                maybe_gradualizer_check(single_module_forms, opts) do
           [] ->
-            [:ok]
+            :ok
 
           errors ->
             opts = Keyword.put(opts, :forms, single_module_forms)
             ElixirFmt.print_errors(errors, opts)
 
-            List.duplicate(:error, Enum.count(errors))
+            {:error, errors}
         end
       end)
     else
@@ -96,7 +96,7 @@ defmodule Gradient do
   defp maybe_specify_forms(forms, opts) do
     unless opts[:no_specify] do
       forms
-      |> put_code_path(opts)
+      |> put_source_path(opts)
       |> AstSpecifier.specify()
     else
       forms
@@ -111,8 +111,8 @@ defmodule Gradient do
     end
   end
 
-  defp put_code_path(forms, opts) do
-    case opts[:code_path] do
+  defp put_source_path(forms, opts) do
+    case opts[:source_path] do
       nil ->
         case opts[:app_path] do
           nil ->

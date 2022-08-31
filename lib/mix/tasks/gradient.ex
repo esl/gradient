@@ -12,7 +12,7 @@ defmodule Mix.Tasks.Gradient do
     * `--no-gradualizer-check` - do not perform the Gradualizer checks
     * `--no-specify` - do not specify missing lines in AST what can
       result in less precise error messages
-    * `--code-path` -  provide a path to the .ex file containing code for analyzed .beam
+    * `--source-path` -  provide a path to the .ex file containing code for analyzed .beam
 
     * `--no-deps` - do not import dependencies to the Gradualizer
     * `--stop_on_first_error` - stop type checking at the first error
@@ -43,7 +43,7 @@ defmodule Mix.Tasks.Gradient do
     no_gradualizer_check: :boolean,
     no_specify: :boolean,
     # checker options
-    code_path: :string,
+    source_path: :string,
     no_deps: :boolean,
     stop_on_first_error: :boolean,
     infer: :boolean,
@@ -91,7 +91,14 @@ defmodule Mix.Tasks.Gradient do
         do: stream,
         else: Enum.to_list(stream) |> List.flatten()
 
-    case Enum.count(res, &(&1 != :ok)) do
+    res
+    |> Enum.reduce(0, fn
+      :ok, acc -> acc
+      :error, acc -> acc + 1
+      {:error, errors}, acc -> errors |> Enum.count() |> Kernel.+(acc)
+      _, acc -> acc + 1
+    end)
+    |> case do
       0 ->
         IO.puts([
           IO.ANSI.bright(),

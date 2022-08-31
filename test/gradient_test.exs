@@ -23,8 +23,7 @@ defmodule GradientTest do
 
     io_data =
       capture_io(fn ->
-        errors = Gradient.type_check_file(path)
-        assert Enum.count(errors) == 23
+        assert [{:error, _}] = Gradient.type_check_file(path)
       end)
 
     assert String.contains?(io_data, ex_path)

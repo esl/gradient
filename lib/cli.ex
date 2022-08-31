@@ -42,7 +42,7 @@ defmodule Gradient.CLI do
     no_gradualizer_check: :boolean,
     no_specify: :boolean,
     # checker options
-    code_path: :string,
+    source_path: :string,
     no_deps: :boolean,
     stop_on_first_error: :boolean,
     infer: :boolean,
@@ -94,7 +94,14 @@ defmodule Gradient.CLI do
         do: stream,
         else: Enum.to_list(stream)
 
-    case Enum.count(res, &(&1 != :ok)) do
+    res
+    |> Enum.reduce(0, fn
+      :ok, acc -> acc
+      :error, acc -> acc + 1
+      {:error, errors}, acc -> errors |> Enum.count() |> Kernel.+(acc)
+      _, acc -> acc + 1
+    end)
+    |> case do
       0 ->
         IO.puts([
           IO.ANSI.bright(),
@@ -154,8 +161,6 @@ defmodule Gradient.CLI do
   defp prepare_option({:no_fancy, _}, opts), do: [{:fancy, false} | opts]
 
   defp prepare_option({:stop_on_first_error, _}, opts), do: [{:crash_on_error, true} | opts]
-
-  defp prepare_option({:source_path, path}, opts), do: [{:code_path, path} | opts]
 
   defp prepare_option({k, v}, opts), do: [{k, v} | opts]
 

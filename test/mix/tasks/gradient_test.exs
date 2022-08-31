@@ -197,10 +197,10 @@ defmodule Mix.Tasks.GradientTest do
     assert_receive {:system_halt, 1}
   end
 
-  test "--code-path option" do
+  test "--source-path option" do
     ex_file = "wrong_ret.ex"
 
-    output = run_task(test_opts(["--code-path", ex_file, "--", @s_wrong_ret_beam]))
+    output = run_task(test_opts(["--source-path", ex_file, "--", @s_wrong_ret_beam]))
 
     assert not String.contains?(output, @s_wrong_ret_ex)
     assert String.contains?(output, ex_file)
