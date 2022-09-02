@@ -215,6 +215,10 @@ defmodule Mix.Tasks.GradientTest do
     assert_receive {:system_halt, 1}
   end
 
+  test "dependent modules are loaded" do
+    assert run_task([@examples_path <> "/dependent_modules.ex"]) =~ "No errors found!"
+  end
+
   def run_task(args), do: capture_io(fn -> Mix.Tasks.Gradient.run(args) end)
 
   def test_opts(opts), do: ["--no-comile", "--no-deps"] ++ opts

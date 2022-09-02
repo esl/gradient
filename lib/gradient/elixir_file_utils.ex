@@ -48,6 +48,8 @@ defmodule Gradient.ElixirFileUtils do
         path
         |> Code.compile_file()
         |> Enum.reduce([], fn {required_module_name, binary}, acc ->
+          ensure_module_loaded_into_gradualizer(binary)
+
           if module != "all_modules" do
             string_module_name = Atom.to_string(required_module_name)
 
@@ -115,5 +117,14 @@ defmodule Gradient.ElixirFileUtils do
         IO.puts("Cannot load tokens: #{inspect(error)}")
         []
     end
+  end
+
+  defp ensure_module_loaded_into_gradualizer(binary) do
+    {path, _} = System.cmd("mktemp", [])
+    sanitized_path = path |> String.trim() |> Kernel.<>(".beam")
+
+    :file.write_file(to_charlist(sanitized_path), binary)
+
+    :gradualizer_db.import_beam_files([to_charlist(sanitized_path)])
   end
 end
