@@ -66,6 +66,10 @@ defmodule Gradient.CLI do
     options = Enum.reduce(options, [], &prepare_option/2)
 
     if module_flag_absent_or_provided_with_file_path?(options, user_paths) do
+      # Gradualizer has to be stopped, otherwise adding the extra code paths won't take effect.
+      # We don't want to worry the user with the stop message, though.
+      Logger.configure(level: :warning)
+      Application.stop(:gradualizer)
       maybe_path_add(options)
       # Start Gradualizer application
       Application.ensure_all_started(:gradualizer)
