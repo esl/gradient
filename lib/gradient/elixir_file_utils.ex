@@ -123,8 +123,8 @@ defmodule Gradient.ElixirFileUtils do
     {path, _} = System.cmd("mktemp", [])
     sanitized_path = path |> String.trim() |> Kernel.<>(".beam")
 
-    :file.write_file(to_charlist(sanitized_path), binary)
+    :ok = :file.write_file(to_charlist(sanitized_path), binary)
 
-    :gradualizer_db.import_beam_files([to_charlist(sanitized_path)])
+    :ok = :gradualizer_db.import_beam_files([to_charlist(sanitized_path)])
   end
 end

@@ -80,9 +80,7 @@ defmodule Gradient.CLI do
       IO.puts("Typechecking files...")
 
       files
-      |> Stream.map(fn {app_path, paths} ->
-        Stream.map(paths, &Gradient.type_check_file(&1, [{:app_path, app_path} | options]))
-      end)
+      |> Stream.map(&Gradient.type_check_file(&1, options))
       |> Stream.concat()
       |> execute(options)
 
@@ -177,15 +175,13 @@ defmodule Gradient.CLI do
 
   defp prepare_option({k, v}, opts), do: [{k, v} | opts]
 
-  defp get_paths([], _options) do
-    %{nil => get_paths_from_dir([File.cwd!()])}
-  end
+  defp get_paths([], _options), do: get_paths_from_dir([File.cwd!()])
 
-  defp get_paths(paths, _options), do: %{nil => get_paths_from_dir(paths)}
+  defp get_paths(paths, _options), do: get_paths_from_dir(paths)
 
   defp get_paths_from_dir(paths) do
     paths
-    |> Enum.map(fn p ->
+    |> Enum.flat_map(fn p ->
       if File.dir?(p) do
         expanded_path = Path.expand(p)
         Path.wildcard(Path.join([expanded_path, "/**/*.ex"]))
@@ -193,7 +189,6 @@ defmodule Gradient.CLI do
         [p]
       end
     end)
-    |> Enum.concat()
   end
 
   defp module_flag_absent_or_provided_with_file_path?(options, user_paths) do
