@@ -197,10 +197,10 @@ defmodule Mix.Tasks.GradientTest do
     assert_receive {:system_halt, 1}
   end
 
-  test "--code-path option" do
+  test "--source-path option" do
     ex_file = "wrong_ret.ex"
 
-    output = run_task(test_opts(["--code-path", ex_file, "--", @s_wrong_ret_beam]))
+    output = run_task(test_opts(["--source-path", ex_file, "--", @s_wrong_ret_beam]))
 
     assert not String.contains?(output, @s_wrong_ret_ex)
     assert String.contains?(output, ex_file)
@@ -208,11 +208,15 @@ defmodule Mix.Tasks.GradientTest do
   end
 
   test "counts errors" do
-    assert run_task([@s_wrong_ret_beam]) =~ "Total errors: 1"
+    assert run_task([@s_wrong_ret_beam]) =~ "Total errors: 2"
     assert_receive {:system_halt, 1}
 
-    assert run_task([@s_wrong_ret_beam, @s_wrong_ret_ex]) =~ "Total errors: 2"
+    assert run_task([@s_wrong_ret_beam, @s_wrong_ret_ex]) =~ "Total errors: 4"
     assert_receive {:system_halt, 1}
+  end
+
+  test "dependent modules are loaded" do
+    assert run_task([@examples_path <> "/dependent_modules.ex"]) =~ "No errors found!"
   end
 
   def run_task(args), do: capture_io(fn -> Mix.Tasks.Gradient.run(args) end)

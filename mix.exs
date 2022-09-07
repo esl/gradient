@@ -10,7 +10,8 @@ defmodule Gradient.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
-      dialyzer: [plt_add_apps: [:mix]]
+      dialyzer: [plt_add_apps: [:mix]],
+      escript: escript()
     ]
   end
 
@@ -37,5 +38,9 @@ defmodule Gradient.MixProject do
 
   def aliases do
     []
+  end
+
+  def escript() do
+    [main_module: Gradient.CLI]
   end
 end

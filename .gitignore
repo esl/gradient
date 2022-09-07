@@ -33,3 +33,5 @@ test/examples/erlang/_build/
 
 # MacOS DS_Store
 .DS_Store
+
+.elixir_ls

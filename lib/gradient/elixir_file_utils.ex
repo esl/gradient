@@ -39,27 +39,51 @@ defmodule Gradient.ElixirFileUtils do
     end
   end
 
-  @spec get_forms_from_ex(binary()) ::
-          {:ok, abstract_forms()} | parsed_file_error()
-  def get_forms_from_ex(path) do
+  @spec get_forms_from_ex(binary(), String.t()) ::
+          {:ok, list(abstract_forms())} | parsed_file_error()
+  def get_forms_from_ex(path, module \\ "all_modules") do
     # For compiling many files concurrently, see Kernel.ParallelCompiler.compile/2.
     if File.exists?(path) do
-      [{_module, bin}] = Code.compile_file(path)
-      get_forms_from_beam(bin)
+      forms =
+        path
+        |> Code.compile_file()
+        |> Enum.reduce([], fn {required_module_name, binary}, acc ->
+          ensure_module_loaded_into_gradualizer(binary)
+
+          if module != "all_modules" do
+            string_module_name = Atom.to_string(required_module_name)
+
+            if string_module_name == "Elixir." <> module do
+              {:ok, forms} = get_forms_from_beam(binary)
+              [forms | acc]
+            else
+              acc
+            end
+          else
+            {:ok, forms} = get_forms_from_beam(binary)
+            [forms | acc]
+          end
+        end)
+
+      {:ok, forms}
     else
       {:file_not_found, path}
     end
   end
 
-  def get_forms(path) do
+  def get_forms(path, module \\ "all_modules") do
     case Path.extname(path) do
       ".beam" ->
         path
         |> to_charlist()
         |> get_forms_from_beam()
+        |> case do
+          {:ok, forms} -> {:ok, [forms]}
+          error -> error
+        end
 
       ".ex" ->
-        get_forms_from_ex(path)
+        get_forms_from_ex(path, module)
 
       _ ->
         which =
@@ -70,6 +94,10 @@ defmodule Gradient.ElixirFileUtils do
         case which do
           filename when is_list(filename) ->
             get_forms_from_beam(filename)
+            |> case do
+              {:ok, forms} -> {:ok, [forms]}
+              error -> error
+            end
 
           other ->
             raise "Could not get forms for path #{inspect(path)}, got #{inspect(other)}"
@@ -89,5 +117,14 @@ defmodule Gradient.ElixirFileUtils do
         IO.puts("Cannot load tokens: #{inspect(error)}")
         []
     end
+  end
+
+  defp ensure_module_loaded_into_gradualizer(binary) do
+    {path, _} = System.cmd("mktemp", [])
+    sanitized_path = path |> String.trim() |> Kernel.<>(".beam")
+
+    :ok = :file.write_file(to_charlist(sanitized_path), binary)
+
+    :ok = :gradualizer_db.import_beam_files([to_charlist(sanitized_path)])
   end
 end
