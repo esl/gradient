@@ -291,10 +291,7 @@ defmodule Mix.Tasks.Gradient do
     file_overrides_enabled? = Keyword.get(config, :file_overrides, enabled?)
 
     if file_overrides_enabled? do
-      magic_comment =
-        if enabled?, do: "# gradient:disable-for-file", else: "# gradient:enable-for-file"
-
-      filter_files_with_magic_comment(app_name, app_files, magic_comment, not enabled?)
+      filter_files_with_magic_comment(app_name, app_files, enabled? and :enabled || :disabled)
     else
       if enabled?, do: app_files, else: []
     end
@@ -331,7 +328,7 @@ defmodule Mix.Tasks.Gradient do
     mixfile_module.project()
   end
 
-  defp filter_files_with_magic_comment(app_name, beam_files, comment, should_include?) do
+  defp filter_files_with_magic_comment(app_name, beam_files, enabled?) do
     app_path = path_for_app(app_name) |> Path.expand()
     deps_path = Path.expand(mix_config_for_app(app_name)[:deps_path] || "deps")
 
@@ -346,16 +343,24 @@ defmodule Mix.Tasks.Gradient do
       is_dep = String.starts_with?(ex_path, deps_path)
 
       # Filter out the files with the magic comment
+      comment = magic_comment(enabled?)
       has_magic_comment =
         File.stream!(ex_path)
         |> Enum.any?(fn line -> String.trim(line) == comment end)
 
       # Negate has_magic_comment if should_include? is false
-      has_magic_comment = if should_include?, do: has_magic_comment, else: not has_magic_comment
+      r = case {enabled?, has_magic_comment} do
+        {:enabled, true} -> false
+        {:disabled, true} -> true
+        _ -> false
+      end
 
-      has_magic_comment and not is_dep
+      r and not is_dep
     end)
   end
+
+  defp magic_comment(:enabled), do: "# gradient:disable-for-file"
+  defp magic_comment(:disabled), do: "# gradient:enable-for-file"
 
   defp ex_filename_from_beam(beam_path) do
     case ElixirFileUtils.get_forms(beam_path) do
