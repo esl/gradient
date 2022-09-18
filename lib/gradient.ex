@@ -25,6 +25,8 @@ defmodule Gradient do
           no_specify: boolean()
         ]
 
+  @type env() :: %{tokens_present: boolean(), macro_lines: [integer()]}
+
   @doc """
   Type-checks file in `path` with provided `opts`, and prints the result.
   """
@@ -37,16 +39,22 @@ defmodule Gradient do
          {:ok, first_ast} <- get_first_forms(asts),
          {:elixir, _} <- wrap_language_name(first_ast) do
       asts
-      |> Enum.map(fn module_forms ->
-        single_module_forms = maybe_specify_forms(module_forms, opts)
+      |> Enum.map(fn ast ->
+        ast =
+          ast
+          |> put_source_path(opts)
+          |> maybe_specify_forms(opts)
 
-        case maybe_gradient_check(single_module_forms, opts) ++
-               maybe_gradualizer_check(single_module_forms, opts) do
+        tokens = maybe_use_tokens(ast, opts)
+        opts = [{:env, build_env(tokens)} | opts]
+
+        case maybe_gradient_check(ast, opts) ++
+               maybe_gradualizer_check(ast, opts) do
           [] ->
             :ok
 
           errors ->
-            opts = Keyword.put(opts, :forms, single_module_forms)
+            opts = Keyword.put(opts, :forms, ast)
             ElixirFmt.print_errors(errors, opts)
 
             {:error, errors}
@@ -71,6 +79,18 @@ defmodule Gradient do
       error ->
         Logger.error("Can't load file - #{inspect(error)}")
         {:error, [error]}
+    end
+  end
+
+  def build_env(tokens) do
+    %{tokens_present: tokens != [], macro_lines: Gradient.Tokens.find_macro_lines(tokens)}
+  end
+
+  defp maybe_use_tokens(forms, opts) do
+    unless opts[:no_tokens] do
+      Gradient.ElixirFileUtils.load_tokens(forms)
+    else
+      []
     end
   end
 

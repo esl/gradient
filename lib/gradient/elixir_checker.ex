@@ -6,12 +6,14 @@ defmodule Gradient.ElixirChecker do
   - {`ex_check`, boolean()}: whether to use checks specific only to Elixir.
   """
 
+  @type env() :: Gradient.env()
+  @type opts :: [env: env(), ex_check: boolean()]
   @type simplified_form :: {:spec | :fun, {atom(), integer()}, :erl_anno.anno()}
 
-  @spec check([:erl_parse.abstract_form()], keyword()) :: [{:file.filename(), any()}]
+  @spec check([:erl_parse.abstract_form()], opts()) :: [{:file.filename(), any()}]
   def check(forms, opts) do
     if Keyword.get(opts, :ex_check, true) do
-      check_spec(forms)
+      check_spec(forms, opts[:env])
     else
       []
     end
@@ -48,13 +50,16 @@ defmodule Gradient.ElixirChecker do
     end
     ```
   """
-  @spec check_spec([:erl_parse.abstract_form()]) :: [{:file.filename(), any()}]
-  def check_spec([{:attribute, _, :file, {file, _}} | forms]) do
+  @spec check_spec([:erl_parse.abstract_form()], map()) :: [{:file.filename(), any()}]
+  def check_spec([{:attribute, _, :file, {file, _}} | forms], env) do
+    %{tokens_present: tokens_present, macro_lines: macro_lines} = env
+
     forms
-    |> Stream.filter(&is_fun_or_spec?/1)
+    |> Stream.filter(&is_fun_or_spec?(&1, macro_lines))
     |> Stream.map(&simplify_form/1)
     |> Stream.concat()
     |> Stream.filter(&is_not_generated?/1)
+    |> remove_injected_forms(not tokens_present)
     |> Enum.sort(&(elem(&1, 2) < elem(&2, 2)))
     |> Enum.reduce({nil, []}, fn
       {:fun, {n, :def}, _}, {{:spec, {sn, _}, _}, _} = acc when n == sn ->
@@ -83,9 +88,10 @@ defmodule Gradient.ElixirChecker do
     not (String.starts_with?(name_str, "__") and String.ends_with?(name_str, "__"))
   end
 
-  def is_fun_or_spec?({:attribute, _, :spec, _}), do: true
-  def is_fun_or_spec?({:function, _, _, _, _}), do: true
-  def is_fun_or_spec?(_), do: false
+  # The forms injected by `__using__` macro inherit the line from `use` keyword.
+  def is_fun_or_spec?({:attribute, anno, :spec, _}, ml), do: :erl_anno.line(anno) not in ml
+  def is_fun_or_spec?({:function, anno, _, _, _}, ml), do: :erl_anno.line(anno) not in ml
+  def is_fun_or_spec?(_, _), do: false
 
   @doc """
   Returns a stream of simplified forms in the format defined by type `simplified_form/1`
@@ -115,4 +121,15 @@ defmodule Gradient.ElixirChecker do
       _ -> false
     end)
   end
+
+  # When tokens were not present to detect macro_lines, the forms without unique
+  # lines can be removed.
+  def remove_injected_forms(forms, true) do
+    forms
+    |> Enum.group_by(fn {_, _, line} -> line end)
+    |> Enum.filter(fn {_, fs2} -> length(fs2) == 1 end)
+    |> Enum.flat_map(fn {_, fs2} -> fs2 end)
+  end
+
+  def remove_injected_forms(forms, false), do: forms
 end
