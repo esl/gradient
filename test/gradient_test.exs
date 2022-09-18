@@ -32,4 +32,10 @@ defmodule GradientTest do
       assert [:ok] = Gradient.type_check_file("test/examples/_build/Elixir.Basic.beam")
     end)
   end
+
+  test "struct field dot access" do
+    capture_io(fn ->
+      assert [:ok] = Gradient.type_check_file("test/examples/_build/Elixir.DotAccess.beam")
+    end)
+  end
 end
