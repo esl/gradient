@@ -40,9 +40,12 @@ defmodule Gradient do
          {:elixir, _} <- wrap_language_name(first_ast) do
       asts
       |> Enum.map(fn ast ->
-        ast = put_source_path(ast, opts)
+        ast =
+          ast
+          |> put_source_path(opts)
+          |> maybe_specify_forms(opts)
+
         tokens = maybe_use_tokens(ast, opts)
-        ast = maybe_specify_forms(ast, tokens, opts)
         opts = [{:env, build_env(tokens)} | opts]
 
         case maybe_gradient_check(ast, opts) ++
@@ -115,7 +118,7 @@ defmodule Gradient do
     end
   end
 
-  defp maybe_specify_forms(forms, tokens, opts) do
+  defp maybe_specify_forms(forms, opts) do
     unless opts[:no_specify] do
       forms
       |> put_source_path(opts)
