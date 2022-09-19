@@ -10,7 +10,7 @@ defmodule TypedGenServer.Stage2.Server do
   ##   Application.ensure_all_started(:gradient)
   ##
   ## Then use the following to recheck the file on any change:
-  ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage2.Server ), [:infer])
+  ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage2.Server ), [infer: true])
 
   @opaque t :: pid()
 
@@ -83,8 +83,8 @@ defmodule Test.TypedGenServer.Stage2.Server do
   ##   recompile(); Test.TypedGenServer.Stage2.Server.test()
   ##
   ## Typecheck with:
-  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [:infer])
-  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [:infer, ex_check: false])
+  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [infer: true])
+  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [infer: true, ex_check: false])
 
   @spec test :: any()
   def test do

@@ -9,7 +9,7 @@ defmodule TypedGenServer.Stage1.Server do
   ##   Application.ensure_all_started(:gradient)
   ##
   ## Then use the following to recheck the file on any change:
-  ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage1.Server ), [:infer])
+  ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage1.Server ), [infer: true])
 
   ## Try switching between the definitions and see what happens
   @type message :: Contract.Echo.req() | Contract.Hello.req()
