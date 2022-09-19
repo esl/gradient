@@ -57,7 +57,7 @@ defmodule TypedGenServer.Stage3.Server do
     end
   end
 
-  # @impl true
+  @impl true
   def init(state) do
     {:ok, state}
   end
@@ -65,7 +65,7 @@ defmodule TypedGenServer.Stage3.Server do
   @type called(a) :: {:noreply, state()}
                    | {:reply, a, state()}
 
-  # @impl true
+  @impl true
   @spec handle_call(message(), GenServer.from(), state()) ::
           called(Contract.Echo.res() | Contract.Hello.res())
   def handle_call(message, _from, state) do

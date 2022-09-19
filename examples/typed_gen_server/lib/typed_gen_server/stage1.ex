@@ -1,5 +1,5 @@
 defmodule TypedGenServer.Stage1.Server do
-  # use GenServer
+  use GenServer
   use Gradient.TypeAnnotation
 
   ## Start IEx with:
@@ -43,7 +43,7 @@ defmodule TypedGenServer.Stage1.Server do
     end
   end
 
-  # @impl true
+  @impl true
   def init(state) do
     {:ok, state}
   end
@@ -51,7 +51,7 @@ defmodule TypedGenServer.Stage1.Server do
   @type called(a) :: {:noreply, state()}
                    | {:reply, a, state()}
 
-  # @impl true
+  @impl true
   @spec handle_call(message(), GenServer.from(), state()) ::
           called(Contract.Echo.res() | Contract.Hello.res())
   def handle_call(message, _from, state) do
