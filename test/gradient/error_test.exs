@@ -262,10 +262,10 @@ defmodule Gradient.ErrorTest do
         capture_io(:stderr, fn ->
           errors =
             case Gradient.type_check_file(path) do
-              :ok ->
+              [:ok] ->
                 []
 
-              {:error, errors} when is_list(errors) ->
+              [{:error, errors}] when is_list(errors) ->
                 errors
             end
 
