@@ -99,7 +99,14 @@ defmodule Gradient do
 
     unless opts[:no_gradualizer_check] do
       try do
-        :gradualizer.type_check_forms(forms, opts)
+        case :gradualizer.type_check_forms(forms, opts) do
+          :ok ->
+            :ok
+
+          errors ->
+            errors
+            |> filter_out_errors_in_generated_forms()
+        end
       catch
         err ->
           {:attribute, _, :file, {path, _}} = hd(forms)
@@ -108,6 +115,14 @@ defmodule Gradient do
     else
       []
     end
+  end
+
+  defp filter_out_errors_in_generated_forms(errors) do
+    errors
+    |> Enum.filter(fn
+      {_, {:type_error, :unreachable_clause, anno}} -> not :erl_anno.generated(anno)
+      _ -> true
+    end)
   end
 
   defp maybe_gradient_check(forms, opts) do
