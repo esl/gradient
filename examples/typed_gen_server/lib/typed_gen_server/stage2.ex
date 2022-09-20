@@ -1,5 +1,5 @@
 defmodule TypedGenServer.Stage2.Server do
-  # use GenServer
+  use GenServer
   use Gradient.TypeAnnotation
   alias Stage2.TypedServer
 
@@ -10,7 +10,7 @@ defmodule TypedGenServer.Stage2.Server do
   ##   Application.ensure_all_started(:gradient)
   ##
   ## Then use the following to recheck the file on any change:
-  ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage2.Server ), [:infer])
+  ##   recompile(); Gradient.type_check_file(:code.which( TypedGenServer.Stage2.Server ), [infer: true])
 
   @opaque t :: pid()
 
@@ -48,7 +48,7 @@ defmodule TypedGenServer.Stage2.Server do
     end
   end
 
-  # @impl true
+  @impl true
   def init(state) do
     {:ok, state}
   end
@@ -56,7 +56,7 @@ defmodule TypedGenServer.Stage2.Server do
   @type called(a) :: {:noreply, state()}
                    | {:reply, a, state()}
 
-  # @impl true
+  @impl true
   @spec handle_call(message(), GenServer.from(), state()) ::
           called(Contract.Echo.res() | Contract.Hello.res())
   def handle_call(message, _from, state) do
@@ -83,8 +83,8 @@ defmodule Test.TypedGenServer.Stage2.Server do
   ##   recompile(); Test.TypedGenServer.Stage2.Server.test()
   ##
   ## Typecheck with:
-  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [:infer])
-  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [:infer, ex_check: false])
+  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [infer: true])
+  ##   recompile(); Gradient.type_check_file(:code.which( Test.TypedGenServer.Stage2.Server ), [infer: true, ex_check: false])
 
   @spec test :: any()
   def test do
