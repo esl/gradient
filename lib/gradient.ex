@@ -33,85 +33,78 @@ defmodule Gradient do
   @doc """
   Type-checks file in `path` with provided `opts`, and prints the result.
   """
-  @spec type_check_file(charlist() | String.t(), options()) :: :ok | {:error, [error(), ...]}
+  @spec type_check_file(charlist() | String.t(), options()) :: [:ok | {:error, [error(), ...]}]
   def type_check_file(path, opts \\ []) do
     opts = Keyword.put(opts, :return_errors, true)
     module = Keyword.get(opts, :module, "all_modules")
 
     with {:ok, asts} <- ElixirFileUtils.get_forms(path, module),
-         {:ok, first_ast} <- get_first_forms(asts),
-         {:elixir, _} <- wrap_language_name(first_ast) do
-      asts
-      |> Enum.map(fn ast ->
-        ast =
-          ast
-          |> put_source_path(opts)
-          |> maybe_specify_forms(opts)
+         {:ok, first_ast} <- get_first_forms(asts) do
+      case wrap_language_name(first_ast) do
+        {:elixir, _} ->
+          Enum.map(asts, &handle_elixir_ast(&1, opts))
 
-        tokens = maybe_use_tokens(ast, opts)
-        opts = [{:env, build_env(tokens)} | opts]
-
-        case maybe_gradient_check(ast, opts) ++
-               maybe_gradualizer_check(ast, opts) do
-          [] ->
-            :ok
-
-          errors ->
-            opts = Keyword.put(opts, :forms, ast)
-            ElixirFmt.print_errors(errors, opts)
-
-            {:error, errors}
-        end
-      end)
-  # @spec type_check_file(charlist() | String.t(), options()) :: :ok | {:error, [error(), ...]}
-  # def type_check_file(path, opts \\ []) do
-  #   opts = Keyword.put(opts, :return_errors, true)
-
-  #   with {:ok, forms} <- ElixirFileUtils.get_forms(path),
-  #        {:elixir, _} <- wrap_language_name(forms) do
-  #     forms = maybe_specify_forms(forms, opts)
-
-  #     case maybe_gradient_check(forms, opts) ++ maybe_gradualizer_check(forms, opts) do
-  #       [] ->
-  #         :ok
-
-  #       errors ->
-  #         opts = Keyword.put(opts, :forms, forms)
-
-  #         case Error.reject_ignored_errors(errors, opts) do
-  #           [] ->
-  #             :ok
-
-  #           [_ | _] = filtered_errors ->
-  #             ElixirFmt.print_errors(filtered_errors, opts)
-  #             {:error, filtered_errors}
-  #         end
-  #     end
+        {:erlang, ast} ->
+          handle_erlang_ast(ast, opts)
+      end
     else
-      {:erlang, forms} ->
-        case maybe_gradualizer_check(forms, opts) do
-          [] ->
-            :ok
-          :nok ->
-            {:error, [:gradualizer_check_nok]}
-          errors ->
-            opts = Keyword.put(opts, :forms, forms)
-            ElixirFmt.print_errors(errors, opts)
-            {:error, errors}
-        end
-
       {:error, :module_not_found} ->
         Logger.error("Can't find module specified by '--module' flag.")
-        {:error, [{:module_not_found, module}]}
+        [{:error, [{:module_not_found, module}]}]
 
       error ->
         Logger.error("Can't load file - #{inspect(error)}")
-        {:error, [error]}
+        [{:error, [error]}]
     end
   end
 
   def build_env(tokens) do
     %{tokens_present: tokens != [], macro_lines: Gradient.Tokens.find_macro_lines(tokens)}
+  end
+
+  @spec handle_elixir_ast(any(), Keyword.t()) :: :ok | {:error, [error(), ...]}
+  defp handle_elixir_ast(ast, opts) do
+    ast =
+      ast
+      |> put_source_path(opts)
+      |> maybe_specify_forms(opts)
+
+    tokens = maybe_use_tokens(ast, opts)
+    opts = [{:env, build_env(tokens)} | opts]
+
+    case maybe_gradient_check(ast, opts) ++
+            maybe_gradualizer_check(ast, opts) do
+      [] ->
+        :ok
+
+      errors ->
+        opts = Keyword.put(opts, :forms, ast)
+        case Error.reject_ignored_errors(errors, opts) do
+          [] ->
+            :ok
+
+          [_ | _] = filtered_errors ->
+            ElixirFmt.print_errors(filtered_errors, opts)
+            {:error, filtered_errors}
+        end
+    end
+  end
+
+  defp handle_erlang_ast(ast, opts) do
+    case maybe_gradualizer_check(ast, opts) do
+      [] ->
+        [:ok]
+
+      errors ->
+        case Error.reject_ignored_errors(errors, opts) do
+          [] ->
+            [:ok]
+
+          [_ | _] = filtered_errors ->
+            ElixirFmt.print_errors(filtered_errors, opts)
+            [{:error, filtered_errors}]
+        end
+    end
   end
 
   defp maybe_use_tokens(forms, opts) do

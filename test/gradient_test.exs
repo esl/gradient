@@ -8,16 +8,12 @@ defmodule GradientTest do
     # typecheck file with errors
     path = "test/examples/erlang/_build/test_err.beam"
     erl_path = "test/examples/erlang/test_err.erl"
-    io_data = capture_io(fn -> assert {:error, _} = Gradient.type_check_file(path) end)
-    # io_data =
-    #   capture_io(fn ->
-    #     assert {:error, [:gradualizer_check_nok]} = Gradient.type_check_file(path)
-    #   end)
+    io_data = capture_io(fn -> assert [{:error, [{'test/examples/erlang/test_err.erl', {:type_error, _, _, _}}]}] = Gradient.type_check_file(path) end)
 
     assert String.contains?(io_data, erl_path)
     # typecheck correct file
     capture_io(fn ->
-      assert :ok = Gradient.type_check_file("test/examples/erlang/_build/test.beam")
+      assert [:ok] = Gradient.type_check_file("test/examples/erlang/_build/test.beam")
     end)
   end
 
@@ -28,8 +24,7 @@ defmodule GradientTest do
 
     io_data =
       capture_io(fn ->
-        assert [{:error, _}] = Gradient.type_check_file(path)
-        # assert {:error, [_ | _]} = Gradient.type_check_file(path)
+        assert [{:error, [_ | _]}] = Gradient.type_check_file(path)
       end)
 
     assert String.contains?(io_data, ex_path)
