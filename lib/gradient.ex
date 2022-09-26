@@ -119,10 +119,7 @@ defmodule Gradient do
 
   defp filter_out_errors_in_generated_forms(errors) do
     errors
-    |> Enum.filter(fn
-      {_, {:type_error, :unreachable_clause, anno}} -> not :erl_anno.generated(anno)
-      _ -> true
-    end)
+    |> Enum.filter(&Gradient.ElixirSyntax.dot_operator_errors/1)
   end
 
   defp maybe_gradient_check(forms, opts) do
