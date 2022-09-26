@@ -49,10 +49,14 @@ defmodule Gradient.ElixirSyntax do
          {:type_error, :pattern, _,
           {:map, _,
            [
-             {:map_field_exact, _, {:atom, fun_anno, _function_name}, {:var, var_anno, _var_name}}
+             {:map_field_exact, _, {:atom, fun_anno, _function_name},
+              {:var, _var_anno, _var_name}}
            ]}, _called_expr_type}}
       ) do
-    not (:erl_anno.generated(fun_anno) and :erl_anno.generated(var_anno))
+    ## Ideally, we would also check for `generated: true` in `_var_anno`, but Elixir 1.11 doesn't
+    ## set it, whereas the error shape is exactly the same so we cannot add another match
+    ## in the function head.
+    not :erl_anno.generated(fun_anno)
   end
 
   def dot_operator_errors(_) do
