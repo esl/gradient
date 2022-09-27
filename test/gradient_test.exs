@@ -38,4 +38,10 @@ defmodule GradientTest do
       assert [:ok] = Gradient.type_check_file("test/examples/_build/Elixir.DotAccess.beam")
     end)
   end
+
+  test "module dot call" do
+    capture_io(fn ->
+      assert [:ok] = Gradient.type_check_file("test/examples/_build/Elixir.DotCall.beam")
+    end)
+  end
 end
