@@ -56,6 +56,7 @@ defmodule Gradient.ElixirSyntax do
     ## Ideally, we would also check for `generated: true` in `_var_anno`, but Elixir 1.11 doesn't
     ## set it, whereas the error shape is exactly the same so we cannot add another match
     ## in the function head.
+    ## TODO: use System.version() to do it
     not :erl_anno.generated(fun_anno)
   end
 
