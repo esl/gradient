@@ -22,7 +22,7 @@ jobs:
             elixir: "1.11.4"
           - otp: "25.0.2"
             elixir: "1.12.3"
-          - otp: "23.3.4"
+          - otp: "23.3.4.15"
             elixir: "1.14.0"
     steps:
       - uses: actions/checkout@v2
