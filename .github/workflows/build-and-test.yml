@@ -15,18 +15,12 @@ jobs:
     name: Erlang ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
       matrix:
-        otp: ["23.3.4.15", "24.3.4.2", "25.0.2", "25.1.1"]
-        elixir: ["1.11.4", "1.12.3", "1.13.4", "1.14.0"]
+        otp: ["23.3.4.15", "24.3.4.2", "25.0.2"]
+        elixir: ["1.11.4", "1.12.3", "1.13.4"]
         exclude:
           - otp: "25.0.2"
             elixir: "1.11.4"
           - otp: "25.0.2"
-            elixir: "1.12.3"
-          - otp: "23.3.4.15"
-            elixir: "1.14.0"
-          - otp: "25.1.1"
-            elixir: "1.11.4"
-          - otp: "25.1.1"
             elixir: "1.12.3"
     steps:
       - uses: actions/checkout@v2
