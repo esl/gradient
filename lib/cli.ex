@@ -158,6 +158,11 @@ defmodule Gradient.CLI do
         Logger.error("Elixir is not managed by ASDF, #{inspect(ASDFError)}")
       end
       Path.wildcard(elixir_bin |> Path.dirname() |> Path.dirname() |> Path.join("lib/*/ebin"))
+      |> Enum.map(fn path ->
+        path
+        |> Path.expand()
+        |> to_charlist()
+      end)
       |> :code.add_paths()
     end
   end
