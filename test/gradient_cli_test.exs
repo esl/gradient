@@ -1,4 +1,3 @@
-
 defmodule Gradient.CLITest do
   use ExUnit.Case
 
