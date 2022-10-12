@@ -1,4 +1,7 @@
 defmodule Gradient.CLI do
+
+  require Logger
+
   @moduledoc """
   Gradient CLI module responsible for
   accepting shell params and starting gradualizer.
@@ -146,6 +149,15 @@ defmodule Gradient.CLI do
         |> Path.expand()
         |> to_charlist()
       end)
+      |> :code.add_paths()
+    else
+      {elixir_bin, 0} = try do
+        System.cmd("asdf", ["which", "elixir"])
+      rescue
+        ASDFError ->
+        Logger.error("Elixir is not managed by ASDF, #{inspect(ASDFError)}")
+      end
+      Path.wildcard(elixir_bin |> Path.dirname() |> Path.dirname() |> Path.join("lib/*/ebin"))
       |> :code.add_paths()
     end
   end
