@@ -72,6 +72,7 @@ defmodule Gradient.CLI do
       # We don't want to worry the user with the stop message, though.
       Logger.configure(level: :warning)
       Application.stop(:gradualizer)
+      check_asdf_paths()
       maybe_path_add(options)
       # Start Gradualizer application
       Application.ensure_all_started(:gradualizer)
@@ -149,21 +150,6 @@ defmodule Gradient.CLI do
         |> to_charlist()
       end)
       |> :code.add_paths()
-    else
-      try do
-        {elixir_bin, 0} = System.cmd("asdf", ["which", "elixir"])
-
-        Path.wildcard(elixir_bin |> Path.dirname() |> Path.dirname() |> Path.join("lib/*/ebin"))
-        |> Enum.map(fn path ->
-          path
-          |> Path.expand()
-          |> to_charlist()
-        end)
-        |> :code.add_paths()
-      rescue
-        ASDFError ->
-          Logger.error("Elixir is not managed by ASDF, #{inspect(ASDFError)}")
-      end
     end
   end
 
@@ -221,6 +207,23 @@ defmodule Gradient.CLI do
 
       true ->
         false
+    end
+  end
+
+  defp check_asdf_paths() do
+    try do
+      {elixir_bin, 0} = System.cmd("asdf", ["which", "elixir"])
+
+      Path.wildcard(elixir_bin |> Path.dirname() |> Path.dirname() |> Path.join("lib/*/ebin"))
+      |> Enum.map(fn path ->
+        path
+        |> Path.expand()
+        |> to_charlist()
+      end)
+      |> :code.add_paths()
+    rescue
+      ASDFError ->
+        Logger.error("Elixir is not managed by ASDF, #{inspect(ASDFError)}")
     end
   end
 end
