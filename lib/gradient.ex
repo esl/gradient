@@ -73,12 +73,13 @@ defmodule Gradient do
     opts = [{:env, build_env(tokens)} | opts]
 
     case maybe_gradient_check(ast, opts) ++
-            maybe_gradualizer_check(ast, opts) do
+           maybe_gradualizer_check(ast, opts) do
       [] ->
         :ok
 
       errors ->
         opts = Keyword.put(opts, :forms, ast)
+
         case Error.reject_ignored_errors(errors, opts) do
           [] ->
             :ok
