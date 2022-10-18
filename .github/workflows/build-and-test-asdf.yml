@@ -23,7 +23,7 @@ jobs:
           otp-version: ${{matrix.otp}}
       - uses: asdf-vm/actions/install@v1
         with:
-          command: asdf install elixir 1.13.4-otp-25
+          tool_versions: elixir 1.13.4-otp-25
       - name: "Get and compile deps"
         run: "mix local.hex --force && mix local.rebar --force && mix deps.get && mix deps.compile"
       - name: "Build"
