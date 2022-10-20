@@ -223,7 +223,7 @@ defmodule Gradient.CLI do
       |> :code.add_paths()
     rescue
       ASDFError ->
-        Logger.error("Elixir is not managed by ASDF, #{inspect(ASDFError)}")
+        IO.puts("Elixir is not managed by ASDF, #{inspect(ASDFError)}")
     end
   end
 end
