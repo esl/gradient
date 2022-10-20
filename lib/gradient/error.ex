@@ -335,6 +335,7 @@ defmodule Gradient.Error do
   def line({:type_error, :record_pattern, anno, _, _}), do: gradualizer_line(anno)
   def line({:type_error, :rel_error, _, anno, _, _}), do: gradualizer_line(anno)
   def line({:type_error, :relop, _, anno, _, _}), do: gradualizer_line(anno)
+  def line({:type_error, :pattern, _, anno, _}), do: gradualizer_line(anno)
   def line({:type_error, {_, anno, _}, _, _}), do: gradualizer_line(anno)
   def line({:type_error, {_, anno, _, _}, _, _}), do: gradualizer_line(anno)
 
