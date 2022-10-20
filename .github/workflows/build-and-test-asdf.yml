@@ -1,0 +1,34 @@
+name: Build and test ASDF
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request: []
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
+    name: Erlang ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    strategy:
+      matrix:
+        otp: ["25.0.2"]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+      - uses: asdf-vm/actions/install@v1
+        with:
+          tool_versions: elixir 1.13.4-otp-25
+      - name: "Get and compile deps"
+        run: "mix local.hex --force && mix local.rebar --force && mix deps.get && mix deps.compile"
+      - name: "Build"
+        run: "mix compile --warnings-as-errors"
+      - name: "Build escript"
+        run: "mix escript.build & mix escript.install"
+      - name: "Test"
+        run: "mix test test/gradient_cli_test.exs"
