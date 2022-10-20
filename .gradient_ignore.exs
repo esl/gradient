@@ -16,6 +16,9 @@
 
   "lib/gradient.ex:184",
 
+  # error occurs only on GitHub Actions
+  "test/support/helpers.ex:14",
+
   # https://github.com/esl/gradient/issues/85
   {:type_error, :unreachable_clause},
 
