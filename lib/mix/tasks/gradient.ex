@@ -291,7 +291,7 @@ defmodule Mix.Tasks.Gradient do
     file_overrides_enabled? = Keyword.get(config, :file_overrides, enabled?)
 
     if file_overrides_enabled? do
-      filter_files_with_magic_comment(app_name, app_files, enabled? and :enabled || :disabled)
+      filter_files_with_magic_comment(app_name, app_files, (enabled? and :enabled) || :disabled)
     else
       if enabled?, do: app_files, else: []
     end
@@ -344,16 +344,18 @@ defmodule Mix.Tasks.Gradient do
 
       # Filter out the files with the magic comment
       comment = magic_comment(enabled?)
+
       has_magic_comment =
         File.stream!(ex_path)
         |> Enum.any?(fn line -> String.trim(line) == comment end)
 
       # Negate has_magic_comment if should_include? is false
-      r = case {enabled?, has_magic_comment} do
-        {:enabled, true} -> false
-        {:disabled, true} -> true
-        _ -> false
-      end
+      r =
+        case {enabled?, has_magic_comment} do
+          {:enabled, true} -> false
+          {:disabled, true} -> true
+          _ -> false
+        end
 
       r and not is_dep
     end)
