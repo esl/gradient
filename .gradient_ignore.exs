@@ -6,11 +6,7 @@
 
   "lib/gradient/elixir_type.ex:38",
 
-  "lib/gradient/debug.ex:58",
-
   "lib/gradient/ast_specifier.ex:436",
-
-  "lib/gradient/elixir_fmt.ex:215",
 
   "lib/gradient.ex:77",
 
