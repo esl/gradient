@@ -82,7 +82,9 @@ defmodule Mix.Tasks.Gradient do
     # Compile the project before the analysis
     maybe_compile_project(options)
     # Get paths to files
-    files = get_paths(user_paths) |> filter_enabled_paths
+    files =
+      get_paths(user_paths)
+      |> filter_enabled_paths
 
     IO.puts("Typechecking files...")
 
@@ -288,10 +290,14 @@ defmodule Mix.Tasks.Gradient do
     config = gradient_config_for_app(app_name)
 
     enabled? = Keyword.get(config, :enabled, true)
+
     file_overrides_enabled? = Keyword.get(config, :file_overrides, enabled?)
 
     if file_overrides_enabled? do
-      filter_files_with_magic_comment(app_name, app_files, (enabled? and :enabled) || :disabled)
+      magic_comment =
+        if enabled?, do: "# gradient:disable-for-file", else: "# gradient:enable-for-file"
+
+      filter_files_with_magic_comment(app_name, app_files, magic_comment, not enabled?)
     else
       if enabled?, do: app_files, else: []
     end
@@ -328,8 +334,9 @@ defmodule Mix.Tasks.Gradient do
     mixfile_module.project()
   end
 
-  defp filter_files_with_magic_comment(app_name, beam_files, enabled?) do
+  defp filter_files_with_magic_comment(app_name, beam_files, comment, should_include?) do
     app_path = path_for_app(app_name) |> Path.expand()
+
     deps_path = Path.expand(mix_config_for_app(app_name)[:deps_path] || "deps")
 
     Enum.filter(beam_files, fn beam_path ->
@@ -343,36 +350,29 @@ defmodule Mix.Tasks.Gradient do
       is_dep = String.starts_with?(ex_path, deps_path)
 
       # Filter out the files with the magic comment
-      comment = magic_comment(enabled?)
-
-      has_magic_comment =
+      has_magic_comment? =
         File.stream!(ex_path)
         |> Enum.any?(fn line -> String.trim(line) == comment end)
 
-      # Negate has_magic_comment if should_include? is false
-      r =
-        case {enabled?, has_magic_comment} do
-          {:enabled, true} -> false
-          {:disabled, true} -> true
-          _ -> false
-        end
+      # Negate has_magic_comment? if should_include? is false
+      has_magic_comment? =
+        if should_include?, do: has_magic_comment?, else: not has_magic_comment?
 
-      r and not is_dep
+      has_magic_comment? and not is_dep
     end)
   end
 
-  defp magic_comment(:enabled), do: "# gradient:disable-for-file"
-  defp magic_comment(:disabled), do: "# gradient:enable-for-file"
-
   defp ex_filename_from_beam(beam_path) do
     case ElixirFileUtils.get_forms(beam_path) do
-      {:ok, [{:attribute, _, :file, {filename, _}} | _]} ->
+      {:ok, code_forms} ->
         # Convert the *.beam compiled filename to its corresponding *.ex source file
         # (it's a charlist initially so we pipe it through to_string)
-        filename |> to_string()
+        code_forms
+        |> Enum.map(fn [{:attribute, _, :file, {filename, _}} | _] -> to_string(filename) end)
+        |> List.first()
 
       error ->
-        raise "Error resolving filename from compiled .beam filename #{inspect(beam_path)}: #{inspect(error)}"
+        raise "Error resolving .ex filename from compiled .beam filename #{inspect(beam_path)}: #{inspect(error)}"
     end
   end
 end
