@@ -219,12 +219,12 @@ defmodule Mix.Tasks.GradientTest do
     test "defaults to enabled when no gradient config in any mix.exs files" do
       assert %{
                "app_a" => [
-                 "_build/dev/lib/app_a/ebin/Elixir.AppA.beam",
-                 "_build/dev/lib/app_a/ebin/Elixir.AppAHelper.beam"
+                 "_build/test/lib/app_a/ebin/Elixir.AppA.beam",
+                 "_build/test/lib/app_a/ebin/Elixir.AppAHelper.beam"
                ],
                "app_b" => [
-                 "_build/dev/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/dev/lib/app_b/ebin/Elixir.AppBHelper.beam"
+                 "_build/test/lib/app_b/ebin/Elixir.AppB.beam",
+                 "_build/test/lib/app_b/ebin/Elixir.AppBHelper.beam"
                ]
              } == run_task_and_return_files()
     end
@@ -233,12 +233,12 @@ defmodule Mix.Tasks.GradientTest do
     test "when gradient is enabled for umbrella, checks all files" do
       assert %{
                "app_a" => [
-                 "_build/dev/lib/app_a/ebin/Elixir.AppA.beam",
-                 "_build/dev/lib/app_a/ebin/Elixir.AppAHelper.beam"
+                 "_build/test/lib/app_a/ebin/Elixir.AppA.beam",
+                 "_build/test/lib/app_a/ebin/Elixir.AppAHelper.beam"
                ],
                "app_b" => [
-                 "_build/dev/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/dev/lib/app_b/ebin/Elixir.AppBHelper.beam"
+                 "_build/test/lib/app_b/ebin/Elixir.AppB.beam",
+                 "_build/test/lib/app_b/ebin/Elixir.AppBHelper.beam"
                ]
              } == run_task_and_return_files()
     end
@@ -252,8 +252,8 @@ defmodule Mix.Tasks.GradientTest do
     test "gradient can be enabled for a subapp even if disabled for umbrella" do
       assert %{
                "app_a" => [
-                 "_build/dev/lib/app_a/ebin/Elixir.AppA.beam",
-                 "_build/dev/lib/app_a/ebin/Elixir.AppAHelper.beam"
+                 "_build/test/lib/app_a/ebin/Elixir.AppA.beam",
+                 "_build/test/lib/app_a/ebin/Elixir.AppAHelper.beam"
                ]
              } == run_task_and_return_files()
     end
@@ -262,8 +262,8 @@ defmodule Mix.Tasks.GradientTest do
     test "gradient can be enabled for the umbrella and disabled for a subapp" do
       assert %{
                "app_b" => [
-                 "_build/dev/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/dev/lib/app_b/ebin/Elixir.AppBHelper.beam"
+                 "_build/test/lib/app_b/ebin/Elixir.AppB.beam",
+                 "_build/test/lib/app_b/ebin/Elixir.AppBHelper.beam"
                ]
              } == run_task_and_return_files()
     end
@@ -273,18 +273,18 @@ defmodule Mix.Tasks.GradientTest do
     test "individual files can be disabled" do
       assert %{
                "app_a" => [
-                 "_build/dev/lib/app_a/ebin/Elixir.AppA.beam"
+                 "_build/test/lib/app_a/ebin/Elixir.AppA.beam"
                ],
                "app_b" => [
-                 "_build/dev/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/dev/lib/app_b/ebin/Elixir.AppBHelper.beam"
+                 "_build/test/lib/app_b/ebin/Elixir.AppB.beam",
+                 "_build/test/lib/app_b/ebin/Elixir.AppBHelper.beam"
                ]
              } == run_task_and_return_files()
     end
 
     @tag umbrella: %{enabled: false, overrides: true}, edit_files: %{"app_a/lib/app_a.ex" => true}
     test "individual files can be enabled" do
-      assert %{"app_a" => ["_build/dev/lib/app_a/ebin/Elixir.AppA.beam"]} ==
+      assert %{"app_a" => ["_build/test/lib/app_a/ebin/Elixir.AppA.beam"]} ==
                run_task_and_return_files()
     end
   end
@@ -494,7 +494,7 @@ defmodule Mix.Tasks.GradientTest do
       File.cd!(dir)
 
       # Run the task
-      {output, exit_code} = System.cmd("mix", ["gradient"] ++ args)
+      {output, exit_code} = System.cmd("mix", ["gradient"] ++ args, env: [{"MIX_ENV", "test"}])
       assert exit_code == 0, output
 
       output
