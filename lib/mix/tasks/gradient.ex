@@ -20,6 +20,7 @@ defmodule Mix.Tasks.Gradient do
     * `--infer` - infer type information from literals and other language
       constructs,
     * `--verbose` - show what Gradualizer is doing
+    * `--print-filenames` - print the name of every file being analyzed (mainly useful for tests)
     * `--no-fancy` - do not use fancy error messages
     * `--fmt-location none` - do not display location for easier comparison
     * `--fmt-location brief` - display location for machine processing
@@ -55,6 +56,7 @@ defmodule Mix.Tasks.Gradient do
     stop_on_first_error: :boolean,
     infer: :boolean,
     verbose: :boolean,
+    print_filenames: :boolean,
     # formatter options
     no_fancy: :boolean,
     fmt_location: :string,
@@ -84,7 +86,11 @@ defmodule Mix.Tasks.Gradient do
     # Get paths to files
     files =
       get_paths(user_paths)
-      |> filter_enabled_paths
+      |> filter_enabled_paths()
+
+    if options[:print_filenames] do
+      print_filenames(files)
+    end
 
     IO.puts("Typechecking files...")
 
@@ -102,6 +108,36 @@ defmodule Mix.Tasks.Gradient do
     |> execute(options)
 
     :ok
+  end
+
+  defp print_filenames(files) do
+    IO.puts("Files to check:")
+
+    cwd = File.cwd!() <> "/"
+    # Range for slicing off cwd from the beginning of a string
+    cwd_range = String.length(cwd)..-1
+
+    Enum.each(files, fn {app, filenames} ->
+      # Print app name
+      case app do
+        "apps/" <> appname -> IO.puts("Files in app #{appname}:")
+        # May be nil for non-umbrella apps
+        _ -> :noop
+      end
+
+      # Print actual filenames
+      for filename <- filenames do
+        # Convert charlist to string
+        filename = to_string(filename)
+        # If the filename starts with the cwd, don't print the cwd
+        filename =
+          if String.starts_with?(filename, cwd),
+            do: String.slice(filename, cwd_range),
+            else: filename
+
+        IO.puts(filename)
+      end
+    end)
   end
 
   defp execute(stream, opts) do
