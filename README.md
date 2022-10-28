@@ -53,9 +53,9 @@ The `examples/` folder contains example applications showing how the produced er
 
 ### Ignore warnings
 
-It's possible to ignore specific warnings, by adding a `.gradient_ignore.exs` in project root folder.
+It's possible to ignore specific warnings by adding a `.gradient_ignore.exs` in a project root folder.
 
-`.gradient_ignore.exs` contains a list of ignores:
+`.gradient_ignore.exs` should contain a list of ignore rules:
 
 ```elixir
   [
