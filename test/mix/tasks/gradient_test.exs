@@ -240,7 +240,7 @@ defmodule Mix.Tasks.GradientTest do
                  "_build/test/lib/app_b/ebin/Elixir.AppB.beam",
                  "_build/test/lib/app_b/ebin/Elixir.AppBHelper.beam"
                ]
-             } == run_task_and_return_files()
+             } == run_task_and_return_files() |> IO.inspect()
     end
 
     @tag umbrella: %{enabled: false}, app_a: %{no_config: true}, app_b: %{no_config: true}

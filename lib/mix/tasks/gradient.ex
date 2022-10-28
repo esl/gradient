@@ -399,10 +399,13 @@ defmodule Mix.Tasks.Gradient do
   end
 
   defp ex_filename_from_beam(beam_path) do
-    case ElixirFileUtils.get_forms(beam_path) do
+    ElixirFileUtils.get_forms(beam_path)
+    |> IO.inspect(label: :FORMS)
+    |> case do
       {:ok, code_forms} ->
         # Convert the *.beam compiled filename to its corresponding *.ex source file
         # (it's a charlist initially so we pipe it through to_string)
+        # Elixir can have multiple files
         code_forms
         |> Enum.map(fn [{:attribute, _, :file, {filename, _}} | _] -> to_string(filename) end)
         |> List.first()
