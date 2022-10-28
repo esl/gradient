@@ -74,6 +74,9 @@ defmodule Gradient.ElixirChecker do
         # Specs with diffrent name/arity are mixed
         {s1, [{:spec_error, :mixed_specs, anno, n, a} | errors]}
 
+      {:fun, {n, a}, anno} = fun, {{not_spec, _, _}, errors} when not_spec != :spec ->
+        {fun, [{:spec_error, :no_spec, anno, n, a} | errors]}
+
       x, {_, errors} ->
         {x, errors}
     end)
