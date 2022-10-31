@@ -113,8 +113,6 @@ defmodule Gradient do
   end
 
   defp maybe_use_tokens(forms, opts) do
-    # IO.inspect(forms, label: :FORMS)
-
     unless opts[:no_tokens] do
       Gradient.ElixirFileUtils.load_tokens(forms)
     else
@@ -176,8 +174,6 @@ defmodule Gradient do
   end
 
   defp put_source_path(forms, opts) do
-    IO.inspect(opts, label: :OPTS)
-
     case opts[:source_path] do
       nil ->
         case opts[:app_path] do
@@ -187,11 +183,8 @@ defmodule Gradient do
           app_path ->
             {:attribute, anno, :file, {path, line}} = hd(forms)
 
-            new_path =
-              (String.to_charlist(app_path) ++ '/' ++ path) |> IO.inspect(label: :NEW_PATH)
-
             [
-              {:attribute, anno, :file, {new_path, line}}
+              {:attribute, anno, :file, {String.to_charlist(app_path) ++ '/' ++ path, line}}
               | tl(forms)
             ]
         end
