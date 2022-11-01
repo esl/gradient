@@ -70,12 +70,12 @@ defmodule Mix.Tasks.Gradient do
 
     options = Enum.reduce(options, [], &prepare_option/2)
 
+    # Compile the project before the analysis
+    maybe_compile_project(options)
     # Load dependencies
     maybe_load_deps(options)
     # Start Gradualizer application
     Application.ensure_all_started(:gradualizer)
-    # Compile the project before the analysis
-    maybe_compile_project(options)
     # Get paths to files
     files = get_paths(user_paths) |> filter_enabled_paths()
 
