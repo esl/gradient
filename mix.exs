@@ -37,7 +37,10 @@ defmodule Gradient.MixProject do
   end
 
   def aliases do
-    []
+    [
+      # Before testing, remove compiled test/examples files for a clean build
+      test: ["clean_examples", "test"]
+    ]
   end
 
   def escript() do

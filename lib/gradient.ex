@@ -133,7 +133,6 @@ defmodule Gradient do
   defp maybe_specify_forms(forms, opts) do
     unless opts[:no_specify] do
       forms
-      |> put_source_path(opts)
       |> AstSpecifier.specify()
     else
       forms

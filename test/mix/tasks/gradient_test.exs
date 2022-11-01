@@ -502,6 +502,9 @@ defmodule Mix.Tasks.GradientTest do
       # cd to the specified dir
       File.cd!(dir)
 
+      # mix clean first
+      assert {_, 0} = System.cmd("mix", ["clean"])
+
       # Run the task
       {output, exit_code} = System.cmd("mix", ["gradient"] ++ args)
       assert exit_code == 0, output
