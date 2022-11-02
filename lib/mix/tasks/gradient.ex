@@ -60,7 +60,8 @@ defmodule Mix.Tasks.Gradient do
     no_colors: :boolean,
     expr_color: :string,
     type_color: :string,
-    underscore_color: :string
+    underscore_color: :string,
+    warn_missing_spec_all: :boolean
   ]
 
   @impl Mix.Task
@@ -183,6 +184,12 @@ defmodule Mix.Tasks.Gradient do
   defp prepare_option({:no_fancy, _}, opts), do: [{:fancy, false} | opts]
 
   defp prepare_option({:stop_on_first_error, _}, opts), do: [{:crash_on_error, true} | opts]
+
+  defp prepare_option({:warn_missing_spec_all, _}, opts),
+    do: [{:warn_missing_spec, :all} | opts]
+
+  defp prepare_option({:warn_missing_spec, _}, opts),
+    do: [{:warn_missing_spec, :exported} | opts]
 
   defp prepare_option({k, v}, opts), do: [{k, v} | opts]
 

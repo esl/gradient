@@ -12,11 +12,14 @@ defmodule Gradient.ElixirChecker do
 
   @spec check([:erl_parse.abstract_form()], opts()) :: [{:file.filename(), any()}]
   def check(forms, opts) do
-    if Keyword.get(opts, :ex_check, true) do
-      check_spec(forms, opts[:env])
-    else
-      []
-    end
+    errors =
+      if Keyword.get(opts, :ex_check, true) do
+        check_spec(forms, opts[:env])
+      else
+        []
+      end
+
+    maybe_warn_missing_spec(Keyword.get(opts, :warn_missing_spec), forms, errors)
   end
 
   @doc ~s"""
@@ -135,4 +138,27 @@ defmodule Gradient.ElixirChecker do
   end
 
   def remove_injected_forms(forms, false), do: forms
+
+  defp maybe_warn_missing_spec(nil, _forms, errors), do: IO.inspect(errors)
+  defp maybe_warn_missing_spec(:all, _forms, errors), do: warn_missing_spec([], errors)
+
+  defp maybe_warn_missing_spec(:exported, forms, errors) do
+    forms
+    |> Enum.find([], &exports/1)
+    |> elem(3)
+    |> List.delete_at(0)
+    |> Keyword.keys()
+    |> warn_missing_spec(errors)
+  end
+
+  defp warn_missing_spec(errors, []), do: errors
+
+  defp warn_missing_spec(errors, to_filter) do
+    IO.inspect(errors)
+    IO.inspect(to_filter)
+    errors
+  end
+
+  defp exports({_, _, :export, _}), do: true
+  defp exports(_), do: false
 end
