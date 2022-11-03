@@ -219,7 +219,14 @@ defmodule Mix.Tasks.GradientTest do
     assert run_task([@examples_path <> "/dependent_modules.ex"]) =~ "No errors found!"
   end
 
-  def run_task(args), do: capture_io(fn -> Mix.Tasks.Gradient.run(args) end)
+  # def run_task(args), do: capture_io(fn -> Mix.Tasks.Gradient.run(args) end)
+  def run_task(args) do
+    capture_io(fn ->
+      capture_io(:stderr, fn ->
+        Mix.Tasks.Gradient.run(args)
+      end)
+    end)
+  end
 
   def test_opts(opts), do: ["--no-comile", "--no-deps"] ++ opts
 end

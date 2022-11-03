@@ -46,7 +46,7 @@ defmodule Gradient.Debug do
   @doc ~S"""
   Return the Erlang AST of an Erlang or Elixir module.
   """
-  @spec erlang_ast(module()) :: {:ok, [erlang_form()]}
+  @spec erlang_ast(module()) :: {:ok, Gradient.ElixirFileUtils.abstract_forms()}
   def erlang_ast(mod) do
     result =
       mod

@@ -11,6 +11,7 @@ defmodule Gradient.TypeAnnotationTest do
     io_data =
       capture_io(fn ->
         assert [{:error, _}] = Gradient.type_check_file(path, @no_color)
+        # assert {:error, [_]} = Gradient.type_check_file(path, @no_color)
       end)
 
     assert String.contains?(io_data, "expected to have type nonempty_list")
@@ -22,6 +23,7 @@ defmodule Gradient.TypeAnnotationTest do
     io_data =
       capture_io(fn ->
         assert [{:error, _}] = Gradient.type_check_file(path, @no_color)
+        # assert {:error, [_]} = Gradient.type_check_file(path, @no_color)
       end)
 
     assert String.contains?(io_data, "expected to have type float")
