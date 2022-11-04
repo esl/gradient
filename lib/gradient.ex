@@ -132,8 +132,7 @@ defmodule Gradient do
 
   defp maybe_specify_forms(forms, opts) do
     unless opts[:no_specify] do
-      forms
-      |> AstSpecifier.specify()
+      AstSpecifier.specify(forms)
     else
       forms
     end
@@ -158,7 +157,7 @@ defmodule Gradient do
             {:attribute, anno, :file, {path, line}} = hd(forms)
 
             [
-              {:attribute, anno, :file, {String.to_charlist(app_path) ++ '/' ++ path, line}}
+              {:attribute, anno, :file, {maybe_prepend_app_path(app_path, path), line}}
               | tl(forms)
             ]
         end
@@ -167,6 +166,18 @@ defmodule Gradient do
         [{:attribute, 1, :file, {path, 1}} | tl(forms)]
     end
   end
+
+  defp maybe_prepend_app_path(app_path, path) do
+    unless is_absolute_path(path) do
+      String.to_charlist(app_path) ++ '/' ++ path
+    else
+      path
+    end
+  end
+
+  # Check if the specified path (either binary or charlist) is an absolute path
+  defp is_absolute_path(path) when is_list(path), do: path |> to_string() |> is_absolute_path()
+  defp is_absolute_path(path) when is_binary(path), do: path == Path.absname(path)
 
   defp get_first_forms(forms) do
     forms

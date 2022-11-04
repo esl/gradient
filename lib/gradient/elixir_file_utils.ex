@@ -109,7 +109,7 @@ defmodule Gradient.ElixirFileUtils do
   def load_tokens(forms) do
     with [{:attribute, _, :file, {path, _}} | _] <- forms,
          path <- to_string(path),
-         {:ok, code} <- File.read(path),
+         code <- File.read!(path),
          {:ok, tokens} <- :elixir.string_to_tokens(String.to_charlist(code), 1, 1, path, []) do
       tokens
     else
