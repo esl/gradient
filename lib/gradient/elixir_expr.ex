@@ -409,11 +409,12 @@ defmodule Gradient.ElixirExpr do
 
   defp bin_set_size("", :default), do: ""
   defp bin_set_size("", {:integer, _, size}), do: Integer.to_string(size)
-  defp bin_set_size(tsl, :default), do: tsl
   defp bin_set_size(tsl, {:integer, _, size}), do: "#{tsl}-size(#{Integer.to_string(size)})"
+  defp bin_set_size(tsl, _), do: tsl
 
   defp bin_set_tsl(:default), do: ""
   defp bin_set_tsl([:integer]), do: ""
+  defp bin_set_tsl([:integer, :unsigned]), do: ""
   defp bin_set_tsl([tsl]), do: Atom.to_string(tsl)
 
   def format_map_elements(elems) do

@@ -76,6 +76,7 @@ defmodule Mix.Tasks.Gradient do
     ignores = fetch_ignores()
 
     options = Enum.reduce(options, [], &prepare_option/2)
+    options = Keyword.put(options, :ignore_paths, [Mix.Project.deps_path()])
 
     # Compile the project before the analysis
     maybe_compile_project(options)

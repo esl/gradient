@@ -14,6 +14,7 @@ defmodule Gradient do
   @typedoc """
   - `app_path` - Path to the app that contains file with code (for umbrella apps).
   - `source_path` - Path to a file with code (e.g. when beam was compiled without project).
+  - `ignore_paths` - A list of paths to ignore errors from (e.g. deps path).
   - `no_gradualizer_check` - Skip Gradualizer checks if true.
   - `no_ex_check` - Skip Elixir checks if true.
   - `no_specify` - Skip AST specifying if true.
@@ -21,6 +22,7 @@ defmodule Gradient do
   @type options() :: [
           app_path: String.t(),
           source_path: String.t(),
+          ignore_paths: [String.t()],
           no_gradualizer_check: boolean(),
           no_ex_check: boolean(),
           no_specify: boolean(),
@@ -80,7 +82,7 @@ defmodule Gradient do
       errors ->
         opts = Keyword.put(opts, :forms, ast)
 
-        case Error.reject_ignored_errors(errors, opts) do
+        case errors |> filter_ignore_paths(opts) |> Error.reject_ignored_errors(opts) do
           [] ->
             :ok
 
@@ -207,6 +209,20 @@ defmodule Gradient do
     |> case do
       nil -> {:error, :module_not_found}
       forms -> {:ok, forms}
+    end
+  end
+
+  defp filter_ignore_paths(errors, opts) do
+    case opts[:ignore_paths] do
+      nil ->
+        errors
+
+      ignore_paths ->
+        # Filter out errors from files under any of the ignore_paths
+        Enum.filter(errors, fn {file, _} ->
+          file = file |> to_string() |> Path.expand()
+          not Enum.any?(ignore_paths, &String.starts_with?(file, &1))
+        end)
     end
   end
 end
