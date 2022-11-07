@@ -84,7 +84,9 @@ defmodule Gradient.Debug do
 
   defp format_elixir_code(module, ast) do
     [
-      "defmodule ", inspect(module), " do\n",
+      "defmodule ",
+      inspect(module),
+      " do\n",
       Enum.map(ast.definitions, &format_definition/1),
       "end\n"
     ]
