@@ -212,7 +212,7 @@ defmodule Gradient.ElixirFmt do
   end
 
   def format_type_error(error, opts) do
-    :gradualizer_fmt.format_type_error(error, opts) ++ '\n'
+    "#{:gradualizer_fmt.format_type_error(error, opts)}\n"
   end
 
   def format_expr_type_error(expression, actual_type, expected_type, opts) do

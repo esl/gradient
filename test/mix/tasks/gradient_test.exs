@@ -492,7 +492,14 @@ defmodule Mix.Tasks.GradientTest do
   end
 
   # Run the task in the current process. Useful for running on a single file.
-  def run_task(args), do: capture_io(fn -> Mix.Tasks.Gradient.run(args) end)
+  # def run_task(args), do: capture_io(fn -> Mix.Tasks.Gradient.run(args) end)
+  def run_task(args) do
+    capture_io(fn ->
+      capture_io(:stderr, fn ->
+        Mix.Tasks.Gradient.run(args)
+      end)
+    end)
+  end
 
   # Run the task in a new process, via the shell. Useful for running on an entire project.
   def run_shell_task(dir, args) do
