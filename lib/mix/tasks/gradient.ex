@@ -126,7 +126,11 @@ defmodule Mix.Tasks.Gradient do
         # Convert charlist to string
         filename = to_string(filename)
         # If the filename starts with the cwd, don't print the cwd
-        filename = if String.starts_with?(filename, cwd), do: String.slice(filename, cwd_range), else: filename
+        filename =
+          if String.starts_with?(filename, cwd),
+            do: String.slice(filename, cwd_range),
+            else: filename
+
         IO.puts(filename)
       end
     end)
@@ -374,7 +378,8 @@ defmodule Mix.Tasks.Gradient do
         |> Enum.any?(fn line -> String.trim(line) == comment end)
 
       # Negate has_magic_comment? if should_include? is false
-      has_magic_comment? = if should_include?, do: has_magic_comment?, else: not has_magic_comment?
+      has_magic_comment? =
+        if should_include?, do: has_magic_comment?, else: not has_magic_comment?
 
       has_magic_comment? and not is_dep
     end)
