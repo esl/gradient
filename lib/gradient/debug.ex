@@ -87,7 +87,7 @@ defmodule Gradient.Debug do
       "defmodule ",
       inspect(module),
       " do\n",
-      Enum.map(ast.definitions, &format_definition/1),
+      Enum.map(Enum.reverse(ast.definitions), &format_definition/1),
       "end\n"
     ]
     |> IO.iodata_to_binary()
