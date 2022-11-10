@@ -138,6 +138,18 @@ defmodule Gradient.ElixirFmt do
     )
   end
 
+  def format_type_error({:spec_error, :no_spec, anno, name, arity}, opts) do
+    :io_lib.format(
+      "~sThe function ~p/~p~s has no spec~n",
+      [
+        format_location(anno, :brief, opts),
+        name,
+        arity,
+        format_location(anno, :verbose, opts)
+      ]
+    )
+  end
+
   def format_type_error({:call_undef, anno, module, func, arity}, opts) do
     :io_lib.format(
       "~sCall to undefined function ~s~p/~p~s~n",
