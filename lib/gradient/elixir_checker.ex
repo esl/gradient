@@ -13,7 +13,7 @@ defmodule Gradient.ElixirChecker do
   @spec check([:erl_parse.abstract_form()], opts()) :: [{:file.filename(), any()}]
   def check(forms, opts) do
     if Keyword.get(opts, :ex_check, true) do
-      check_spec(forms, opts[:env])
+      check_spec(forms, opts)
     else
       []
     end
@@ -50,34 +50,57 @@ defmodule Gradient.ElixirChecker do
     end
     ```
   """
-  @spec check_spec([:erl_parse.abstract_form()], map()) :: [{:file.filename(), any()}]
-  def check_spec([{:attribute, _, :file, {file, _}} | forms], env) do
-    %{tokens_present: tokens_present, macro_lines: macro_lines} = env
+  @spec check_spec([:erl_parse.abstract_form()], opts()) :: [{:file.filename(), any()}]
+  def check_spec([{:attribute, _, :file, {file, _}} | forms], opts) do
+    %{tokens_present: tokens_present, macro_lines: macro_lines} = opts[:env]
 
-    forms
-    |> Stream.filter(&is_fun_or_spec?(&1, macro_lines))
-    |> Stream.map(&simplify_form/1)
-    |> Stream.concat()
-    |> Stream.filter(&is_not_generated?/1)
-    |> remove_injected_forms(not tokens_present)
-    |> Enum.sort(&(elem(&1, 2) < elem(&2, 2)))
-    |> Enum.reduce({nil, []}, fn
-      {:fun, {n, :def}, _}, {{:spec, {sn, _}, _}, _} = acc when n == sn ->
-        # skip clauses generated for default arguments
-        acc
+    prep_forms =
+      forms
+      |> Stream.filter(&is_fun_or_spec?(&1, macro_lines))
+      |> Stream.map(&simplify_form/1)
+      |> Stream.concat()
+      |> Stream.filter(&is_not_generated?/1)
 
-      {:fun, fna, _} = fun, {{:spec, {n, a} = sna, anno}, errors} when fna != sna ->
-        # Spec name doesn't match the function name
-        {fun, [{:spec_error, :wrong_spec_name, anno, n, a} | errors]}
+    errors =
+      prep_forms
+      |> remove_injected_forms(not tokens_present)
+      |> Enum.sort(&(elem(&1, 2) < elem(&2, 2)))
+      |> Enum.reduce({nil, []}, fn
+        {:fun, {n, :def}, _}, {{:spec, {sn, _}, _}, _} = acc when n == sn ->
+          # skip clauses generated for default arguments
+          acc
 
-      {:spec, {n, a}, anno} = s1, {{:spec, {n2, a2}, _}, errors} when n != n2 or a != a2 ->
-        # Specs with diffrent name/arity are mixed
-        {s1, [{:spec_error, :mixed_specs, anno, n, a} | errors]}
+        {:fun, fna, _} = fun, {{:spec, {n, a} = sna, anno}, errors} when fna != sna ->
+          # Spec name doesn't match the function name
+          {fun, [{:spec_error, :wrong_spec_name, anno, n, a} | errors]}
 
-      x, {_, errors} ->
-        {x, errors}
-    end)
-    |> elem(1)
+        {:spec, {n, a}, anno} = s1, {{:spec, {n2, a2}, _}, errors} when n != n2 or a != a2 ->
+          # Specs with diffrent name/arity are mixed
+          {s1, [{:spec_error, :mixed_specs, anno, n, a} | errors]}
+
+        x, {_, errors} ->
+          {x, errors}
+      end)
+      |> elem(1)
+
+    no_specs_warn =
+      case opts[:warn_missing_spec] do
+        :exported ->
+          forms
+          |> Enum.find([], &exports/1)
+          |> elem(3)
+          |> List.delete_at(0)
+          |> Keyword.keys()
+          |> warn_missing_spec(prep_forms)
+
+        :all ->
+          warn_missing_spec([], prep_forms)
+
+        _ ->
+          []
+      end
+
+    (errors ++ no_specs_warn)
     |> Enum.map(&{file, &1})
     |> Enum.reverse()
   end
@@ -132,4 +155,31 @@ defmodule Gradient.ElixirChecker do
   end
 
   def remove_injected_forms(forms, false), do: forms
+
+  defp warn_missing_spec(to_filter, forms) do
+    all_fnas_specs =
+      Enum.reduce(forms, %{:fun => [], :spec => []}, fn
+        {:fun, {name, _}, _}, %{fun: fnas} = acc -> %{acc | fun: [name | fnas]}
+        {:spec, {name, _}, _}, %{spec: fnas} = acc -> %{acc | spec: [name | fnas]}
+        _, acc -> acc
+      end)
+
+    ret = (all_fnas_specs[:fun] -- all_fnas_specs[:spec]) -- to_filter
+    ret = MapSet.new(ret)
+
+    Enum.reduce(forms, [], fn
+      {:fun, {n, a}, anno}, acc ->
+        if Enum.member?(ret, n) do
+          [{:spec_error, :no_spec, anno, n, a} | acc]
+        else
+          acc
+        end
+
+      _, acc ->
+        acc
+    end)
+  end
+
+  defp exports({_, _, :export, _}), do: true
+  defp exports(_), do: false
 end

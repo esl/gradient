@@ -71,6 +71,40 @@ defmodule Gradient.Debug do
     IO.puts(:erl_prettypr.format(:erl_syntax.form_list(forms)))
   end
 
+  @doc """
+  Print module as Elixir source code.
+
+  Based on https://github.com/michalmuskala/decompile by Michał Muskała
+  """
+  @spec print_elixir(module()) :: :ok
+  def print_elixir(mod) do
+    {:ok, ast} = elixir_ast(mod)
+    format_elixir_code(mod, ast)
+  end
+
+  defp format_elixir_code(module, ast) do
+    [
+      "defmodule ",
+      inspect(module),
+      " do\n",
+      Enum.map(Enum.reverse(ast.definitions), &format_definition/1),
+      "end\n"
+    ]
+    |> IO.iodata_to_binary()
+    |> Code.format_string!()
+    |> IO.puts()
+  end
+
+  defp format_definition({{name, _arity}, kind, _meta, heads}) do
+    Enum.map(heads, fn {_meta, args, _what?, body} ->
+      [
+        "  #{kind} #{name}(#{Enum.map_join(args, ", ", &Macro.to_string/1)}) do\n",
+        Macro.to_string(body),
+        "  end\n"
+      ]
+    end)
+  end
+
   def get_beam_path_as_charlist(mod) when is_list(mod), do: mod
   def get_beam_path_as_charlist(mod) when is_atom(mod), do: :code.which(mod)
 end

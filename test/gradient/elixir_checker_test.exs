@@ -61,6 +61,21 @@ defmodule Gradient.ElixirCheckerTest do
     assert [] = ElixirChecker.check(ast, env())
   end
 
+  test "--warn-missing-spec(-all) option" do
+    ast = load("Elixir.SpecsNoSpecs.beam")
+
+    assert [] = ElixirChecker.check(ast, env())
+
+    assert [
+             {_, {:spec_error, :no_spec, 16, :g1, 0}}
+           ] = ElixirChecker.check(ast, env([], [{:warn_missing_spec, :exported}]))
+
+    assert [
+             {_, {:spec_error, :no_spec, 7, :g, 0}},
+             {_, {:spec_error, :no_spec, 16, :g1, 0}}
+           ] = ElixirChecker.check(ast, env([], [{:warn_missing_spec, :all}]))
+  end
+
   defp env(tokens \\ [], opts \\ []) do
     [{:env, Gradient.build_env(tokens)} | opts]
   end
