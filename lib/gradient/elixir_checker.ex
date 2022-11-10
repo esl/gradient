@@ -165,6 +165,7 @@ defmodule Gradient.ElixirChecker do
       end)
 
     ret = (all_fnas_specs[:fun] -- all_fnas_specs[:spec]) -- to_filter
+    ret = MapSet.new(ret)
 
     Enum.reduce(forms, [], fn
       {:fun, {n, a}, anno}, acc ->
