@@ -158,8 +158,11 @@ defmodule Gradient.ElixirChecker do
 
   defp warn_missing_spec(to_filter, forms) do
     all_fnas_specs =
-      forms
-      |> Enum.group_by(&elem(&1, 0), &fun_or_spec_name/1)
+      Enum.reduce(forms, %{:fun => [], :spec => []}, fn
+        {:fun, {name, _}, _}, %{fun: fnas} = acc -> %{acc | fun: [name | fnas]}
+        {:spec, {name, _}, _}, %{spec: fnas} = acc -> %{acc | spec: [name | fnas]}
+        _, acc -> acc
+      end)
 
     ret = (all_fnas_specs[:fun] -- all_fnas_specs[:spec]) -- to_filter
 
@@ -178,6 +181,4 @@ defmodule Gradient.ElixirChecker do
 
   defp exports({_, _, :export, _}), do: true
   defp exports(_), do: false
-
-  defp fun_or_spec_name({_, {name, _}, _}), do: name
 end
