@@ -417,32 +417,39 @@ defmodule Mix.Tasks.GradientTest do
       |> Map.get(:apps_files)
     end
 
+    # Strip off "_build/dev/" or "_build/test/" from the beginning of a path
+    defp strip_beam_path("_build/dev/" <> path), do: path
+    defp strip_beam_path("_build/test/" <> path), do: path
+    defp strip_beam_path(path), do: path
+
     @tag umbrella: %{no_config: true}, app_a: %{no_config: true}, app_b: %{no_config: true}
     test "defaults to enabled when no gradient config in any mix.exs files" do
-      assert %{
-               "app_a" => [
-                 "_build/dev/lib/app_a/ebin/Elixir.AppA.beam",
-                 "_build/dev/lib/app_a/ebin/Elixir.AppAHelper.beam"
-               ],
-               "app_b" => [
-                 "_build/dev/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/dev/lib/app_b/ebin/Elixir.AppBHelper.beam"
-               ]
-             } == run_task_and_return_files()
+      assert %{"app_a" => app_a_files, "app_b" => app_b_files} = run_task_and_return_files()
+
+      assert [
+               "lib/app_a/ebin/Elixir.AppA.beam",
+               "lib/app_a/ebin/Elixir.AppAHelper.beam"
+             ] == Enum.map(app_a_files, &strip_beam_path/1)
+
+      assert [
+               "lib/app_b/ebin/Elixir.AppB.beam",
+               "lib/app_b/ebin/Elixir.AppBHelper.beam"
+             ] == Enum.map(app_b_files, &strip_beam_path/1)
     end
 
     @tag umbrella: %{enabled: true}, app_a: %{no_config: true}, app_b: %{no_config: true}
     test "when gradient is enabled for umbrella, checks all files" do
-      assert %{
-               "app_a" => [
-                 "_build/dev/lib/app_a/ebin/Elixir.AppA.beam",
-                 "_build/dev/lib/app_a/ebin/Elixir.AppAHelper.beam"
-               ],
-               "app_b" => [
-                 "_build/dev/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/dev/lib/app_b/ebin/Elixir.AppBHelper.beam"
-               ]
-             } == run_task_and_return_files()
+      assert %{"app_a" => app_a_files, "app_b" => app_b_files} = run_task_and_return_files()
+
+      assert [
+               "lib/app_a/ebin/Elixir.AppA.beam",
+               "lib/app_a/ebin/Elixir.AppAHelper.beam"
+             ] == Enum.map(app_a_files, &strip_beam_path/1)
+
+      assert [
+               "lib/app_b/ebin/Elixir.AppB.beam",
+               "lib/app_b/ebin/Elixir.AppBHelper.beam"
+             ] == Enum.map(app_b_files, &strip_beam_path/1)
     end
 
     @tag umbrella: %{enabled: false}, app_a: %{no_config: true}, app_b: %{no_config: true}
@@ -452,42 +459,42 @@ defmodule Mix.Tasks.GradientTest do
 
     @tag umbrella: %{enabled: false}, app_a: %{enabled: true}
     test "gradient can be enabled for a subapp even if disabled for umbrella" do
-      assert %{
-               "app_a" => [
-                 "_build/dev/lib/app_a/ebin/Elixir.AppA.beam",
-                 "_build/dev/lib/app_a/ebin/Elixir.AppAHelper.beam"
-               ]
-             } == run_task_and_return_files()
+      assert %{"app_a" => app_a_files} = run_task_and_return_files()
+
+      assert [
+               "lib/app_a/ebin/Elixir.AppA.beam",
+               "lib/app_a/ebin/Elixir.AppAHelper.beam"
+             ] == Enum.map(app_a_files, &strip_beam_path/1)
     end
 
     @tag umbrella: %{enabled: true}, app_a: %{enabled: false}
     test "gradient can be enabled for the umbrella and disabled for a subapp" do
-      assert %{
-               "app_b" => [
-                 "_build/dev/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/dev/lib/app_b/ebin/Elixir.AppBHelper.beam"
-               ]
-             } == run_task_and_return_files()
+      assert %{"app_b" => app_b_files} = run_task_and_return_files()
+
+      assert [
+               "lib/app_b/ebin/Elixir.AppB.beam",
+               "lib/app_b/ebin/Elixir.AppBHelper.beam"
+             ] == Enum.map(app_b_files, &strip_beam_path/1)
     end
 
     @tag umbrella: %{enabled: true, overrides: true},
          edit_files: %{"app_a/lib/app_a_helper.ex" => false}
     test "individual files can be disabled" do
-      assert %{
-               "app_a" => [
-                 "_build/dev/lib/app_a/ebin/Elixir.AppA.beam"
-               ],
-               "app_b" => [
-                 "_build/dev/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/dev/lib/app_b/ebin/Elixir.AppBHelper.beam"
-               ]
-             } == run_task_and_return_files()
+      assert %{"app_a" => app_a_files, "app_b" => app_b_files} = run_task_and_return_files()
+
+      assert ["lib/app_a/ebin/Elixir.AppA.beam"] == Enum.map(app_a_files, &strip_beam_path/1)
+
+      assert [
+               "lib/app_b/ebin/Elixir.AppB.beam",
+               "lib/app_b/ebin/Elixir.AppBHelper.beam"
+             ] == Enum.map(app_b_files, &strip_beam_path/1)
     end
 
     @tag umbrella: %{enabled: false, overrides: true}, edit_files: %{"app_a/lib/app_a.ex" => true}
     test "individual files can be enabled" do
-      assert %{"app_a" => ["_build/dev/lib/app_a/ebin/Elixir.AppA.beam"]} ==
-               run_task_and_return_files()
+      assert %{"app_a" => app_a_files} = run_task_and_return_files()
+
+      assert ["lib/app_a/ebin/Elixir.AppA.beam"] == Enum.map(app_a_files, &strip_beam_path/1)
     end
   end
 
