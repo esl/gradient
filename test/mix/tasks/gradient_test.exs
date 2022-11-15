@@ -41,254 +41,6 @@ defmodule Mix.Tasks.GradientTest do
     :ok
   end
 
-  describe "Umbrella project app filtering:" do
-    # Templates for dynamically creating variations on the umbrella/subapp
-    # mix.exs config files at runtime
-    @umbrella_mix_exs """
-    defmodule SimpleUmbrellaApp.MixProject do
-      use Mix.Project
-      def project do
-        [
-          apps_path: "apps",
-          version: "0.1.0",
-          start_permanent: Mix.env() == :prod,
-          deps: deps(),
-          <%= if not no_config do %>
-            gradient: [
-              <%= if enabled != nil do %>
-                enabled: <%= enabled %>,
-              <% end %>
-              <%= if overrides != nil do %>
-                file_overrides: <%= overrides %>,
-              <% end %>
-            ]
-          <% end %>
-        ]
-      end
-      defp deps do
-        [{:gradient, path: "../../", override: true}]
-      end
-    end
-    """
-
-    @subapp_mix_exs """
-    defmodule App<%= String.upcase(app) %>.MixProject do
-      use Mix.Project
-      def project do
-        [
-          app: :app_<%= app %>,
-          version: "0.1.0",
-          build_path: "../../_build",
-          config_path: "../../config/config.exs",
-          deps_path: "../../deps",
-          lockfile: "../../mix.lock",
-          elixir: "~> 1.12",
-          start_permanent: Mix.env() == :prod,
-          deps: deps(),
-          <%= if not no_config do %>
-            gradient: [
-              <%= if enabled != nil do %>
-                enabled: <%= enabled %>,
-              <% end %>
-              <%= if overrides != nil do %>
-                file_overrides: <%= overrides %>,
-              <% end %>
-            ]
-          <% end %>
-        ]
-      end
-      <%= if app == "b" do %>
-        defp deps, do: [{:app_a, in_umbrella: true}]
-      <% else %>
-        defp deps, do: []
-      <% end %>
-    end
-    """
-
-    @umbrella_app_path "examples/simple_umbrella_app"
-    @umbrella_mix @umbrella_app_path <> "/mix.exs"
-    @umbrella_app_a_mix @umbrella_app_path <> "/apps/app_a/mix.exs"
-    @umbrella_app_b_mix @umbrella_app_path <> "/apps/app_b/mix.exs"
-
-    setup context do
-      umbrella_mix_contents = File.read!(@umbrella_mix)
-      app_a_mix_contents = File.read!(@umbrella_app_a_mix)
-      app_b_mix_contents = File.read!(@umbrella_app_b_mix)
-
-      on_exit(fn ->
-        # Put back the original file contents at the end of the test
-        File.write!(@umbrella_mix, umbrella_mix_contents)
-        File.write!(@umbrella_app_a_mix, app_a_mix_contents)
-        File.write!(@umbrella_app_b_mix, app_b_mix_contents)
-      end)
-
-      # Edit files if specified in config
-      context |> Map.get(:edit_files, %{}) |> edit_files()
-
-      # Get test configs from context
-      umbrella_mix = Map.get(context, :umbrella, %{}) |> prep_config()
-      app_a_mix = Map.get(context, :app_a, %{}) |> Map.put(:app, "a") |> prep_config()
-      app_b_mix = Map.get(context, :app_b, %{}) |> Map.put(:app, "b") |> prep_config()
-
-      # Write new mix.exs file contents for duration of test
-      File.write!(@umbrella_mix, EEx.eval_string(@umbrella_mix_exs, umbrella_mix))
-      File.write!(@umbrella_app_a_mix, EEx.eval_string(@subapp_mix_exs, app_a_mix))
-      File.write!(@umbrella_app_b_mix, EEx.eval_string(@subapp_mix_exs, app_b_mix))
-    end
-
-    # Merge in default configs, and convert map to keyword list
-    defp prep_config(mix_exs_config) do
-      Map.merge(
-        %{
-          no_config: false,
-          enabled: nil,
-          overrides: nil
-        },
-        mix_exs_config
-      )
-      |> Keyword.new()
-    end
-
-    defp edit_files(files) do
-      for {filename, enabled?} <- files do
-        filename = @umbrella_app_path <> "/apps/" <> filename
-
-        magic_comment =
-          if enabled?, do: "# gradient:enable-for-file\n", else: "# gradient:disable-for-file\n"
-
-        file_contents = File.read!(filename)
-        updated_file_contents = magic_comment <> file_contents
-        File.write!(filename, updated_file_contents)
-
-        on_exit(fn ->
-          File.write!(filename, file_contents)
-        end)
-      end
-    end
-
-    # Run the task on the umbrella app, and extract which files it ran on
-    defp run_task_and_return_files() do
-      output = run_shell_task("examples/simple_umbrella_app", ["--print-filenames"])
-
-      # Parse the output and figure out which files it said it ran on
-      output
-      |> String.split("\n")
-      |> Enum.reduce(
-        %{state: :not_started, apps_files: %{}, curr_app: nil},
-        fn line, %{state: state, apps_files: apps_files, curr_app: curr_app} = acc ->
-          case state do
-            # Looking for the string "Typechecking files..." to start
-            :not_started ->
-              if line == "Files to check:" do
-                %{acc | state: :started}
-              else
-                acc
-              end
-
-            :started ->
-              case line do
-                # Change current app
-                "Files in app " <> app_name_and_colon ->
-                  # get rid of colon on the end
-                  app_name = String.replace(app_name_and_colon, ":", "")
-                  %{acc | curr_app: app_name}
-
-                # This line signifies the end of the file list
-                "Typechecking files..." ->
-                  %{acc | state: :finished}
-
-                # Save filename to list for current app
-                filename ->
-                  file_list_for_app = Map.get(apps_files, curr_app, [])
-                  updated_file_list = file_list_for_app ++ [filename]
-                  updated_apps_files = Map.put(apps_files, curr_app, updated_file_list)
-                  %{acc | apps_files: updated_apps_files}
-              end
-
-            # Already found all the files, no-op
-            :finished ->
-              acc
-          end
-        end
-      )
-      # Return just the list of apps/files
-      |> Map.get(:apps_files)
-    end
-
-    @tag umbrella: %{no_config: true}, app_a: %{no_config: true}, app_b: %{no_config: true}
-    test "defaults to enabled when no gradient config in any mix.exs files" do
-      assert %{
-               "app_a" => [
-                 "_build/test/lib/app_a/ebin/Elixir.AppA.beam",
-                 "_build/test/lib/app_a/ebin/Elixir.AppAHelper.beam"
-               ],
-               "app_b" => [
-                 "_build/test/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/test/lib/app_b/ebin/Elixir.AppBHelper.beam"
-               ]
-             } == run_task_and_return_files()
-    end
-
-    @tag umbrella: %{enabled: true}, app_a: %{no_config: true}, app_b: %{no_config: true}
-    test "when gradient is enabled for umbrella, checks all files" do
-      assert %{
-               "app_a" => [
-                 "_build/test/lib/app_a/ebin/Elixir.AppA.beam",
-                 "_build/test/lib/app_a/ebin/Elixir.AppAHelper.beam"
-               ],
-               "app_b" => [
-                 "_build/test/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/test/lib/app_b/ebin/Elixir.AppBHelper.beam"
-               ]
-             } == run_task_and_return_files()
-    end
-
-    @tag umbrella: %{enabled: false}, app_a: %{no_config: true}, app_b: %{no_config: true}
-    test "when gradient is disabled for umbrella, doesn't check any files" do
-      assert %{} == run_task_and_return_files()
-    end
-
-    @tag umbrella: %{enabled: false}, app_a: %{enabled: true}
-    test "gradient can be enabled for a subapp even if disabled for umbrella" do
-      assert %{
-               "app_a" => [
-                 "_build/test/lib/app_a/ebin/Elixir.AppA.beam",
-                 "_build/test/lib/app_a/ebin/Elixir.AppAHelper.beam"
-               ]
-             } == run_task_and_return_files()
-    end
-
-    @tag umbrella: %{enabled: true}, app_a: %{enabled: false}
-    test "gradient can be enabled for the umbrella and disabled for a subapp" do
-      assert %{
-               "app_b" => [
-                 "_build/test/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/test/lib/app_b/ebin/Elixir.AppBHelper.beam"
-               ]
-             } == run_task_and_return_files()
-    end
-
-    @tag umbrella: %{enabled: true, overrides: true},
-         edit_files: %{"app_a/lib/app_a_helper.ex" => false}
-    test "individual files can be disabled" do
-      assert %{
-               "app_a" => [
-                 "_build/test/lib/app_a/ebin/Elixir.AppA.beam"
-               ],
-               "app_b" => [
-                 "_build/test/lib/app_b/ebin/Elixir.AppB.beam",
-                 "_build/test/lib/app_b/ebin/Elixir.AppBHelper.beam"
-               ]
-             } == run_task_and_return_files()
-    end
-
-    @tag umbrella: %{enabled: false, overrides: true}, edit_files: %{"app_a/lib/app_a.ex" => true}
-    test "individual files can be enabled" do
-      assert %{"app_a" => ["_build/test/lib/app_a/ebin/Elixir.AppA.beam"]} ==
-               run_task_and_return_files()
-    end
-  end
-
   test "--no-compile option" do
     info = "Compiling project..."
 
@@ -485,6 +237,277 @@ defmodule Mix.Tasks.GradientTest do
     assert run_task([@examples_path <> "/dependent_modules.ex"]) =~ "No errors found!"
   end
 
+  describe "Umbrella project app filtering:" do
+    # Templates for dynamically creating variations on the umbrella/subapp
+    # mix.exs config files at runtime
+    @umbrella_mix_exs """
+    defmodule SimpleUmbrellaApp.MixProject do
+      use Mix.Project
+
+      def project do
+        [
+          apps_path: "apps",
+          version: "0.1.0",
+          start_permanent: Mix.env() == :prod,
+          deps: deps(),
+          <%= if not no_config do %>
+            gradient: [
+              <%= if enabled != nil do %>
+                enabled: <%= enabled %>,
+              <% end %>
+
+              <%= if overrides != nil do %>
+                file_overrides: <%= overrides %>,
+              <% end %>
+            ]
+          <% end %>
+        ]
+      end
+
+      defp deps do
+        [{:gradient, path: "../../", override: true}]
+      end
+    end
+    """
+
+    @subapp_mix_exs """
+    defmodule App<%= String.upcase(app) %>.MixProject do
+      use Mix.Project
+
+      def project do
+        [
+          app: :app_<%= app %>,
+          version: "0.1.0",
+          build_path: "../../_build",
+          config_path: "../../config/config.exs",
+          deps_path: "../../deps",
+          lockfile: "../../mix.lock",
+          elixir: "~> 1.12",
+          start_permanent: Mix.env() == :prod,
+          deps: deps(),
+          <%= if not no_config do %>
+            gradient: [
+              <%= if enabled != nil do %>
+                enabled: <%= enabled %>,
+              <% end %>
+
+              <%= if overrides != nil do %>
+                file_overrides: <%= overrides %>,
+              <% end %>
+            ]
+          <% end %>
+        ]
+      end
+
+      <%= if app == "b" do %>
+        defp deps, do: [{:app_a, in_umbrella: true}]
+      <% else %>
+        defp deps, do: []
+      <% end %>
+    end
+    """
+
+    @umbrella_app_path "examples/simple_umbrella_app"
+    @umbrella_mix @umbrella_app_path <> "/mix.exs"
+    @umbrella_app_a_mix @umbrella_app_path <> "/apps/app_a/mix.exs"
+    @umbrella_app_b_mix @umbrella_app_path <> "/apps/app_b/mix.exs"
+
+    setup context do
+      umbrella_mix_contents = File.read!(@umbrella_mix)
+      app_a_mix_contents = File.read!(@umbrella_app_a_mix)
+      app_b_mix_contents = File.read!(@umbrella_app_b_mix)
+
+      on_exit(fn ->
+        # Put back the original file contents at the end of the test
+        File.write!(@umbrella_mix, umbrella_mix_contents)
+        File.write!(@umbrella_app_a_mix, app_a_mix_contents)
+        File.write!(@umbrella_app_b_mix, app_b_mix_contents)
+      end)
+
+      # Edit files if specified in config
+      context |> Map.get(:edit_files, %{}) |> edit_files()
+
+      # Get test configs from context
+      umbrella_mix = Map.get(context, :umbrella, %{}) |> prep_config()
+      app_a_mix = Map.get(context, :app_a, %{}) |> Map.put(:app, "a") |> prep_config()
+      app_b_mix = Map.get(context, :app_b, %{}) |> Map.put(:app, "b") |> prep_config()
+
+      # Write new mix.exs file contents for duration of test
+      File.write!(@umbrella_mix, EEx.eval_string(@umbrella_mix_exs, umbrella_mix))
+      File.write!(@umbrella_app_a_mix, EEx.eval_string(@subapp_mix_exs, app_a_mix))
+      File.write!(@umbrella_app_b_mix, EEx.eval_string(@subapp_mix_exs, app_b_mix))
+    end
+
+    # Merge in default configs, and convert map to keyword list
+    defp prep_config(mix_exs_config) do
+      Map.merge(
+        %{
+          no_config: false,
+          enabled: nil,
+          overrides: nil
+        },
+        mix_exs_config
+      )
+      |> Keyword.new()
+    end
+
+    defp edit_files(files) do
+      for {filename, enabled?} <- files do
+        filename = @umbrella_app_path <> "/apps/" <> filename
+
+        magic_comment =
+          if enabled?, do: "# gradient:enable-for-file\n", else: "# gradient:disable-for-file\n"
+
+        file_contents = File.read!(filename)
+        updated_file_contents = magic_comment <> file_contents
+        File.write!(filename, updated_file_contents)
+
+        on_exit(fn ->
+          File.write!(filename, file_contents)
+        end)
+      end
+    end
+
+    # Run the task on the umbrella app, and extract which files it ran on
+    defp run_task_and_return_files() do
+      output = run_shell_task("examples/simple_umbrella_app", ["--print-filenames"])
+
+      # Parse the output and figure out which files it said it ran on
+      output
+      |> String.split("\n")
+      |> Enum.reduce(
+        %{state: :not_started, apps_files: %{}, curr_app: nil},
+        fn line, %{state: state, apps_files: apps_files, curr_app: curr_app} = acc ->
+          case state do
+            # Looking for the string "Typechecking files..." to start
+            :not_started ->
+              if line == "Files to check:" do
+                %{acc | state: :started}
+              else
+                acc
+              end
+
+            :started ->
+              case line do
+                # Change current app
+                "Files in app " <> app_name_and_colon ->
+                  # get rid of colon on the end
+                  app_name = String.replace(app_name_and_colon, ":", "")
+                  %{acc | curr_app: app_name}
+
+                # This line signifies the end of the file list
+                "Typechecking files..." ->
+                  %{acc | state: :finished}
+
+                # Save filename to list for current app
+                filename ->
+                  file_list_for_app = Map.get(apps_files, curr_app, [])
+                  updated_file_list = file_list_for_app ++ [filename]
+                  updated_apps_files = Map.put(apps_files, curr_app, updated_file_list)
+                  %{acc | apps_files: updated_apps_files}
+              end
+
+            # Already found all the files, no-op
+            :finished ->
+              acc
+          end
+        end
+      )
+      # Return just the list of apps/files
+      |> Map.get(:apps_files)
+    end
+
+    # Strip off "_build/dev/" or "_build/test/" from the beginning of a path
+    defp strip_beam_path("_build/dev/" <> path), do: path
+    defp strip_beam_path("_build/test/" <> path), do: path
+    defp strip_beam_path(path), do: path
+
+    @tag umbrella: %{no_config: true}, app_a: %{no_config: true}, app_b: %{no_config: true}
+    test "defaults to enabled when no gradient config in any mix.exs files" do
+      assert %{"app_a" => app_a_files, "app_b" => app_b_files} = run_task_and_return_files()
+
+      assert [
+               "lib/app_a/ebin/Elixir.AppA.beam",
+               "lib/app_a/ebin/Elixir.AppAHelper.beam"
+             ] == Enum.map(app_a_files, &strip_beam_path/1)
+
+      assert [
+               "lib/app_b/ebin/Elixir.AppB.beam",
+               "lib/app_b/ebin/Elixir.AppBHelper.beam"
+             ] == Enum.map(app_b_files, &strip_beam_path/1)
+    end
+
+    @tag umbrella: %{enabled: true}, app_a: %{no_config: true}, app_b: %{no_config: true}
+    test "when gradient is enabled for umbrella, checks all files" do
+      assert %{"app_a" => app_a_files, "app_b" => app_b_files} = run_task_and_return_files()
+
+      assert [
+               "lib/app_a/ebin/Elixir.AppA.beam",
+               "lib/app_a/ebin/Elixir.AppAHelper.beam"
+             ] == Enum.map(app_a_files, &strip_beam_path/1)
+
+      assert [
+               "lib/app_b/ebin/Elixir.AppB.beam",
+               "lib/app_b/ebin/Elixir.AppBHelper.beam"
+             ] == Enum.map(app_b_files, &strip_beam_path/1)
+    end
+
+    @tag umbrella: %{enabled: false}, app_a: %{no_config: true}, app_b: %{no_config: true}
+    test "when gradient is disabled for umbrella, doesn't check any files" do
+      assert %{} == run_task_and_return_files()
+    end
+
+    @tag umbrella: %{enabled: false}, app_a: %{enabled: true}
+    test "gradient can be enabled for a subapp even if disabled for umbrella" do
+      assert %{"app_a" => app_a_files} = run_task_and_return_files()
+
+      assert [
+               "lib/app_a/ebin/Elixir.AppA.beam",
+               "lib/app_a/ebin/Elixir.AppAHelper.beam"
+             ] == Enum.map(app_a_files, &strip_beam_path/1)
+    end
+
+    @tag umbrella: %{enabled: true}, app_a: %{enabled: false}
+    test "gradient can be enabled for the umbrella and disabled for a subapp" do
+      assert %{"app_b" => app_b_files} = run_task_and_return_files()
+
+      assert [
+               "lib/app_b/ebin/Elixir.AppB.beam",
+               "lib/app_b/ebin/Elixir.AppBHelper.beam"
+             ] == Enum.map(app_b_files, &strip_beam_path/1)
+    end
+
+    @tag umbrella: %{enabled: true, overrides: true},
+         edit_files: %{"app_a/lib/app_a_helper.ex" => false}
+    test "individual files can be disabled" do
+      assert %{"app_a" => app_a_files, "app_b" => app_b_files} = run_task_and_return_files()
+
+      assert ["lib/app_a/ebin/Elixir.AppA.beam"] == Enum.map(app_a_files, &strip_beam_path/1)
+
+      assert [
+               "lib/app_b/ebin/Elixir.AppB.beam",
+               "lib/app_b/ebin/Elixir.AppBHelper.beam"
+             ] == Enum.map(app_b_files, &strip_beam_path/1)
+    end
+
+    @tag umbrella: %{enabled: false, overrides: true}, edit_files: %{"app_a/lib/app_a.ex" => true}
+    test "individual files can be enabled" do
+      assert %{"app_a" => app_a_files} = run_task_and_return_files()
+
+      assert ["lib/app_a/ebin/Elixir.AppA.beam"] == Enum.map(app_a_files, &strip_beam_path/1)
+    end
+  end
+
+  # Run the task in the current process. Useful for running on a single file.
+  # def run_task(args), do: capture_io(fn -> Mix.Tasks.Gradient.run(args) end)
+  def run_task(args) do
+    capture_io(fn ->
+      capture_io(:stderr, fn ->
+        Mix.Tasks.Gradient.run(args)
+      end)
+    end)
+  end
+
   # Run the task in a new process, via the shell. Useful for running on an entire project.
   def run_shell_task(dir, args) do
     previous_cwd = File.cwd!()
@@ -493,8 +516,11 @@ defmodule Mix.Tasks.GradientTest do
       # cd to the specified dir
       File.cd!(dir)
 
+      # mix clean first
+      assert {_, 0} = System.cmd("mix", ["clean"])
+
       # Run the task
-      {output, exit_code} = System.cmd("mix", ["gradient"] ++ args, env: [{"MIX_ENV", "test"}])
+      {output, exit_code} = System.cmd("mix", ["gradient"] ++ args)
       assert exit_code == 0, output
 
       output
@@ -503,7 +529,5 @@ defmodule Mix.Tasks.GradientTest do
     end
   end
 
-  def run_task(args), do: capture_io(fn -> Mix.Tasks.Gradient.run(args) end)
-
-  def test_opts(opts), do: ["--no-comile", "--no-deps"] ++ opts
+  def test_opts(opts), do: ["--no-compile", "--no-deps"] ++ opts
 end

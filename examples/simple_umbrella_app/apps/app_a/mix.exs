@@ -12,13 +12,6 @@ defmodule AppA.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       
-        gradient: [
-          
-            enabled: true,
-          
-          
-        ]
-      
     ]
   end
   

@@ -9,7 +9,7 @@ defmodule SimpleUmbrellaApp.MixProject do
       
         gradient: [
           
-            enabled: false,
+            enabled: true,
           
           
         ]

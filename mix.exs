@@ -38,7 +38,7 @@ defmodule Gradient.MixProject do
 
   def aliases do
     [
-      # Befor testing, remove compiled test/examples files for a clean build
+      # Before testing, remove compiled test/examples files for a clean build
       test: ["clean_examples", "test"]
     ]
   end
