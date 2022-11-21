@@ -248,15 +248,6 @@ defmodule Gradient.ElixirFmtTest do
 
       assert "The spec convert/1 on line 3 doesn't match the function name/arity\n" = msg
     end
-
-    test "follows another spec" do
-      msg =
-        {:spec_error, :mixed_specs, 3, :encode, 1}
-        |> ElixirFmt.format_error([])
-        |> :erlang.iolist_to_binary()
-
-      assert "The spec encode/1 on line 3 follows a spec with different name/arity\n" = msg
-    end
   end
 
   @tag :skip
