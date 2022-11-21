@@ -17,8 +17,9 @@ defmodule Gradient.Error do
           | {:type_error, type_kind()}
           | {:undef, undef_kind()}
 
-  @type spec_kind :: :no_spec
-                   | :wrong_spec_name
+  @type spec_kind ::
+          :no_spec
+          | :wrong_spec_name
 
   @type type_kind ::
           :arith_error
