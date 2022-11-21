@@ -67,14 +67,12 @@ defmodule Gradient.ErrorTest do
       {31, {:type_error, :mismatch}}
     ],
     simple_range: [],
-    spec_correct: [],
-    spec_default_args: [],
-    spec_mixed: [
-      {3, {:spec_error, :mixed_specs}},
-      {3, {:spec_error, :wrong_spec_name}}
+    spec_correct: [
+      {3, :nonexhaustive}
     ],
+    spec_default_args: [],
     spec_wrong_name: [
-      {3, {:type_error, :arith_error}},
+      {3, :nonexhaustive},
       {5, {:spec_error, :wrong_spec_name}},
       {8, {:type_error, :mismatch}},
       {11, {:spec_error, :wrong_spec_name}}
@@ -171,7 +169,7 @@ defmodule Gradient.ErrorTest do
       reject_compact = &compact(reject(errors, &1))
 
       assert compact(errors) == [
-               {3, {:type_error, :arith_error}},
+               {3, :nonexhaustive},
                {5, {:spec_error, :wrong_spec_name}},
                {8, {:type_error, :mismatch}},
                {11, {:spec_error, :wrong_spec_name}}
@@ -179,12 +177,13 @@ defmodule Gradient.ErrorTest do
 
       # ignoring all occurrences of an error
       assert reject_compact.({:spec_error, :wrong_spec_name}) == [
-               {3, {:type_error, :arith_error}},
+               {3, :nonexhaustive},
                {8, {:type_error, :mismatch}}
              ]
 
       # ignoring all occurrences of another error
       assert reject_compact.({:type_error, :arith_error}) == [
+               {3, :nonexhaustive},
                {5, {:spec_error, :wrong_spec_name}},
                {8, {:type_error, :mismatch}},
                {11, {:spec_error, :wrong_spec_name}}
@@ -192,18 +191,19 @@ defmodule Gradient.ErrorTest do
 
       # ignoring all occurrences of error group
       assert reject_compact.(:type_error) == [
+               {3, :nonexhaustive},
                {5, {:spec_error, :wrong_spec_name}},
                {11, {:spec_error, :wrong_spec_name}}
              ]
 
       # ignoring all occurrences of an error on a file
       assert reject_compact.({path, {:spec_error, :wrong_spec_name}}) == [
-               {3, {:type_error, :arith_error}},
+               {3, :nonexhaustive},
                {8, {:type_error, :mismatch}}
              ]
 
       # ignoring all occurrences of another error on a file
-      assert reject_compact.({path, {:type_error, :arith_error}}) == [
+      assert reject_compact.({path, :nonexhaustive}) == [
                {5, {:spec_error, :wrong_spec_name}},
                {8, {:type_error, :mismatch}},
                {11, {:spec_error, :wrong_spec_name}}
@@ -211,19 +211,21 @@ defmodule Gradient.ErrorTest do
 
       # ignoring all occurrences of error group on a file
       assert reject_compact.({path, :type_error}) == [
+               {3, :nonexhaustive},
                {5, {:spec_error, :wrong_spec_name}},
                {11, {:spec_error, :wrong_spec_name}}
              ]
 
       # ignoring all occurrences of an error on a file line
       assert reject_compact.({"#{path}:5", {:spec_error, :wrong_spec_name}}) == [
-               {3, {:type_error, :arith_error}},
+               {3, :nonexhaustive},
                {8, {:type_error, :mismatch}},
                {11, {:spec_error, :wrong_spec_name}}
              ]
 
       # ignoring all occurrences of an error group on a file line
       assert reject_compact.({"#{path}:3", :type_error}) == [
+               {3, :nonexhaustive},
                {5, {:spec_error, :wrong_spec_name}},
                {8, {:type_error, :mismatch}},
                {11, {:spec_error, :wrong_spec_name}}

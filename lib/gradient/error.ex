@@ -18,7 +18,7 @@ defmodule Gradient.Error do
           | {:undef, undef_kind()}
 
   @type spec_kind ::
-          :mixed_specs
+          :no_spec
           | :wrong_spec_name
 
   @type type_kind ::
@@ -99,13 +99,13 @@ defmodule Gradient.Error do
     "lib/ecto/schema.ex:55",
 
     # Ignores an error kind in a file
-    {"lib/ecto/changeset.ex", {:spec_error, :mixed_specs}},
+    {"lib/ecto/changeset.ex", {:spec_error, :no_spec}},
 
     # Ignores an error kind in a specific line
-    {"lib/ecto/changeset.ex:55", {:spec_error, :mixed_specs}},
+    {"lib/ecto/changeset.ex:55", {:spec_error, :no_spec}},
 
     # Ignores an error kind in all files
-    {:spec_error, :mixed_specs}
+    {:spec_error, :no_spec}
   ]
   ```
 
@@ -182,9 +182,9 @@ defmodule Gradient.Error do
     {:not_exported, :remote_type}
   end
 
-  def kind({:spec_error, type, _anno, _name, _arity})
-      when type in [:mixed_specs, :wrong_spec_name] do
-    {:spec_error, type}
+  def kind({:spec_error, kind, _anno, _name, _arity})
+      when kind in [:no_spec, :wrong_spec_name] do
+    {:spec_error, kind}
   end
 
   def kind({:type_error, :arith_error, _arith_op, _anno, _ty}) do
