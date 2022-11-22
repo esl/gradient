@@ -66,6 +66,7 @@ defmodule Gradient do
   defp handle_elixir_ast(ast, opts) do
     ast =
       ast
+      |> put_source_path(opts)
       |> maybe_specify_forms(opts)
 
     tokens = maybe_use_tokens(ast, opts)
