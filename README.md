@@ -66,13 +66,13 @@ It's possible to ignore specific warnings by adding a `.gradient_ignore.exs` in 
     "lib/ecto/schema.ex:55",
 
     # Ignores an error kind in a file
-    {"lib/ecto/changeset.ex", {:spec_error, :mixed_specs}},
+    {"lib/ecto/changeset.ex", {:spec_error, :no_spec}},
 
     # Ignores an error kind in a specific line
-    {"lib/ecto/changeset.ex:55", {:spec_error, :mixed_specs}},
+    {"lib/ecto/changeset.ex:55", {:spec_error, :no_spec}},
 
     # Ignores an error kind in all files
-    {:spec_error, :mixed_specs}
+    {:spec_error, :no_spec}
   ]
 ```
 

@@ -40,15 +40,6 @@ defmodule Gradient.ElixirCheckerTest do
            ] = ElixirChecker.check(ast, env())
   end
 
-  test "mixing specs names is not allowed" do
-    ast = load("Elixir.SpecMixed.beam")
-
-    assert [
-             {_, {:spec_error, :mixed_specs, 3, :encode, 1}},
-             {_, {:spec_error, :wrong_spec_name, 3, :encode, 1}}
-           ] = ElixirChecker.check(ast, env())
-  end
-
   test "spec defined in a __using__ macro with tokens" do
     {tokens, ast} = load("Elixir.SpecInMacro.beam", "spec_in_macro.ex")
 

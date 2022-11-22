@@ -126,18 +126,6 @@ defmodule Gradient.ElixirFmt do
     )
   end
 
-  def format_type_error({:spec_error, :mixed_specs, anno, name, arity}, opts) do
-    :io_lib.format(
-      "~sThe spec ~p/~p~s follows a spec with different name/arity~n",
-      [
-        format_location(anno, :brief, opts),
-        name,
-        arity,
-        format_location(anno, :verbose, opts)
-      ]
-    )
-  end
-
   def format_type_error({:spec_error, :no_spec, anno, name, arity}, opts) do
     :io_lib.format(
       "~sThe function ~p/~p~s has no spec~n",

@@ -74,10 +74,6 @@ defmodule Gradient.ElixirChecker do
           # Spec name doesn't match the function name
           {fun, [{:spec_error, :wrong_spec_name, anno, n, a} | errors]}
 
-        {:spec, {n, a}, anno} = s1, {{:spec, {n2, a2}, _}, errors} when n != n2 or a != a2 ->
-          # Specs with diffrent name/arity are mixed
-          {s1, [{:spec_error, :mixed_specs, anno, n, a} | errors]}
-
         x, {_, errors} ->
           {x, errors}
       end)
