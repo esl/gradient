@@ -79,10 +79,10 @@ defmodule Mix.Tasks.Gradient do
 
     # Load dependencies
     maybe_load_deps(options)
-    # Start Gradualizer application
-    Application.ensure_all_started(:gradualizer)
     # Compile the project before the analysis
     maybe_compile_project(options)
+    # Start Gradualizer application
+    Application.ensure_all_started(:gradualizer)
     # Get paths to files
     files =
       get_paths(user_paths)
