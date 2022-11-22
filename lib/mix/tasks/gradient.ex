@@ -365,7 +365,6 @@ defmodule Mix.Tasks.Gradient do
       |> Enum.at(1)
 
     mixfile_module = String.to_atom("Elixir." <> mixfile_module_str)
-
     # return the module's config
     mixfile_module.project()
   end

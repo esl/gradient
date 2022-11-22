@@ -39,14 +39,10 @@ defmodule Gradient do
     module = Keyword.get(opts, :module, "all_modules")
 
     with {:ok, asts} <- ElixirFileUtils.get_forms(path, module),
-         {:ok, first_ast} <- get_first_forms(asts),
-         {:elixir, _} <- wrap_language_name(first_ast) do
-      asts
-      |> Enum.map(fn ast ->
-        ast =
-          ast
-          |> put_source_path(opts)
-          |> maybe_specify_forms(opts)
+         {:ok, first_ast} <- get_first_forms(asts) do
+      case wrap_language_name(first_ast) do
+        {:elixir, _} ->
+          Enum.map(asts, &handle_elixir_ast(&1, opts))
 
         {:erlang, ast} ->
           handle_erlang_ast(ast, opts)
