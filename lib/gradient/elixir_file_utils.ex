@@ -107,14 +107,24 @@ defmodule Gradient.ElixirFileUtils do
 
   @spec load_tokens([:erl_parse.abstract_form()]) :: Types.tokens()
   def load_tokens(forms) do
-    with [{:attribute, _, :file, {path, _}} | _] <- forms,
-         path <- to_string(path),
+    case forms do
+      [{:attribute, _, :file, {path, _}} | _] ->
+        load_tokens_at_path(path)
+
+      _ ->
+        IO.puts("Error finding file attribute from forms: #{inspect(forms)}")
+        []
+    end
+  end
+
+  defp load_tokens_at_path(path) do
+    with path <- to_string(path),
          {:ok, code} <- File.read(path),
          {:ok, tokens} <- :elixir.string_to_tokens(String.to_charlist(code), 1, 1, path, []) do
       tokens
     else
       error ->
-        IO.puts("Cannot load tokens: #{inspect(error)}")
+        IO.puts("Error loading tokens from file at path #{inspect(path)}: #{inspect(error)}")
         []
     end
   end
