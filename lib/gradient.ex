@@ -47,6 +47,13 @@ defmodule Gradient do
         {:erlang, ast} ->
           handle_erlang_ast(ast, opts)
       end
+      |> Enum.reduce({:error, []}, fn
+        {:error, e}, {:error, acc} ->
+          {:error, ElixirFmt.print_errors(e, opts) ++ acc}
+
+        _, acc ->
+          acc
+      end)
     else
       {:error, :module_not_found} ->
         Logger.error("Can't find module specified by '--module' flag.")
@@ -85,7 +92,6 @@ defmodule Gradient do
             :ok
 
           [_ | _] = filtered_errors ->
-            ElixirFmt.print_errors(filtered_errors, opts)
             {:error, filtered_errors}
         end
     end
@@ -102,7 +108,6 @@ defmodule Gradient do
             [:ok]
 
           [_ | _] = filtered_errors ->
-            ElixirFmt.print_errors(filtered_errors, opts)
             [{:error, filtered_errors}]
         end
     end

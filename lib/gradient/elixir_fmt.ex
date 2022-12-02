@@ -39,23 +39,24 @@ defmodule Gradient.ElixirFmt do
   @default_colors [use_colors: true, expression: :yellow, type: :cyan, underscored_line: :red]
 
   def print_errors(errors, opts) do
-    for {file, e} <- errors do
+    Enum.map(errors, fn {file, e} ->
       opts = Keyword.put(opts, :filename, file)
       print_error(e, opts)
-    end
+    end)
   end
 
   def print_error(error, opts) do
     file = Keyword.get(opts, :filename)
     fmt_loc = Keyword.get(opts, :fmt_location, :verbose)
 
-    case file do
-      nil -> :ok
-      _ when fmt_loc == :brief -> :io.format("~s:", [file])
-      _ -> :io.format("~s: ", [file])
-    end
+    f =
+      case file do
+        nil -> :ok
+        _ when fmt_loc == :brief -> :io_lib.format("~s:", [file])
+        _ -> :io_lib.format("~s: ", [file])
+      end
 
-    :io.put_chars(format_error(error, opts))
+    {f, format_error(error, opts)}
   end
 
   def format_error(error, opts) do

@@ -42,6 +42,7 @@ defmodule Mix.Tasks.Gradient do
   use Mix.Task
 
   alias Gradient.ElixirFileUtils
+  alias Gradient.ElixirFmt
 
   @options [
     # skip phases options
@@ -94,18 +95,32 @@ defmodule Mix.Tasks.Gradient do
 
     IO.puts("Typechecking files...")
 
-    files
-    |> Stream.map(fn {app_path, paths} ->
-      Stream.map(
-        paths,
-        &Gradient.type_check_file(
-          &1,
-          [{:app_path, app_path}, {:ignores, ignores} | options]
+    errors =
+      files
+      |> Enum.map(fn {app_path, paths} ->
+        Enum.map(
+          paths,
+          &Gradient.type_check_file(
+            &1,
+            [{:app_path, app_path}, {:ignores, ignores} | options]
+          )
         )
-      )
+      end)
+      |> List.flatten()
+
+    errors
+    |> Enum.map(fn
+      {:error, prepared_errors} ->
+        Enum.each(prepared_errors, fn {f, e} ->
+          :io.put_chars(f)
+          :io.put_chars(e)
+        end)
+
+      _ ->
+        :ok
     end)
-    |> Stream.concat()
-    |> execute(options)
+
+    execute(errors, options)
 
     :ok
   end
