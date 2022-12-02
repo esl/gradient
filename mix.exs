@@ -30,6 +30,7 @@ defmodule Gradient.MixProject do
   def deps do
     [
       {:gradualizer, github: "josefs/Gradualizer", ref: "5567a23", manager: :rebar3},
+      {:gradient_runtime, github: "esl/gradient_runtime", only: [:test, :prod]},
       # {:gradualizer, path: "../Gradualizer/", manager: :rebar3},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.28.4", only: [:dev], runtime: false}

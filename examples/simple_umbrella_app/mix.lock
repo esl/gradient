@@ -1,3 +1,4 @@
 %{
+  "gradient_runtime": {:git, "https://github.com/esl/gradient_runtime.git", "63cefee8511b721aae45910f7253e1836068d735", []},
   "gradualizer": {:git, "https://github.com/josefs/Gradualizer.git", "5567a232df543ce23296bd9d27a14dc81a9ff188", [ref: "5567a23"]},
 }
