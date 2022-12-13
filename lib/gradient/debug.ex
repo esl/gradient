@@ -96,11 +96,17 @@ defmodule Gradient.Debug do
   end
 
   defp format_definition({{name, _arity}, kind, _meta, heads}) do
+    # Replace unallowed characters in function names with `_`.
+    #
+    # This is for cases where the name is like "call (overridable 2)", in which
+    # case it'd get converted to "call__overridable_2_".
+    name = Regex.replace(~r/[^\w\?\!]/, to_string(name), "_")
+
     Enum.map(heads, fn {_meta, args, _what?, body} ->
       [
-        "  #{kind} #{name}(#{Enum.map_join(args, ", ", &Macro.to_string/1)}) do\n",
+        "  #{kind} #{name}(#{Enum.map_join(args, ", ", &Macro.to_string/1)}) do\n    ",
         Macro.to_string(body),
-        "  end\n"
+        "\n  end\n\n"
       ]
     end)
   end
