@@ -501,6 +501,7 @@ defmodule Mix.Tasks.GradientTest do
   # that was generated with `mix phx.new`. Such an app has been created in the
   # examples/simple_phoenix_app directory in this project.
   describe "simple Phoenix app" do
+    @tag timeout: 120_000
     test "Gradient run is successful" do
       # run_shell_task asserts that the task had an exit code of 0, ensuring
       # there were no errors
