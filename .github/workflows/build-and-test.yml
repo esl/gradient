@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       MIX_ENV: test
     name: Erlang ${{matrix.otp}} / Elixir ${{matrix.elixir}}
