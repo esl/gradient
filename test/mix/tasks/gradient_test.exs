@@ -12,19 +12,18 @@ defmodule Mix.Tasks.GradientTest do
   @s_wrong_ret_beam Path.join(@build_path, "Elixir.SWrongRet.beam")
   @s_wrong_ret_ex Path.join([@examples_path, "type", "s_wrong_ret.ex"])
 
-  # Run `mix deps.get` on umbrella project
+  @simple_umbrella_app_path "examples/simple_umbrella_app"
+  @simple_phoenix_app_path "examples/simple_phoenix_app"
+
   setup_all do
-    previous_cwd = File.cwd!()
-
-    try do
-      # cd to umbrella app dir
-      File.cd!("examples/simple_umbrella_app")
-
-      # Get deps
-      {_, 0} = System.cmd("mix", ["deps.get"])
-    after
-      File.cd!(previous_cwd)
-    end
+    # Run `mix deps.get` on all the projects we'll be running gradient on. This
+    # happens in setup_all so it's only run once per project path, rather than
+    # once per test.
+    [
+      @simple_umbrella_app_path,
+      @simple_phoenix_app_path
+    ]
+    |> Enum.each(&mix_deps_get/1)
 
     :ok
   end
@@ -498,6 +497,18 @@ defmodule Mix.Tasks.GradientTest do
     end
   end
 
+  # Checks to make sure that Gradient passes on a simple Phoenix app, i.e. one
+  # that was generated with `mix phx.new`. Such an app has been created in the
+  # examples/simple_phoenix_app directory in this project.
+  describe "simple Phoenix app" do
+    @tag timeout: 120_000
+    test "Gradient run is successful" do
+      # run_shell_task asserts that the task had an exit code of 0, ensuring
+      # there were no errors
+      run_shell_task(@simple_phoenix_app_path)
+    end
+  end
+
   # Run the task in the current process. Useful for running on a single file.
   # def run_task(args), do: capture_io(fn -> Mix.Tasks.Gradient.run(args) end)
   def run_task(args) do
@@ -508,8 +519,25 @@ defmodule Mix.Tasks.GradientTest do
     end)
   end
 
+  # cd into a directory, run `mix deps.get`, and cd back to the previous cwd.
+  # Run in setup_all so it happens once on each folder that `run_shell_task`
+  # will be run on.
+  defp mix_deps_get(dir) do
+    previous_cwd = File.cwd!()
+
+    try do
+      # cd to umbrella app dir
+      File.cd!(dir)
+
+      # Get deps
+      {_, 0} = System.cmd("mix", ["deps.get"])
+    after
+      File.cd!(previous_cwd)
+    end
+  end
+
   # Run the task in a new process, via the shell. Useful for running on an entire project.
-  def run_shell_task(dir, args) do
+  def run_shell_task(dir, args \\ []) do
     previous_cwd = File.cwd!()
 
     try do
@@ -521,6 +549,7 @@ defmodule Mix.Tasks.GradientTest do
 
       # Run the task
       {output, exit_code} = System.cmd("mix", ["gradient"] ++ args)
+      # Assert the task ran successfully
       assert exit_code == 0, output
 
       output
