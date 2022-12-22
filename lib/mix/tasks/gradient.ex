@@ -155,7 +155,7 @@ defmodule Mix.Tasks.Gradient do
             :ok ->
               {:cont, acc}
 
-            {:error, errors} ->
+            {:error, errors, _} ->
               total_errors = errors |> Enum.count() |> Kernel.+(acc)
               {:cont, total_errors}
           end

@@ -43,6 +43,8 @@ defmodule Gradient.ElixirFmt do
       opts = Keyword.put(opts, :filename, file)
       print_error(e, opts)
     end
+
+    opts
   end
 
   def print_error(error, opts) do

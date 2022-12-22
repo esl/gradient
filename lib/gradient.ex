@@ -87,8 +87,8 @@ defmodule Gradient do
             :ok
 
           [_ | _] = filtered_errors ->
-            ElixirFmt.print_errors(filtered_errors, opts)
-            {:error, filtered_errors}
+            opts = ElixirFmt.print_errors(filtered_errors, opts)
+            {:error, filtered_errors, opts}
         end
     end
   end
@@ -104,8 +104,8 @@ defmodule Gradient do
             [:ok]
 
           [_ | _] = filtered_errors ->
-            ElixirFmt.print_errors(filtered_errors, opts)
-            [{:error, filtered_errors}]
+            opts = ElixirFmt.print_errors(filtered_errors, opts)
+            [{:error, filtered_errors, opts}]
         end
     end
   end
