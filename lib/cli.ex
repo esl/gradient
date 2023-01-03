@@ -7,32 +7,33 @@ defmodule Gradient.CLI do
 
   ## Command-line options
 
-    * `--no-compile` - do not compile even if needed
-    * `--no-ex-check` - do not perform checks specyfic for Elixir
+    --no-compile - do not compile even if needed
+    --no-ex-check` - do not perform checks specyfic for Elixir
       (from ElixirChecker module)
-    * `--no-gradualizer-check` - do not perform the Gradualizer checks
-    * `--no-specify` - do not specify missing lines in AST what can
+    --no-gradualizer-check` - do not perform the Gradualizer checks
+    --no-specify` - do not specify missing lines in AST what can
       result in less precise error messages
-    * `--source-path` -  provide a path to the .ex file containing code for analyzed .beam
+    --source-path` -  provide a path to the .ex file containing code for analyzed .beam
 
-    * `--no-deps` - do not import dependencies to the Gradualizer
-    * `--stop_on_first_error` - stop type checking at the first error
-    * `--infer` - infer type information from literals and other language
+    --no-deps` - do not import dependencies to the Gradualizer
+    --stop_on_first_error` - stop type checking at the first error
+    --infer` - infer type information from literals and other language
       constructs,
-    * `--verbose` - show what Gradualizer is doing
-    * `--no-fancy` - do not use fancy error messages
-    * `--fmt-location none` - do not display location for easier comparison
-    * `--fmt-location brief` - display location for machine processing
-    * `--fmt-location verbose` - display location for human readers (default)
+    --verbose` - show what Gradualizer is doing
+    --no-fancy` - do not use fancy error messages
+    --fmt-location none` - do not display location for easier comparison
+    --fmt-location brief` - display location for machine processing
+    --fmt-location verbose` - display location for human readers (default)
 
-    * `--no-colors` - do not use colors in printed messages
-    * `--expr-color ansicode` - set color for expressions (default: cyan)
-    * `--type-color ansicode` - set color for types
-    * `--underscore-color ansicode` - set color for the underscored invalid code part
+    --no-colors` - do not use colors in printed messages
+    --expr-color ansicode` - set color for expressions (default: cyan)
+    --type-color ansicode` - set color for types
+    --underscore-color ansicode` - set color for the underscored invalid code part
       in the fancy messages
 
-    # --path-add - append a list of comma-delimited paths to the Erlang code path
-    # --module - add name of the specific module to check in a source file
+    --path-add - append a list of comma-delimited paths to the Erlang code path
+    --module - add name of the specific module to check in a source file
+    --help - print this message
 
   Warning! Flags passed to this task are passed on to Gradualizer.
   """
@@ -59,11 +60,18 @@ defmodule Gradient.CLI do
     underscore_color: :string,
     # path and compiler options
     path_add: :string,
-    module: :string
+    module: :string,
+    help: :boolean
   ]
 
   def main(args) do
     {options, user_paths, _invalid} = OptionParser.parse(args, strict: @options)
+    help_flag_set? = Keyword.get(options, :help, false)
+
+    if (length(options) == 0 and length(user_paths) == 0) or help_flag_set? do
+      IO.puts(@moduledoc)
+      System.halt(0)
+    end
 
     options = Enum.reduce(options, [], &prepare_option/2)
 
