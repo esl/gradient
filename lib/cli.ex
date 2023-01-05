@@ -31,8 +31,9 @@ defmodule Gradient.CLI do
     * `--underscore-color ansicode` - set color for the underscored invalid code part
       in the fancy messages
 
-    # --path-add - append a list of comma-delimited paths to the Erlang code path
-    # --module - add name of the specific module to check in a source file
+    * `--path-add` - append a list of comma-delimited paths to the Erlang code path
+    * `--module` - add name of the specific module to check in a source file
+    * `--help` - print this message
 
   Warning! Flags passed to this task are passed on to Gradualizer.
   """
@@ -59,11 +60,21 @@ defmodule Gradient.CLI do
     underscore_color: :string,
     # path and compiler options
     path_add: :string,
-    module: :string
+    module: :string,
+    help: :boolean
   ]
 
   def main(args) do
     {options, user_paths, _invalid} = OptionParser.parse(args, strict: @options)
+    help_flag_set? = Keyword.get(options, :help, false)
+
+    if (length(options) == 0 and length(user_paths) == 0) or help_flag_set? do
+      @moduledoc
+      |> (&Regex.replace(~r/(  \* |`)/, &1, "")).()
+      |> IO.puts()
+
+      System.halt(0)
+    end
 
     options = Enum.reduce(options, [], &prepare_option/2)
 
