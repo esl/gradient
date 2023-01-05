@@ -8,11 +8,11 @@ defmodule Try do
       end
     rescue
       e in RuntimeError ->
-        11
+        _ = 11
         e
     catch
       val ->
-        12
+        _ = 12
         val
     end
   end
@@ -24,15 +24,15 @@ defmodule Try do
       1 / x
     rescue
       ArithmeticError ->
-        1
+        _ = 1
         :infinity
     else
       y when y < 1 and y > -1 ->
-        2
+        _ = 2
         :small
 
       _ ->
-        3
+        _ = 3
         :large
     end
   end

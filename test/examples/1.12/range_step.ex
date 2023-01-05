@@ -12,7 +12,7 @@ defmodule RangeStep do
   end
 
   def match_range do
-    first..last//step = range_step()
+    _first.._last//_step = range_step()
   end
 
   def to_list do

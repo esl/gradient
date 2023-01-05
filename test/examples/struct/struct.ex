@@ -6,14 +6,14 @@ defmodule StructEx do
   end
 
   def update do
-    %{empty | x: 13}
+    %{empty() | x: 13}
   end
 
   def get do
-    %StructEx{x: x} = update()
+    %StructEx{x: _x} = update()
   end
 
   def get2 do
-    x = update().x
+    _x = update().x
   end
 end

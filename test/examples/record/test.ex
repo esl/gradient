@@ -27,7 +27,7 @@ defmodule Test do
   @spec f_records(record_variants()) :: :ok | :not_ok
   def f_records(r) do
     import R1
-    import R2
+    # import R2
 
     case r do
       r1(a: _) ->
