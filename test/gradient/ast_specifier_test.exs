@@ -691,9 +691,9 @@ defmodule Gradient.AstSpecifierTest do
                   {:map, 15,
                    [
                      {:map_field_exact, 15, {:atom, 15, :__struct__}, {:atom, 15, Range}},
-                     {:map_field_exact, 15, {:atom, 15, :first}, {:var, 15, :_first@1}},
-                     {:map_field_exact, 15, {:atom, 15, :last}, {:var, 15, :_last@1}},
-                     {:map_field_exact, 15, {:atom, 15, :step}, {:var, 15, :_step@1}}
+                     {:map_field_exact, 15, {:atom, 15, :first}, {:var, 15, :__first@1}},
+                     {:map_field_exact, 15, {:atom, 15, :last}, {:var, 15, :__last@1}},
+                     {:map_field_exact, 15, {:atom, 15, :step}, {:var, 15, :__step@1}}
                    ]}, {:call, 15, {:atom, 15, :range_step}, []}}
                ]}
             ]} = match_range
@@ -907,7 +907,7 @@ defmodule Gradient.AstSpecifierTest do
                      ],
                      [
                        {:match, 10, {:var, 10, :_e@1}, {:var, 10, :_@1}},
-                       {:integer, 11, 11},
+                       {:match, 11, {:var, 11, :_}, {:integer, 11, 11}},
                        {:var, 12, :_e@1}
                      ]},
                     {:clause, 14,
@@ -918,7 +918,8 @@ defmodule Gradient.AstSpecifierTest do
                           {:var, 14, :_val@1},
                           {:var, 14, :___STACKTRACE__@1}
                         ]}
-                     ], [], [{:integer, 15, 12}, {:var, 16, :_val@1}]}
+                     ], [],
+                     [{:match, 15, {:var, 15, :_}, {:integer, 15, 12}}, {:var, 16, :_val@1}]}
                   ], []}
                ]}
             ]} = try_rescue
@@ -936,8 +937,9 @@ defmodule Gradient.AstSpecifierTest do
                          {:op, 30, :andalso, {:op, 30, :<, {:var, 30, :_y@1}, {:integer, 30, 1}},
                           {:op, 30, :>, {:var, 30, :_y@1}, {:op, 30, :-, {:integer, 30, 1}}}}
                        ]
-                     ], [{:integer, 31, 2}, {:atom, 32, :small}]},
-                    {:clause, 34, [{:var, 34, :_}], [], [{:integer, 35, 3}, {:atom, 36, :large}]}
+                     ], [{:match, 31, {:var, 31, :_}, {:integer, 31, 2}}, {:atom, 32, :small}]},
+                    {:clause, 34, [{:var, 34, :_}], [],
+                     [{:match, 35, {:var, 35, :_}, {:integer, 35, 3}}, {:atom, 36, :large}]}
                   ],
                   [
                     {:clause, 26,
@@ -960,7 +962,7 @@ defmodule Gradient.AstSpecifierTest do
                           {:call, 26, {:remote, 26, {:atom, 26, :erlang}, {:atom, 26, :map_get}},
                            [{:atom, 26, :__exception__}, {:var, 26, :_@1}]}}
                        ]
-                     ], [{:integer, 27, 1}, {:atom, 28, :infinity}]}
+                     ], [{:match, 27, {:var, 27, :_}, {:integer, 27, 1}}, {:atom, 28, :infinity}]}
                   ], []}
                ]}
             ]} = try_else
@@ -1087,7 +1089,7 @@ defmodule Gradient.AstSpecifierTest do
                    [
                      {:map_field_exact, 20,
                       {:bin, 20, [{:bin_element, 20, {:string, 20, 'a'}, :default, :default}]},
-                      {:var, 20, :_a@1}}
+                      {:var, 20, :__a@1}}
                    ]}, {:call, 20, {:atom, 20, :test_map}, []}}
                ]}
             ]} = pattern_matching_str
@@ -1114,7 +1116,7 @@ defmodule Gradient.AstSpecifierTest do
             [
               {:clause, 16, [], [],
                [
-                 {:match, 17, {:var, 17, :_x@1},
+                 {:match, 17, {:var, 17, :__x@1},
                   {:case, [generated: true, location: 17], {:call, 17, {:atom, 17, :update}, []},
                    [
                      {:clause, [generated: true, location: 17],
@@ -1164,7 +1166,7 @@ defmodule Gradient.AstSpecifierTest do
                   {:map, 13,
                    [
                      {:map_field_exact, 13, {:atom, 13, :__struct__}, {:atom, 13, StructEx}},
-                     {:map_field_exact, 13, {:atom, 13, :x}, {:var, 13, :_x@1}}
+                     {:map_field_exact, 13, {:atom, 13, :x}, {:var, 13, :__x@1}}
                    ]}, {:call, 13, {:atom, 13, :update}, []}}
                ]}
             ]} = get

@@ -1,5 +1,5 @@
 defmodule CallRemoteException do
-  def call(conn, opts) do
+  def call(_conn, _opts) do
     try do
       :ok
     rescue

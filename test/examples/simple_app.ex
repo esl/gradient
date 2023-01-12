@@ -18,7 +18,7 @@ defmodule SimpleApp do
 
   @spec wrong_return_a(boolean()) :: integer()
   def wrong_return_a(_x) do
-    y = 12
+    _y = 12
     12
   end
 
@@ -26,7 +26,7 @@ defmodule SimpleApp do
   # def wrong_return_b(_x), do: 10
 
   @spec bool_id(boolean()) :: boolean()
-  def bool_id(x) do
+  def bool_id(_x) do
     _x = 13
     12
   end
@@ -47,5 +47,5 @@ defmodule SimpleApp do
   # bool_id(false)
   # xd = 123
   # bool_id(xd)
-  # end 
+  # end
 end

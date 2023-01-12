@@ -17,6 +17,6 @@ defmodule MapEx do
   end
 
   def pattern_matching_str do
-    %{"a" => a} = test_map()
+    %{"a" => _a} = test_map()
   end
 end
