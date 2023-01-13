@@ -1,5 +1,6 @@
 defmodule AppB.MixProject do
   use Mix.Project
+
   def project do
     [
       app: :app_b,
@@ -12,8 +13,15 @@ defmodule AppB.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       
+        gradient: [
+          
+
+          
+        ]
+      
     ]
   end
+
   
     defp deps, do: [{:app_a, in_umbrella: true}]
   

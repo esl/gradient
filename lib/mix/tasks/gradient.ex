@@ -14,6 +14,7 @@ defmodule Mix.Tasks.Gradient do
       result in less precise error messages
     * `--source-path` - provide a path to the .ex file containing code for analyzed .beam
     * `--no-tokens` - do not use tokens to increase the precision of typechecking
+    * `--solve-constraints` - EXPERIMENTAL - check polymprphic functions constraints
 
     * `--no-deps` - do not import dependencies to the Gradualizer
     * `--stop_on_first_error` - stop type checking at the first error
@@ -57,6 +58,7 @@ defmodule Mix.Tasks.Gradient do
     infer: :boolean,
     verbose: :boolean,
     print_filenames: :boolean,
+    solve_constraints: :boolean,
     # formatter options
     no_fancy: :boolean,
     fmt_location: :string,

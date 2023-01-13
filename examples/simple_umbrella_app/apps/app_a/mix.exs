@@ -1,5 +1,6 @@
 defmodule AppA.MixProject do
   use Mix.Project
+
   def project do
     [
       app: :app_a,
@@ -12,8 +13,15 @@ defmodule AppA.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       
+        gradient: [
+          
+
+          
+        ]
+      
     ]
   end
+
   
     defp deps, do: []
   

@@ -224,6 +224,18 @@ defmodule Mix.Tasks.GradientTest do
     assert_receive {:system_halt, 1}
   end
 
+  test "--solve-constraints option" do
+    ex_file = "polymorphic.ex"
+    beam = Path.join(@build_path, "Elixir.Polymorphic.beam")
+
+    output = run_task(test_opts(["--solve-constraints", "--", beam]))
+
+    assert String.contains?(output, ex_file)
+    assert String.contains?(output, "Total errors: 2")
+    assert String.contains?(output, "Lower bound")
+    assert_receive {:system_halt, 1}
+  end
+
   test "counts errors" do
     assert run_task([@s_wrong_ret_beam]) =~ "Total errors: 2"
     assert_receive {:system_halt, 1}

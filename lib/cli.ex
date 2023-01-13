@@ -14,6 +14,7 @@ defmodule Gradient.CLI do
     * `--no-specify` - do not specify missing lines in AST what can
       result in less precise error messages
     * `--source-path` -  provide a path to the .ex file containing code for analyzed .beam
+    * `--solve-constraints` - EXPERIMENTAL - check polymprphic functions constraints
 
     * `--no-deps` - do not import dependencies to the Gradualizer
     * `--stop_on_first_error` - stop type checking at the first error
@@ -50,6 +51,7 @@ defmodule Gradient.CLI do
     stop_on_first_error: :boolean,
     infer: :boolean,
     verbose: :boolean,
+    solve_constraints: :boolean,
     # formatter options
     no_fancy: :boolean,
     fmt_location: :string,

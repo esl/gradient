@@ -111,6 +111,19 @@ defmodule Gradient.ElixirFmt do
     )
   end
 
+  def format_type_error({:constraint_error, anno, name, lower_bound, upper_bound}, opts) do
+    :io_lib.format(
+      "~sLower bound ~s of type variable ~s~s is not a subtype of ~s~n",
+      [
+        format_location(anno, :brief, opts),
+        pp_type(lower_bound, opts),
+        name,
+        format_location(anno, :verbose, opts),
+        pp_type(upper_bound, opts)
+      ]
+    )
+  end
+
   def format_type_error(
         {:spec_error, :wrong_spec_name, anno, name, arity},
         opts

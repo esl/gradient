@@ -1,5 +1,6 @@
 defmodule SimpleUmbrellaApp.MixProject do
   use Mix.Project
+
   def project do
     [
       apps_path: "apps",
@@ -11,11 +12,15 @@ defmodule SimpleUmbrellaApp.MixProject do
           
             enabled: true,
           
+
+          
+            file_overrides: true,
           
         ]
       
     ]
   end
+
   defp deps do
     [{:gradient, path: "../../", override: true}]
   end
