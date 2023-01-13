@@ -121,7 +121,7 @@ defmodule Gradient.ElixirType do
     Atom.to_string(type) <> "(#{args_str})"
   end
 
-  def pretty_print({:var, _, t}) do
+  def pretty_print({:var, _, t}) when is_atom(t) do
     Atom.to_string(t)
   end
 

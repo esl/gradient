@@ -11,18 +11,9 @@ defmodule AppB.MixProject do
       lockfile: "../../mix.lock",
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
-      deps: deps(),
-      
-        gradient: [
-          
-
-          
-        ]
-      
+      deps: deps()
     ]
   end
 
-  
-    defp deps, do: [{:app_a, in_umbrella: true}]
-  
+  defp deps, do: [{:app_a, in_umbrella: true}]
 end

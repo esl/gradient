@@ -129,7 +129,8 @@ defmodule Gradient.ErrorTest do
       {18, {:undef, :remote_type}}
     ],
     typespec_beh: [],
-    typespec_when: []
+    typespec_when: [],
+    polymorphic: []
   ]
 
   test "kinds match examples" do
