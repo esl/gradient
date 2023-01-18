@@ -4,8 +4,7 @@ defmodule CorrectSpec do
   @spec convert(atom()) :: binary()
   def convert(atom) when is_atom(atom), do: to_string(atom)
 
-  @spec encode(integer()) :: float()
-  @spec encode(atom()) :: binary()
+  @spec encode(atom() | integer()) :: binary() | float()
   def encode(val) do
     case val do
       _ when is_integer(val) -> val / 1

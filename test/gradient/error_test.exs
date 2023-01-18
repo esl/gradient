@@ -130,7 +130,9 @@ defmodule Gradient.ErrorTest do
     ],
     typespec_beh: [],
     typespec_when: [],
-    polymorphic: []
+    polymorphic: [
+      {6, :nonexhaustive}
+    ]
   ]
 
   test "kinds match examples" do
