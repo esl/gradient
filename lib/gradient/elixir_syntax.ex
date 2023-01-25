@@ -40,10 +40,8 @@ defmodule Gradient.ElixirSyntax do
   ##   end * 10.
   ## ```
   @spec dot_operator_errors(any()) :: boolean()
-  def dot_operator_errors({_, {:type_error, :unreachable_clauses, clauses}}) do
-    not Enum.all?(clauses, fn {:clause, anno, _vars, _guards, _body} ->
-      :erl_anno.generated(anno)
-    end)
+  def dot_operator_errors({_, {:type_error, :unreachable_clauses, anno}}) do
+    not :erl_anno.generated(anno)
   end
 
   def dot_operator_errors(

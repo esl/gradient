@@ -12,6 +12,7 @@ defmodule Gradient.Error do
           | :form_check_timeout
           | :illegal_map_type
           | :nonexhaustive
+          | :constraint_error
           | {:not_exported, :remote_type}
           | {:spec_error, spec_kind()}
           | {:type_error, type_kind()}

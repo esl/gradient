@@ -12,7 +12,7 @@
 
   "lib/gradient.ex:184",
 
-  "lib/mix/tasks/gradient.ex:104",
+  "lib/mix/tasks/gradient.ex:106",
 
   # error occurs only on GitHub Actions
   "test/support/helpers.ex:14",
