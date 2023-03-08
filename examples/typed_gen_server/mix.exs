@@ -15,7 +15,8 @@ defmodule TypedGenServer.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
+      # :gradient_macros are automatically pulled in because we depend on :gradient
+      extra_applications: [:logger, :gradient_macros],
       mod: {TypedGenServer.Application, []}
     ]
   end
