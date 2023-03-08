@@ -1,4 +1,4 @@
 %{
   "gradient_macros": {:git, "https://github.com/esl/gradient_macros.git", "bf5a066a6abd90cc63281d7ccb8eb7ac0fed0e64", [ref: "bf5a066"]},
-  "gradualizer": {:git, "https://github.com/josefs/Gradualizer.git", "ce6e3d104774b9532697651c714582edc9b8970a", [ref: "ce6e3d1"]},
+  "gradualizer": {:git, "https://github.com/josefs/Gradualizer.git", "1498d1792155010950c86dc3e92ccb111b706e80", [ref: "1498d17"]},
 }
