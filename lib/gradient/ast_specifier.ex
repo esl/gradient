@@ -13,6 +13,8 @@ defmodule Gradient.AstSpecifier do
 
   alias Gradient.Types
 
+  use Gradient.TypeAnnotation
+
   @type token :: Types.token()
   @type tokens :: Types.tokens()
   @type form :: Types.form()
@@ -93,6 +95,7 @@ defmodule Gradient.AstSpecifier do
 
   def mapper({:attribute, anno, spec, {name_arity, specs}}, tokens, opts)
       when spec in [:spec, :callback] do
+    specs = assert_type(specs, forms())
     new_specs = context_mapper_map(specs, [], opts, &spec_mapper/3)
 
     {:attribute, anno, spec, {name_arity, new_specs}}

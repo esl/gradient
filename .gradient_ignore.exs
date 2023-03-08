@@ -6,7 +6,7 @@
 
   "lib/gradient/elixir_type.ex:38",
 
-  "lib/gradient/ast_specifier.ex:436",
+  "lib/gradient/ast_specifier.ex:439",
 
   "lib/gradient.ex:77",
 
