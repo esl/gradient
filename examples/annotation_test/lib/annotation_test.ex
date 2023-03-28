@@ -21,3 +21,7 @@ defmodule AnnotationTest do
     annotate_type(a, integer())
   end
 end
+
+defmodule AnnotationTest.ImportExample do
+  import AnnotationTest, except: ["::": 2]
+end
