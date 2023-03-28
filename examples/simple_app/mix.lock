@@ -1,3 +1,6 @@
 %{
-  "gradualizer": {:git, "https://github.com/josefs/Gradualizer.git", "6e89b4e1cd489637a848cc5ca55058c8a241bf7d", [ref: "6e89b4e"]},
+  "gradient_macros": {:git, "https://github.com/esl/gradient_macros.git", "bf5a066a6abd90cc63281d7ccb8eb7ac0fed0e64", [ref: "bf5a066"]},
+  "gradualizer": {:git, "https://github.com/josefs/Gradualizer.git", "1498d1792155010950c86dc3e92ccb111b706e80", [ref: "1498d17"]},
+  "jason": {:hex, :jason, "1.4.0", "e855647bc964a44e2f67df589ccf49105ae039d4179db7f6271dfd3843dc27e6", [:mix], [{:decimal, "~> 1.0 or ~> 2.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm", "79a3791085b2a0f743ca04cec0f7be26443738779d09302e01318f97bdb82121"},
+  "typed_struct": {:hex, :typed_struct, "0.3.0", "939789e3c1dca39d7170c87f729127469d1315dcf99fee8e152bb774b17e7ff7", [:mix], [], "hexpm", "c50bd5c3a61fe4e198a8504f939be3d3c85903b382bde4865579bc23111d1b6d"},
 }

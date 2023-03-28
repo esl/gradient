@@ -20,6 +20,10 @@ defmodule SimpleApp.MixProject do
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
-    [{:gradient, path: "../../"}]
+    [
+      {:jason, "~> 1.4"},
+      {:typed_struct, "~> 0.3.0"},
+      {:gradient, path: "../../"}
+    ]
   end
 end
