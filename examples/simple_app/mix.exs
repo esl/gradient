@@ -23,7 +23,8 @@ defmodule SimpleApp.MixProject do
     [
       {:jason, "~> 1.4"},
       {:typed_struct, "~> 0.3.0"},
-      {:gradient, path: "../../"}
+      {:gradient, path: "../../"},
+      {:morphix, "~> 0.8.0"}
     ]
   end
 end
