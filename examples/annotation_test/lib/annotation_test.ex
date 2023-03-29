@@ -23,5 +23,5 @@ defmodule AnnotationTest do
 end
 
 defmodule AnnotationTest.ImportExample do
-  import AnnotationTest, except: ["::": 2]
+  import AnnotationTest
 end
