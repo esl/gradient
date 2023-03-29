@@ -1,7 +1,7 @@
 defmodule SimpleApp.Exhaustiveness do
-
-  @type t :: {:int, integer()}
-           | {:not_int, boolean()}
+  @type t ::
+          {:int, integer()}
+          | {:not_int, boolean()}
 
   @spec should_raise_nonexhaustive_error(t) :: :ok
   def should_raise_nonexhaustive_error(t) do
@@ -9,5 +9,4 @@ defmodule SimpleApp.Exhaustiveness do
       {:int, _} -> :ok
     end
   end
-
 end

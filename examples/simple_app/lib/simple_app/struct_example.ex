@@ -1,6 +1,6 @@
 defmodule SimpleApp.StructExample do
   defmodule SomeStruct do
-    defstruct [name: "John Smith", age: 25]
+    defstruct name: "John Smith", age: 25
   end
 
   @type t :: %SomeStruct{}
@@ -12,5 +12,4 @@ defmodule SimpleApp.StructExample do
   def mistake do
     age(%{first: "John", last: "Smith", age: 32})
   end
-
 end
