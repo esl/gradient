@@ -3,6 +3,8 @@ defmodule AnnotationTest do
   Documentation for `AnnotationTest`.
   """
 
+  use Gradient.TypeAnnotation
+
   @doc """
   Hello world.
 
@@ -12,8 +14,6 @@ defmodule AnnotationTest do
       :world
 
   """
-
-  use Gradient.TypeAnnotation
 
   @spec hello() :: boolean()
   def hello do
