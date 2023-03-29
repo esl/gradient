@@ -20,6 +20,9 @@ defmodule AnnotationTest.MixProject do
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
-    [{:gradient, path: "../../"}]
+    [
+      {:gradient_macros, github: "esl/gradient_macros", ref: "3bce214", runtime: false},
+      {:gradient, path: "../../", runtime: false}
+    ]
   end
 end

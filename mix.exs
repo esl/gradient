@@ -30,7 +30,7 @@ defmodule Gradient.MixProject do
   def deps do
     [
       {:gradualizer, github: "josefs/Gradualizer", ref: "1498d17", manager: :rebar3},
-      {:gradient_macros, github: "esl/gradient_macros", ref: "bf5a066", runtime: false},
+      {:gradient_macros, github: "esl/gradient_macros", ref: "3bce214", runtime: false},
       # {:gradualizer, path: "../Gradualizer/", manager: :rebar3},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.28.4", only: [:dev], runtime: false}

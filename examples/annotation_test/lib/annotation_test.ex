@@ -3,6 +3,8 @@ defmodule AnnotationTest do
   Documentation for `AnnotationTest`.
   """
 
+  use Gradient.TypeAnnotation
+
   @doc """
   Hello world.
 
@@ -13,11 +15,13 @@ defmodule AnnotationTest do
 
   """
 
-  use Gradient.TypeAnnotation
-
   @spec hello() :: boolean()
   def hello do
     a = 12
     annotate_type(a, integer())
   end
+end
+
+defmodule AnnotationTest.ImportExample do
+  import AnnotationTest
 end
