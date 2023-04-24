@@ -339,10 +339,19 @@ defmodule Mix.Tasks.Gradient do
 
     file_overrides_enabled? = Keyword.get(config, :file_overrides, false)
 
-    if file_overrides_enabled? do
-      all_files_with_magic_comment(app_name, app_files)
-    else
-      if enabled?, do: app_files, else: []
+    cond do
+      enabled? ->
+        # Normal execution - gradient is enabled for all files.
+        app_files
+
+      file_overrides_enabled? ->
+        # Overall checking not enabled, but individual file overrides are
+        # enabled via magic comments.
+        all_files_with_magic_comment(app_name, app_files)
+
+      true ->
+        # Completely disabled.
+        []
     end
   end
 
