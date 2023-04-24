@@ -110,6 +110,7 @@ defmodule Mix.Tasks.Gradient do
         paths,
         &Gradient.type_check_file(
           &1,
+          # gradient:disable-for-next-line
           [{:app_path, app_path}, {:ignores, ignores} | options]
         )
       )

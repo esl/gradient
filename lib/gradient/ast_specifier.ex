@@ -1,10 +1,10 @@
 defmodule Gradient.AstSpecifier do
   @moduledoc """
   Module adds missing location information to the Erlang abstract code produced
-  from Elixir AST. Moreover it can be used to catch some ast pattern and replace 
+  from Elixir AST. Moreover it can be used to catch some ast pattern and replace
   it to forms that cannot be produced from Elixir directly.
 
-  FIXME Optimize tokens searching. Find out why some tokens are dropped 
+  FIXME Optimize tokens searching. Find out why some tokens are dropped
   """
 
   import Gradient.Tokens
@@ -29,7 +29,7 @@ defmodule Gradient.AstSpecifier do
   # Api
 
   @doc """
-  Read and tokenize code file. Than run mappers on the given AST (with obtained tokens) 
+  Read and tokenize code file. Than run mappers on the given AST (with obtained tokens)
   to specify missing locations or replace some parts that match pattern.
   """
   @spec specify(nonempty_list(:erl_parse.abstract_form())) :: [:erl_parse.abstract_form()]
@@ -40,7 +40,7 @@ defmodule Gradient.AstSpecifier do
 
   @doc """
   Function takes forms and traverse them in order to specify location or modify
-  forms matching the pattern. The tokens are required to obtain the missing location 
+  forms matching the pattern. The tokens are required to obtain the missing location
   as precise as possible.
   """
   @spec run_mappers([:erl_parse.abstract_form()], tokens()) :: [
@@ -60,7 +60,7 @@ defmodule Gradient.AstSpecifier do
   # Mappers
 
   @doc """
-  Map over the forms using mapper and attach a context i.e. end line. 
+  Map over the forms using mapper and attach a context i.e. end line.
   """
   @spec context_mapper_map(forms(), tokens(), options(), mapper_fn()) :: forms()
   def context_mapper_map(forms, tokens, opts, mapper \\ &mapper/3)
@@ -88,7 +88,7 @@ defmodule Gradient.AstSpecifier do
 
   @doc """
   The main mapper function traverses AST and specifies missing locations
-  or replaces parts that match the pattern. 
+  or replaces parts that match the pattern.
   """
   @spec mapper(form(), [token()], options()) :: {form(), [token()]}
   def mapper(form, tokens, opts)
@@ -126,7 +126,7 @@ defmodule Gradient.AstSpecifier do
 
   def mapper({:case, anno, condition, clauses}, tokens, opts) do
     # anno has line
-    # NOTE In Elixir `if`, `case` and `cond` statements are represented 
+    # NOTE In Elixir `if`, `case` and `cond` statements are represented
     # as a `case` in abstract code.
     {:ok, line, anno, opts, _} = get_line(anno, opts)
 
@@ -153,8 +153,8 @@ defmodule Gradient.AstSpecifier do
 
   def mapper({:clause, anno, args, guards, children}, tokens, opts) do
     # anno has line
-    # FIXME Handle generated clauses. Right now the literals inherit lines 
-    # from the parents without checking them with tokens 
+    # FIXME Handle generated clauses. Right now the literals inherit lines
+    # from the parents without checking them with tokens
 
     {:ok, line, anno, opts, _} = get_line(anno, opts)
     case_type = Keyword.get(opts, :case_type, :case)
@@ -436,6 +436,7 @@ defmodule Gradient.AstSpecifier do
     |> pass_tokens(tokens)
   end
 
+  # gradient:disable-for-next-line
   def spec_mapper({:type, anno, :any}, tokens, _opts) do
     {:type, anno, :any}
     |> pass_tokens(tokens)
@@ -791,8 +792,8 @@ defmodule Gradient.AstSpecifier do
     case Enum.find(forms, fn f ->
            anno = elem(f, 1)
 
-           # Maybe should try to go deeper when generated and try to obtain 
-           # the line from the first child. It should work for sure for clauses, 
+           # Maybe should try to go deeper when generated and try to obtain
+           # the line from the first child. It should work for sure for clauses,
            # but it has to be in the right order (e.g. if clauses are reversed)
            :erl_anno.line(anno) > 0 and not :erl_anno.generated(anno)
          end) do
