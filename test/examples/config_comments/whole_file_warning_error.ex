@@ -1,4 +1,4 @@
-# gradient:disable-for-file type_error mismatch
+# gradient:disable-file type_error mismatch
 defmodule ConfigComments.WholeFileWarningError do
   @spec ret_wrong_atom() :: atom()
   def ret_wrong_atom, do: 1

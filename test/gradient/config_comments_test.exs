@@ -29,12 +29,12 @@ defmodule Gradient.ConfigCommentsTest do
 
     test "finds magic comments for next/previous lines" do
       assert [
-               # gradient:disable-for-next-line
+               # gradient:disable-next-line
                "test/examples/config_comments/next_and_previous_lines.ex:4",
                {"test/examples/config_comments/next_and_previous_lines.ex:8", :call_undef},
                {"test/examples/config_comments/next_and_previous_lines.ex:12",
                 {:spec_error, :no_spec}},
-               # gradient:disable-for-previous-line
+               # gradient:disable-previous-line
                "test/examples/config_comments/next_and_previous_lines.ex:15",
                {"test/examples/config_comments/next_and_previous_lines.ex:19", :call_undef},
                {"test/examples/config_comments/next_and_previous_lines.ex:23",

@@ -379,11 +379,11 @@ defmodule Mix.Tasks.GradientTest do
           Enum.reduce(edits, file_contents, fn edit, curr_file_contents ->
             case edit do
               :enable ->
-                "# gradient:enable-for-file\n" <> curr_file_contents
+                "# gradient:enable-file\n" <> curr_file_contents
 
               :disable ->
                 # Magic comment to disable file, handled by Gradient.ConfigComments
-                "# gradient:disable-for-file\n" <> curr_file_contents
+                "# gradient:disable-file\n" <> curr_file_contents
 
               :add_error ->
                 lines = curr_file_contents |> String.split("\n")

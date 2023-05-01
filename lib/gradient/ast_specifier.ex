@@ -436,7 +436,7 @@ defmodule Gradient.AstSpecifier do
     |> pass_tokens(tokens)
   end
 
-  # gradient:disable-for-next-line
+  # gradient:disable-next-line
   def spec_mapper({:type, anno, :any}, tokens, _opts) do
     {:type, anno, :any}
     |> pass_tokens(tokens)

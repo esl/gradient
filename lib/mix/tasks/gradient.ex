@@ -45,7 +45,7 @@ defmodule Mix.Tasks.Gradient do
   #
   # Requires gradient config options `[enabled: false, file_overrides: true]` to
   # be set.
-  @magic_comment "# gradient:enable-for-file"
+  @magic_comment "# gradient:enable-file"
 
   use Mix.Task
 
@@ -110,7 +110,7 @@ defmodule Mix.Tasks.Gradient do
         paths,
         &Gradient.type_check_file(
           &1,
-          # gradient:disable-for-next-line
+          # gradient:disable-next-line
           [{:app_path, app_path}, {:ignores, ignores} | options]
         )
       )

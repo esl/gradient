@@ -35,7 +35,7 @@ defmodule Gradient.ElixirType do
   end
 
   def pretty_print({:ann_type, _, [var_name, var_type]}) do
-    # gradient:disable-for-next-line
+    # gradient:disable-next-line
     pretty_print(var_name) <> " :: " <> pretty_print(var_type)
   end
 

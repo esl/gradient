@@ -5,9 +5,9 @@ defmodule Gradient.ConfigComments do
 
   The following comments are supported:
 
-      gradient:disable-for-file [warning]
-      gradient:disable-for-next-line [warning]
-      gradient:disable-for-previous-line [warning]
+      gradient:disable-file [warning]
+      gradient:disable-next-line [warning]
+      gradient:disable-previous-line [warning]
 
   If [warning] is specified in the above patterns, only that particular warning
   will be disabled. Otherwise, all warnings will be disabled.
@@ -15,7 +15,7 @@ defmodule Gradient.ConfigComments do
   Note that [warning] in the examples above may contain a second part for a warning
   detail. For example:
 
-      gradient:disable-for-file spec_error no_spec
+      gradient:disable-file spec_error no_spec
 
   is a valid config comment.
   """
@@ -23,9 +23,9 @@ defmodule Gradient.ConfigComments do
   @instruction_prefix "# gradient:"
   @instruction_prefix_length String.length(@instruction_prefix)
 
-  @instruction_disable_file "disable-for-file"
-  @instruction_disable_next_line "disable-for-next-line"
-  @instruction_disable_previous_line "disable-for-previous-line"
+  @instruction_disable_file "disable-file"
+  @instruction_disable_next_line "disable-next-line"
+  @instruction_disable_previous_line "disable-previous-line"
 
   @enable_extensions [".ex", ".exs"]
 
