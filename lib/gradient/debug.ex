@@ -3,6 +3,8 @@ defmodule Gradient.Debug do
   Helpers for convenient debugging Erlang and Elixir ASTs.
   """
 
+  alias Gradient.ElixirType
+
   ## TODO: specify elixir_form
   @type elixir_form() :: any()
   @type erlang_form() :: Gradient.Types.form()
@@ -79,15 +81,50 @@ defmodule Gradient.Debug do
   @spec print_elixir(module()) :: :ok
   def print_elixir(mod) do
     {:ok, ast} = elixir_ast(mod)
-    format_elixir_code(mod, ast)
+    {:ok, forms} = erlang_ast(mod)
+
+    format_elixir_code(mod, ast, forms)
   end
 
-  defp format_elixir_code(module, ast) do
+  defp format_elixir_code(module, ast, forms) do
+    specs =
+      forms
+      |> Enum.filter(&match?({:attribute, _line, :spec, _contents}, &1))
+      |> Enum.map(fn {:attribute, _line, :spec, {{_fun, _arity} = fun_arity, types}} ->
+        {fun_arity, types}
+      end)
+      |> Enum.into(%{})
+
+    # Function definitions
+    definitions =
+      ast.definitions
+      |> Enum.reverse()
+      |> Enum.map(fn {{name, arity}, kind, _meta, heads} ->
+        spec = Map.get(specs, {name, arity})
+
+        %{
+          name: name,
+          kind: kind,
+          heads: heads,
+          spec: spec
+        }
+      end)
+      |> Enum.map(&format_definition/1)
+
+    # Types
+    types =
+      forms
+      |> Enum.filter(&match?({:attribute, _line, :type, _contents}, &1))
+      |> Enum.map(fn {:attribute, _line, :type, {type_name, type, _}} ->
+        "@type #{type_name} :: #{Gradient.ElixirType.pretty_print(type)}\n"
+      end)
+
     [
       "defmodule ",
       inspect(module),
       " do\n",
-      Enum.map(Enum.reverse(ast.definitions), &format_definition/1),
+      types,
+      definitions,
       "end\n"
     ]
     |> IO.iodata_to_binary()
@@ -95,21 +132,44 @@ defmodule Gradient.Debug do
     |> IO.puts()
   end
 
-  defp format_definition({{name, _arity}, kind, _meta, heads}) do
+  defp format_definition(%{name: name, kind: kind, heads: heads, spec: spec}) do
     # Replace unallowed characters in function names with `_`.
     #
     # This is for cases where the name is like "call (overridable 2)", in which
     # case it'd get converted to "call__overridable_2_".
     name = Regex.replace(~r/[^\w\?\!]/, to_string(name), "_")
 
-    Enum.map(heads, fn {_meta, args, _what?, body} ->
-      [
-        "  #{kind} #{name}(#{Enum.map_join(args, ", ", &Macro.to_string/1)}) do\n    ",
-        Macro.to_string(body),
-        "\n  end\n\n"
-      ]
-    end)
+    formatted_def =
+      Enum.map(heads, fn {_meta, args, _what?, body} ->
+        [
+          "  #{kind} #{name}(#{Enum.map_join(args, ", ", &Macro.to_string/1)}) do\n    ",
+          Macro.to_string(body),
+          "\n  end\n\n"
+        ]
+      end)
+
+    if spec do
+      Enum.map(spec, &"@spec #{print_spec(name, &1)}\n") ++ formatted_def
+      # ["@spec #{print_spec(name, spec)}\n"] ++ formatted_def
+    else
+      formatted_def
+    end
   end
+
+  # Modified version of Gradient.ElixirType.pretty_print(), for function specs rather than anonymous functions
+  defp print_spec(name, {:type, _, :fun, [args, res_type]} = _spec) do
+    args = print_spec_args(args)
+    res = ElixirType.pretty_print(res_type)
+    "#{name}(#{args}) :: #{res}"
+  end
+
+  defp print_spec_args({:type, _, :product, arg_types}) do
+    arg_types
+    |> Enum.map(&ElixirType.pretty_print(&1))
+    |> Enum.join(", ")
+  end
+
+  defp print_spec_args({:type, _, :any}), do: "..."
 
   def get_beam_path_as_charlist(mod) when is_list(mod), do: mod
   def get_beam_path_as_charlist(mod) when is_atom(mod), do: :code.which(mod)

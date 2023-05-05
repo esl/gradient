@@ -14,6 +14,7 @@ defmodule Mix.Tasks.GradientTest do
 
   @simple_umbrella_app_path "examples/simple_umbrella_app"
   @simple_phoenix_app_path "examples/simple_phoenix_app"
+  @use_tesla_app_path "test/examples/use_tesla"
 
   setup_all do
     # Run `mix deps.get` on all the projects we'll be running gradient on. This
@@ -518,6 +519,17 @@ defmodule Mix.Tasks.GradientTest do
       # run_shell_task asserts that the task had an exit code of 0, ensuring
       # there were no errors
       run_shell_task(@simple_phoenix_app_path)
+    end
+  end
+
+  # Checks to make sure that Gradient passes on a module that invokes `use Tesla`
+  # which generates a lot of code using macros.
+  describe "use Tesla" do
+    @tag timeout: 120_000
+    test "Gradient run is successful" do
+      # run_shell_task asserts that the task had an exit code of 0, ensuring
+      # there were no errors
+      run_shell_task(@use_tesla_app_path)
     end
   end
 
