@@ -89,7 +89,7 @@ defmodule Gradient.Debug do
   defp format_elixir_code(module, ast, forms) do
     specs =
       forms
-      |> Enum.filter(&(match?({:attribute, _line, :spec, _contents}, &1)))
+      |> Enum.filter(&match?({:attribute, _line, :spec, _contents}, &1))
       |> Enum.map(fn {:attribute, _line, :spec, {{_fun, _arity} = fun_arity, types}} ->
         {fun_arity, types}
       end)
@@ -114,7 +114,7 @@ defmodule Gradient.Debug do
     # Types
     types =
       forms
-      |> Enum.filter(&(match?({:attribute, _line, :type, _contents}, &1)))
+      |> Enum.filter(&match?({:attribute, _line, :type, _contents}, &1))
       |> Enum.map(fn {:attribute, _line, :type, {type_name, type, _}} ->
         "@type #{type_name} :: #{Gradient.ElixirType.pretty_print(type)}\n"
       end)
