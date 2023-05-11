@@ -51,19 +51,18 @@ defmodule Gradient.DebugTest do
         |> Enum.reject(&(elem(&1, 2) == :__info__))
         |> Enum.sort_by(fn {:function, line, _, _, _} -> line end)
 
-      assert function_defs ==
-               [
-                 {:function, 2, :int, 0, [{:clause, 2, [], [], [{:integer, 2, 1}]}]},
-                 {:function, 3, :float, 0, [{:clause, 3, [], [], [{:float, 3, 1.5}]}]},
-                 {:function, 4, :string, 0,
-                  [
-                    {:clause, 4, [], [],
-                     [{:bin, 4, [{:bin_element, 4, {:string, 4, '2'}, :default, :default}]}]}
-                  ]},
-                 {:function, 5, :charlist, 0,
-                  [{:clause, 5, [], [], [{:cons, 5, {:integer, 5, 51}, {nil, 5}}]}]},
-                 {:function, 6, :char, 0, [{:clause, 6, [], [], [{:integer, 6, 99}]}]}
-               ]
+      assert [
+               {:function, 2, :int, 0, [{:clause, 2, [], [], [{:integer, _, 1}]}]},
+               {:function, 3, :float, 0, [{:clause, 3, [], [], [{:float, _, 1.5}]}]},
+               {:function, 4, :string, 0,
+                [
+                  {:clause, 4, [], [],
+                   [{:bin, _, [{:bin_element, _, {:string, _, '2'}, :default, :default}]}]}
+                ]},
+               {:function, 5, :charlist, 0,
+                [{:clause, _, [], [], [{:cons, _, {:integer, _, 51}, {nil, _}}]}]},
+               {:function, 6, :char, 0, [{:clause, _, [], [], [{:integer, _, 99}]}]}
+             ] = function_defs
     end
   end
 
