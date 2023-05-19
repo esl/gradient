@@ -1,19 +1,6 @@
 [
   ## still to be fixed
 
-  # ?
-  {"lib/gradient/elixir_type.ex:70", {:type_error, :mismatch}},
-
-  "lib/gradient/elixir_type.ex:38",
-
-  "lib/gradient/ast_specifier.ex:439",
-
-  "lib/gradient.ex:77",
-
-  "lib/gradient.ex:184",
-
-  "lib/mix/tasks/gradient.ex:106",
-
   # error occurs only on GitHub Actions
   "test/support/helpers.ex:14",
 

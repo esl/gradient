@@ -3,6 +3,7 @@ defmodule Gradient do
   Documentation for `Gradient`.
   """
 
+  alias Gradient.ConfigComments
   alias Gradient.ElixirFileUtils
   alias Gradient.ElixirFmt
   alias Gradient.Error
@@ -22,7 +23,7 @@ defmodule Gradient do
   @type options() :: [
           app_path: String.t(),
           source_path: String.t(),
-          ignore_paths: [String.t()],
+          ignore_paths: [Path.t()],
           no_gradualizer_check: boolean(),
           no_ex_check: boolean(),
           no_specify: boolean(),
@@ -37,7 +38,11 @@ defmodule Gradient do
   """
   @spec type_check_file(charlist() | String.t(), options()) :: [:ok | {:error, [error(), ...]}]
   def type_check_file(path, opts \\ []) do
-    opts = Keyword.put(opts, :return_errors, true)
+    opts =
+      opts
+      |> Keyword.put(:return_errors, true)
+      |> Keyword.put(:ignores, add_ignore_comments(path, opts))
+
     module = Keyword.get(opts, :module, "all_modules")
 
     with {:ok, asts} <- ElixirFileUtils.get_forms(path, module),
@@ -58,6 +63,12 @@ defmodule Gradient do
         Logger.error("Can't load file - #{inspect(error)}")
         [{:error, [error]}]
     end
+  end
+
+  defp add_ignore_comments(path, opts) do
+    existing_ignores = opts[:ignores] || []
+
+    existing_ignores ++ ConfigComments.ignores_for_file(path)
   end
 
   def build_env(tokens) do
@@ -82,7 +93,7 @@ defmodule Gradient do
       errors ->
         opts = Keyword.put(opts, :forms, ast)
 
-        case errors |> filter_ignore_paths(opts) |> Error.reject_ignored_errors(opts) do
+        case errors |> Error.reject_ignored_errors(opts) do
           [] ->
             :ok
 
@@ -209,20 +220,6 @@ defmodule Gradient do
     |> case do
       nil -> {:error, :module_not_found}
       forms -> {:ok, forms}
-    end
-  end
-
-  defp filter_ignore_paths(errors, opts) do
-    case opts[:ignore_paths] do
-      nil ->
-        errors
-
-      ignore_paths ->
-        # Filter out errors from files under any of the ignore_paths
-        Enum.filter(errors, fn {file, _} ->
-          file = file |> to_string() |> Path.expand()
-          not Enum.any?(ignore_paths, &String.starts_with?(file, &1))
-        end)
     end
   end
 end

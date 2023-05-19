@@ -362,15 +362,42 @@ defmodule Mix.Tasks.GradientTest do
       |> Keyword.new()
     end
 
+    @add_error_lines """
+                     @spec ret_wrong_atom() :: atom()
+                     def ret_wrong_atom, do: 1
+                     """
+                     |> String.split("\n")
+
+    # Various edits that can be performed on files in the example umbrella app
     defp edit_files(files) do
-      for {filename, enabled?} <- files do
+      for {filename, edits} <- files do
         filename = @umbrella_app_path <> "/apps/" <> filename
 
-        magic_comment =
-          if enabled?, do: "# gradient:enable-for-file\n", else: "# gradient:disable-for-file\n"
-
         file_contents = File.read!(filename)
-        updated_file_contents = magic_comment <> file_contents
+
+        updated_file_contents =
+          Enum.reduce(edits, file_contents, fn edit, curr_file_contents ->
+            case edit do
+              :enable ->
+                "# gradient:enable-file\n" <> curr_file_contents
+
+              :disable ->
+                # Magic comment to disable file, handled by Gradient.ConfigComments
+                "# gradient:disable-file\n" <> curr_file_contents
+
+              :add_error ->
+                lines = curr_file_contents |> String.split("\n")
+
+                # Assert last two lines are just end of the module.
+                assert ["end", ""] = Enum.slice(lines, -2..-1)
+
+                # Take everything but the last 2 lines
+                # Note: 0..-1 would be the entire string. 0..-3 chops off last 2 elements.
+                (Enum.slice(lines, 0..-3) ++ @add_error_lines ++ ["end", ""])
+                |> Enum.join("\n")
+            end
+          end)
+
         File.write!(filename, updated_file_contents)
 
         on_exit(fn ->
@@ -488,20 +515,22 @@ defmodule Mix.Tasks.GradientTest do
              ] == Enum.map(app_b_files, &strip_beam_path/1)
     end
 
-    @tag umbrella: %{enabled: true, overrides: true},
-         edit_files: %{"app_a/lib/app_a_helper.ex" => false}
-    test "individual files can be disabled" do
-      assert %{"app_a" => app_a_files, "app_b" => app_b_files} = run_task_and_return_files()
-
-      assert ["lib/app_a/ebin/Elixir.AppA.beam"] == Enum.map(app_a_files, &strip_beam_path/1)
-
-      assert [
-               "lib/app_b/ebin/Elixir.AppB.beam",
-               "lib/app_b/ebin/Elixir.AppBHelper.beam"
-             ] == Enum.map(app_b_files, &strip_beam_path/1)
+    @tag umbrella: %{enabled: true},
+         edit_files: %{"app_a/lib/app_a_helper.ex" => [:add_error]}
+    test "finds error in individual file" do
+      output = run_shell_task("examples/simple_umbrella_app", [], check_exit_code: false)
+      assert output =~ "Total errors: 1"
     end
 
-    @tag umbrella: %{enabled: false, overrides: true}, edit_files: %{"app_a/lib/app_a.ex" => true}
+    @tag umbrella: %{enabled: true},
+         edit_files: %{"app_a/lib/app_a_helper.ex" => [:disable, :add_error]}
+    test "individual files can be disabled" do
+      output = run_shell_task("examples/simple_umbrella_app")
+      assert output =~ "No errors found!"
+    end
+
+    @tag umbrella: %{enabled: false, overrides: true},
+         edit_files: %{"app_a/lib/app_a.ex" => [:enable]}
     test "individual files can be enabled" do
       assert %{"app_a" => app_a_files} = run_task_and_return_files()
 
@@ -549,7 +578,7 @@ defmodule Mix.Tasks.GradientTest do
   end
 
   # Run the task in a new process, via the shell. Useful for running on an entire project.
-  def run_shell_task(dir, args \\ []) do
+  def run_shell_task(dir, args \\ [], opts \\ []) do
     previous_cwd = File.cwd!()
 
     try do
@@ -561,8 +590,11 @@ defmodule Mix.Tasks.GradientTest do
 
       # Run the task
       {output, exit_code} = System.cmd("mix", ["gradient"] ++ args)
-      # Assert the task ran successfully
-      assert exit_code == 0, output
+
+      if Keyword.get(opts, :check_exit_code, true) do
+        # Assert the task ran successfully
+        assert exit_code == 0, "Got non-zero exit code: #{exit_code}\n" <> output
+      end
 
       output
     after

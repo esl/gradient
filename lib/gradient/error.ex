@@ -128,11 +128,33 @@ defmodule Gradient.Error do
   any ignores provided through `opts[:ignores]`.
   """
   @spec reject_ignored_errors([error], Keyword.t()) :: [error] when error: tuple()
-  def reject_ignored_errors(errors, opts)
-
-  def reject_ignored_errors([], _opts), do: []
-
   def reject_ignored_errors(errors, opts) do
+    errors
+    |> reject_errors_in_ignore_paths(opts)
+    |> reject_errors_in_ignores(opts)
+  end
+
+  @spec reject_errors_in_ignore_paths([error], Keyword.t()) :: [error] when error: tuple()
+  defp reject_errors_in_ignore_paths(errors, opts) do
+    case opts[:ignore_paths] do
+      nil ->
+        errors
+
+      ignore_paths ->
+        # Filter out errors from files under any of the ignore_paths
+        Enum.reject(errors, fn {file, _} ->
+          file = file |> to_string() |> Path.expand()
+          Enum.any?(ignore_paths, &String.starts_with?(file, &1))
+        end)
+    end
+  end
+
+  @spec reject_errors_in_ignores([error], Keyword.t()) :: [error] when error: tuple()
+  def reject_errors_in_ignores(errors, opts)
+
+  def reject_errors_in_ignores([], _opts), do: []
+
+  def reject_errors_in_ignores(errors, opts) do
     opts
     |> ignores_option()
     |> parse_applicable_ignores()
