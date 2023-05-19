@@ -1,6 +1,30 @@
 defmodule Gradient.Error do
   @moduledoc ~S"""
   Provides error kind information and logic for ignoring errors.
+
+  Valid formats for `gradient_ignore.exs` are:
+
+  ```elixir
+  [
+    # Ignores all errors in a file
+    "lib/ecto/changeset.ex",
+
+    # Ignores errors in a specific line in a file
+    "lib/ecto/schema.ex:55",
+
+    # Ignores all files that match a regex
+    ~r|lib/ecto/.*|,
+
+    # Ignores an error kind in a file
+    {"lib/ecto/changeset.ex", {:spec_error, :no_spec}},
+
+    # Ignores an error kind in a specific line
+    {"lib/ecto/changeset.ex:55", {:spec_error, :no_spec}},
+
+    # Ignores an error kind in all files
+    {:spec_error, :no_spec}
+  ]
+  ```
   """
 
   require Logger
@@ -92,24 +116,7 @@ defmodule Gradient.Error do
   `.gradient_ignore.exs` contains a list of
   ignore values following this type definition.
 
-  ```
-  [
-    # Ignores errors in the whole file
-    "lib/ecto/changeset.ex",
-
-    # Ignores errors in a specific line in a file
-    "lib/ecto/schema.ex:55",
-
-    # Ignores an error kind in a file
-    {"lib/ecto/changeset.ex", {:spec_error, :no_spec}},
-
-    # Ignores an error kind in a specific line
-    {"lib/ecto/changeset.ex:55", {:spec_error, :no_spec}},
-
-    # Ignores an error kind in all files
-    {:spec_error, :no_spec}
-  ]
-  ```
+  See moduledoc or `README.md` for details
 
   The kind can be any of `ignored_kind()`.
   """
@@ -157,7 +164,7 @@ defmodule Gradient.Error do
   def reject_errors_in_ignores(errors, opts) do
     opts
     |> ignores_option()
-    |> parse_applicable_ignores()
+    |> Enum.map(&parse_ignore/1)
     |> case do
       [] ->
         errors
@@ -441,63 +448,59 @@ defmodule Gradient.Error do
     end
   end
 
-  @spec parse_applicable_ignores([ignore() | any()]) :: [ignore_rule()]
-  defp parse_applicable_ignores(ignores) when is_list(ignores) do
-    ignores
-    |> Enum.map(fn
-      %Regex{} = regex ->
-        {:ignore_regex, regex}
+  #  @spec parse_ignore(ignore() | any()) :: ignore_rule()
+  defp parse_ignore(%Regex{} = regex) do
+    {:ignore_regex, regex}
+  end
 
-      {file, line} when is_file(file) and is_line(line) ->
-        {:ignore_file_line, to_charlist(file), line}
+  defp parse_ignore({file, line}) when is_file(file) and is_line(line) do
+    {:ignore_file_line, to_charlist(file), line}
+  end
 
-      {value, kind_atom} when is_binary(value) and is_atom(kind_atom) ->
-        case file_or_file_line(value) do
-          nil ->
-            nil
+  defp parse_ignore({value, kind_atom} = line) when is_binary(value) and is_atom(kind_atom) do
+    case file_or_file_line(value) do
+      nil -> raise_parse_error(line)
+      {file, line} -> {:ignore_file_line_kind, file, line, kind_atom}
+      file -> {:ignore_file_kind, file, kind_atom}
+    end
+  end
 
-          {file, line} ->
-            {:ignore_file_line_kind, file, line, kind_atom}
+  defp parse_ignore({value, {kind_meta, kind_detail}} = line)
+       when is_binary(value) and is_atom(kind_meta) and is_atom(kind_detail) do
+    case file_or_file_line(value) do
+      nil -> raise_parse_error(line)
+      {file, line} -> {:ignore_file_line_kind, file, line, {kind_meta, kind_detail}}
+      file -> {:ignore_file_kind, file, {kind_meta, kind_detail}}
+    end
+  end
 
-          file ->
-            {:ignore_file_kind, file, kind_atom}
-        end
+  defp parse_ignore(value) when is_binary(value) do
+    case file_or_file_line(value) do
+      nil -> raise_parse_error(value)
+      {file, line} -> {:ignore_file_line, file, line}
+      file -> {:ignore_file, file}
+    end
+  end
 
-      {value, {kind_meta, kind_detail}}
-      when is_binary(value) and is_atom(kind_meta) and is_atom(kind_detail) ->
-        case file_or_file_line(value) do
-          nil ->
-            nil
+  defp parse_ignore(kind_atom) when is_atom(kind_atom) do
+    {:ignore_kind, kind_atom}
+  end
 
-          {file, line} ->
-            {:ignore_file_line_kind, file, line, {kind_meta, kind_detail}}
+  defp parse_ignore({kind_meta, kind_detail}) when is_atom(kind_meta) and is_atom(kind_detail) do
+    {:ignore_kind, {kind_meta, kind_detail}}
+  end
 
-          file ->
-            {:ignore_file_kind, file, {kind_meta, kind_detail}}
-        end
+  defp parse_ignore(other) do
+    raise_parse_error(other)
+  end
 
-      value when is_binary(value) ->
-        case file_or_file_line(value) do
-          nil ->
-            nil
-
-          {file, line} ->
-            {:ignore_file_line, file, line}
-
-          file ->
-            {:ignore_file, file}
-        end
-
-      kind_atom when is_atom(kind_atom) ->
-        {:ignore_kind, kind_atom}
-
-      {kind_meta, kind_detail} when is_atom(kind_meta) and is_atom(kind_detail) ->
-        {:ignore_kind, {kind_meta, kind_detail}}
-
-      _ ->
-        nil
-    end)
-    |> Enum.filter(& &1)
+  defp raise_parse_error(line) do
+    raise """
+    Unrecognized ignore line: 
+    #{inspect(line)}
+      
+    See moduledoc or `README.md` for ignore options
+    """
   end
 
   @spec file_or_file_line(String.t()) ::
