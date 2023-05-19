@@ -65,6 +65,9 @@ It's possible to ignore specific warnings by adding a `.gradient_ignore.exs` in 
     # Ignores errors in a specific line in a file
     "lib/ecto/schema.ex:55",
 
+    # Ignores all files that match a regex
+    ~r|lib/ecto/.*|,
+
     # Ignores an error kind in a file
     {"lib/ecto/changeset.ex", {:spec_error, :no_spec}},
 

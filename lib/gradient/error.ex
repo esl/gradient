@@ -69,6 +69,7 @@ defmodule Gradient.Error do
   @typep ignore_rule ::
            {:ignore_file, file :: charlist()}
            | {:ignore_kind, ignored_kind()}
+           | {:ignore_regex, Regex.t()}
            | {:ignore_file_kind, file :: charlist(), ignored_kind()}
            | {:ignore_file_line, file :: charlist(), :erl_anno.line()}
            | {:ignore_file_line_kind, file :: charlist(), :erl_anno.line(), ignored_kind()}
@@ -401,6 +402,10 @@ defmodule Gradient.Error do
     line(error) == line
   end
 
+  defp ignore?({:ignore_regex, regex}, {file, _error}, _kind) do
+    Regex.match?(regex, to_string(file))
+  end
+
   defp ignore?(_ignore, _file_error, _kind), do: false
 
   @spec ignores_option(Keyword.t()) :: [ignore() | any()]
@@ -418,6 +423,9 @@ defmodule Gradient.Error do
   defp parse_applicable_ignores(ignores) when is_list(ignores) do
     ignores
     |> Enum.map(fn
+      %Regex{} = regex ->
+        {:ignore_regex, regex}
+
       {file, line} when is_file(file) and is_line(line) ->
         {:ignore_file_line, to_charlist(file), line}
 
