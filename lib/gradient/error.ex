@@ -314,10 +314,6 @@ defmodule Gradient.Error do
     {:type_error, :unary_error}
   end
 
-  def kind({:type_error, :unreachable_clause, _anno}) do
-    {:type_error, :unreachable_clause}
-  end
-
   def kind({:type_error, :unreachable_clauses, _anno}) do
     {:type_error, :unreachable_clauses}
   end
