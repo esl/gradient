@@ -69,7 +69,6 @@ defmodule Gradient.Error do
           | :rel_error
           | :relop
           | :unary_error
-          | :unreachable_clause
           | :unreachable_clauses
 
   @type undef_kind ::
