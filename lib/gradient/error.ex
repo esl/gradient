@@ -69,7 +69,7 @@ defmodule Gradient.Error do
           | :rel_error
           | :relop
           | :unary_error
-          | :unreachable_clause
+          | :unreachable_clauses
 
   @type undef_kind ::
           :record
@@ -238,6 +238,10 @@ defmodule Gradient.Error do
     {:type_error, :call_intersect}
   end
 
+  def kind({:type_error, :call_intersect, _anno, _fun_ty, _name, _ty}) do
+    {:type_error, :call_intersect}
+  end
+
   def kind({:type_error, :cyclic_type_vars, _anno, _ty, _xs}) do
     {:type_error, :cyclic_type_vars}
   end
@@ -310,8 +314,8 @@ defmodule Gradient.Error do
     {:type_error, :unary_error}
   end
 
-  def kind({:type_error, :unreachable_clause, _anno}) do
-    {:type_error, :unreachable_clause}
+  def kind({:type_error, :unreachable_clauses, _anno}) do
+    {:type_error, :unreachable_clauses}
   end
 
   def kind({:type_error, a, b, c})
