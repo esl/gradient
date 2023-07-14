@@ -29,7 +29,7 @@ defmodule Gradient.MixProject do
   # Run "mix help deps" to learn about dependencies.
   def deps do
     [
-      {:gradualizer, github: "josefs/Gradualizer", ref: "1498d17", manager: :rebar3},
+      {:gradualizer, github: "josefs/Gradualizer", tag: "0.3.0", manager: :rebar3},
       {:gradient_macros, github: "esl/gradient_macros", ref: "3bce214", runtime: false},
       # {:gradualizer, path: "../Gradualizer/", manager: :rebar3},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
